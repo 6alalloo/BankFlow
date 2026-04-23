@@ -1,0 +1,56 @@
+@startuml
+!theme plain
+skinparam dpi 150
+skinparam backgroundColor #FFFFFF
+skinparam shadowing false
+skinparam defaultFontName Arial
+skinparam defaultFontSize 12
+skinparam sequenceArrowThickness 1.5
+skinparam sequenceParticipantBackgroundColor #EBF8FF
+skinparam sequenceParticipantBorderColor #2B6CB0
+skinparam sequenceLifeLineBackgroundColor #F7FAFC
+skinparam sequenceLifeLineBorderColor #2B6CB0
+
+title Sequence — Case Intake & Orchestration Start
+
+actor "Intake Source\n(API / User / Scheduler)" as src
+participant "caseController" as ctrl
+participant "caseService" as svc
+participant "caseOrchestrator" as orch
+database "PostgreSQL" as db
+participant "nodeExecutor" as exec
+participant "caseEventService" as ev
+
+src -> ctrl : POST /api/cases\n(flow_id, payload)
+ctrl -> svc : createCase(flowId, payload)
+svc -> db : load active case_flow_version
+db --> svc : flow graph
+svc -> db : INSERT cases (status=intake)
+db --> svc : case_id
+svc -> orch : start(caseId)
+
+orch -> db : load case + graph snapshot
+db --> orch : graph
+orch -> orch : identify start node
+
+loop for each automatable node
+  orch -> exec : execute(node, caseContext)
+  exec -> db : update case / task / payload
+  exec --> orch : result (output, next edge)
+  orch -> ev : record case_event
+  ev -> db : INSERT case_events
+end
+
+alt next node requires human action
+  orch -> db : INSERT case_tasks (status=pending,\nassigned_user/team)
+  orch -> ev : record "task_created"
+  orch -> db : UPDATE cases\n(status=in_review,\ncurrent_task_id)
+  orch --> svc : intake complete,\nawaiting human
+else no human step needed yet
+  orch --> svc : continues to next\nautomation node
+end
+
+svc --> ctrl : case created
+ctrl --> src : 201 {case_id, reference}
+
+@enduml

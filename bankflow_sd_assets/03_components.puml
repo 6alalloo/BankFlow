@@ -1,0 +1,91 @@
+@startuml
+!theme plain
+skinparam dpi 150
+skinparam backgroundColor #FFFFFF
+skinparam shadowing false
+skinparam defaultFontName Arial
+skinparam defaultFontSize 11
+skinparam roundcorner 8
+skinparam nodesep 25
+skinparam ranksep 55
+skinparam linetype ortho
+skinparam packageBackgroundColor #FAFAFA
+skinparam packageBorderColor #718096
+skinparam packageFontStyle bold
+skinparam componentBackgroundColor #EBF8FF
+skinparam componentBorderColor #2B6CB0
+skinparam databaseBackgroundColor #E6FFFA
+skinparam databaseBorderColor #2C7A7B
+
+title BankFlow — Backend Component Structure
+
+left to right direction
+
+' ══ Col 1 ══
+package "Cross-Cutting" as xc {
+  component "authMiddleware\n(JWT + RBAC)" as mw_auth
+  component "validators\n(node config)" as vx
+  component "errorHandler" as eh
+}
+
+' ══ Col 2 ══
+package "API Layer (Express Routes)" as api_layer {
+  component "auth" as r_auth
+  component "flows" as r_flows
+  component "cases" as r_cases
+  component "tasks" as r_tasks
+  component "approvals" as r_approvals
+  component "documents" as r_docs
+  component "dashboard" as r_dash
+  component "admin" as r_admin
+}
+
+' ══ Col 3 ══
+package "Service Layer" as svc_layer {
+  component "authService" as s_auth
+  component "flowService" as s_flow
+  component "caseService" as s_case
+  component "taskService" as s_task
+  component "approvalService" as s_appr
+  component "escalationService" as s_esc
+  component "documentService" as s_doc
+  component "caseEventService" as s_ev
+  component "userService" as s_user
+  component "roleService" as s_role
+  component "teamService" as s_team
+  component "auditService" as s_audit
+  component "dashboardService" as s_dash
+}
+
+' ══ Col 4 ══
+package "Runtime Layer" as runtime {
+  component "slaScheduler" as sla
+  component "intakeScheduler" as intk
+  component "caseOrchestrator" as orch
+  component "nodeExecutors" as execs
+  component "automationClient\n(n8n bridge)" as n8nc
+}
+
+' ══ Col 5 ══
+database "PostgreSQL\n(Prisma client)" as db
+
+' ── Force column order with hidden edges ──
+xc        -[hidden]right-> api_layer
+api_layer -[hidden]right-> svc_layer
+svc_layer -[hidden]right-> runtime
+runtime   -[hidden]right-> db
+
+' ── Inter-layer (package level) ──
+xc        ..>  api_layer : applied to\nall routes
+api_layer -->  svc_layer : calls
+svc_layer -->  runtime   : triggers\norchestration
+runtime   ..>  svc_layer : delegates writes\n(tasks, events,\nescalations)
+svc_layer -->  db        : Prisma ORM\n(all services)
+
+' ── Runtime internals ──
+sla  --> orch
+intk --> orch
+orch --> execs
+orch --> n8nc
+
+@enduml

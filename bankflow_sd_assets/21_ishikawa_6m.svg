@@ -1,0 +1,116 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1800" height="1100" viewBox="0 0 1800 1100" role="img" aria-labelledby="title desc">
+  <title id="title">BankFlow Ishikawa Diagram - 6 Ms</title>
+  <desc id="desc">A fishbone diagram for BankFlow showing six cause categories around the effect Demo-Ready BankFlow MVP At Risk.</desc>
+
+  <defs>
+    <style>
+      .bg { fill: #FFFFFF; }
+      .frame { fill: none; stroke: #111827; stroke-width: 2; }
+      .fish-outline { fill: none; stroke: #6AA0E1; stroke-width: 4; stroke-linecap: round; stroke-linejoin: round; }
+      .spine { fill: none; stroke: #1F5FAF; stroke-width: 9; stroke-linecap: round; }
+      .rib { fill: none; stroke: #6AA0E1; stroke-width: 4; stroke-linecap: round; }
+      .arrow-head { fill: #1F5FAF; }
+      .title { font: 700 30px Arial, sans-serif; fill: #111827; text-anchor: middle; }
+      .category-box { fill: #F3EAC8; stroke: #6AA0E1; stroke-width: 3; rx: 10; }
+      .effect-box { fill: #CFE2FF; stroke: #6AA0E1; stroke-width: 3; rx: 10; }
+      .category-title { font: 700 19px Arial, sans-serif; fill: #1F2937; text-anchor: middle; dominant-baseline: middle; }
+      .effect-title { font: 700 22px Arial, sans-serif; fill: #1F2937; text-anchor: middle; }
+      .cause { font: 15px Arial, sans-serif; fill: #374151; }
+      .small { font: 14px Arial, sans-serif; fill: #4B5563; }
+    </style>
+  </defs>
+
+  <rect class="bg" x="0" y="0" width="1800" height="1100" />
+  <rect class="frame" x="30" y="30" width="1740" height="1040" />
+
+  <text class="title" x="900" y="78">BankFlow - Ishikawa Diagram (6 Ms)</text>
+
+  <!-- Fish outline -->
+  <path class="fish-outline" d="M 160 160 Q 900 30 1680 550 Q 900 1070 160 940" />
+  <path class="fish-outline" d="M 160 160 L 60 50 L 60 1050 L 160 940" />
+
+  <!-- Spine -->
+  <line class="spine" x1="230" y1="550" x2="1320" y2="550" />
+  <polygon class="arrow-head" points="1320,550 1288,525 1288,575" />
+
+  <!-- Effect -->
+  <rect class="effect-box" x="1330" y="485" width="290" height="130" />
+  <text class="effect-title" x="1475" y="535">
+    <tspan x="1475" dy="0">Demo-Ready</tspan>
+    <tspan x="1475" dy="28">BankFlow MVP</tspan>
+    <tspan x="1475" dy="28">At Risk</tspan>
+  </text>
+
+  <!-- Main ribs -->
+  <line class="rib" x1="560" y1="550" x2="380" y2="330" />
+  <line class="rib" x1="920" y1="550" x2="720" y2="330" />
+  <line class="rib" x1="1260" y1="550" x2="1080" y2="330" />
+
+  <line class="rib" x1="560" y1="550" x2="380" y2="770" />
+  <line class="rib" x1="920" y1="550" x2="720" y2="770" />
+  <line class="rib" x1="1260" y1="550" x2="1080" y2="770" />
+
+  <!-- Category boxes -->
+  <rect class="category-box" x="180" y="250" width="220" height="62" />
+  <text class="category-title" x="290" y="281">Methods</text>
+
+  <rect class="category-box" x="570" y="250" width="220" height="62" />
+  <text class="category-title" x="680" y="281">Machine</text>
+
+  <rect class="category-box" x="960" y="250" width="220" height="62" />
+  <text class="category-title" x="1070" y="281">Measurement</text>
+
+  <rect class="category-box" x="190" y="780" width="240" height="62" />
+  <text class="category-title" x="310" y="811">Manpower</text>
+
+  <rect class="category-box" x="590" y="780" width="220" height="62" />
+  <text class="category-title" x="700" y="811">Materials</text>
+
+  <rect class="category-box" x="980" y="780" width="260" height="62" />
+  <text class="category-title" x="1110" y="811">Mother Nature</text>
+
+  <!-- Connector stubs from boxes to ribs -->
+  <line class="rib" x1="400" y1="312" x2="470" y2="398" />
+  <line class="rib" x1="790" y1="312" x2="860" y2="392" />
+  <line class="rib" x1="1180" y1="312" x2="1220" y2="360" />
+
+  <line class="rib" x1="430" y1="780" x2="485" y2="715" />
+  <line class="rib" x1="810" y1="780" x2="860" y2="724" />
+  <line class="rib" x1="1110" y1="780" x2="1185" y2="690" />
+
+  <!-- Methods causes -->
+  <text class="cause" x="120" y="355">• HRFlow runtime model still too n8n-centric</text>
+  <text class="cause" x="120" y="380">• Flow publish/versioning approach not fully settled</text>
+  <text class="cause" x="120" y="405">• Auth and route-hardening work still incomplete</text>
+  <text class="small" x="120" y="430">migration from workflow runs to case runtime remains complex</text>
+
+  <!-- Machine causes -->
+  <text class="cause" x="520" y="355">• Orchestrator not yet fully established as runtime core</text>
+  <text class="cause" x="520" y="380">• SLA polling/scheduler may become a bottleneck</text>
+  <text class="cause" x="520" y="405">• n8n callback and correlation handling add fragility</text>
+  <text class="small" x="520" y="430">local Docker/dev stack increases setup and debugging overhead</text>
+
+  <!-- Measurement causes -->
+  <text class="cause" x="940" y="355">• Limited automated coverage for approval/escalation flows</text>
+  <text class="cause" x="940" y="380">• Audit completeness is required but not yet verified end-to-end</text>
+  <text class="cause" x="940" y="405">• Overdue, approval-time, and escalation metrics not baselined</text>
+  <text class="small" x="940" y="430">dashboard acceptance criteria still need sharper testable checks</text>
+
+  <!-- Manpower causes -->
+  <text class="cause" x="120" y="900">• Internship-prototype bandwidth is limited</text>
+  <text class="cause" x="120" y="925">• Banking-domain learning curve slows decision-making</text>
+  <text class="cause" x="120" y="950">• Work spans builder, backend, runtime, and security at once</text>
+  <text class="small" x="120" y="975">ownership can blur across frontend, schema, and orchestration work</text>
+
+  <!-- Materials causes -->
+  <text class="cause" x="520" y="900">• HR-specific templates and labels still need cleanup</text>
+  <text class="cause" x="520" y="925">• Some builder nodes exist without full runtime support</text>
+  <text class="cause" x="520" y="950">• Schema and migration debt remain from the HRFlow fork</text>
+  <text class="small" x="520" y="975">committed backups/runtime artifacts increase cleanup burden</text>
+
+  <!-- Mother Nature causes -->
+  <text class="cause" x="950" y="900">• Tight MVP timeline constrains implementation depth</text>
+  <text class="cause" x="950" y="925">• Banking governance raises security and traceability demands</text>
+  <text class="cause" x="950" y="950">• External integrations can undermine demo reliability</text>
+  <text class="small" x="950" y="975">scope pressure forces focus onto only two core MVP use cases</text>
+</svg>

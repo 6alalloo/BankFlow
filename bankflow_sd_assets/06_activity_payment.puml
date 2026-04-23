@@ -1,0 +1,65 @@
+@startuml
+!theme plain
+skinparam dpi 150
+skinparam backgroundColor #FFFFFF
+skinparam shadowing false
+skinparam defaultFontName Arial
+skinparam defaultFontSize 12
+skinparam activity {
+  BackgroundColor #EBF8FF
+  BorderColor #2B6CB0
+  DiamondBackgroundColor #FEFCBF
+  DiamondBorderColor #B7791F
+  ArrowColor #2B6CB0
+  FontStyle bold
+}
+
+title UC-2: Payment Exception Handling — Activity Diagram
+
+|#EBF8FF|BankFlow Orchestrator|
+|#F7FAFC|Payment Operator|
+|#FED7D7|Approver|
+
+|BankFlow Orchestrator|
+start
+:Receive payment exception\n(API from payments system);
+:Create case with payment payload;
+:Run data capture node\n(normalize fields);
+if (Amount threshold) then (below threshold)
+  :Route to payment ops queue\n(standard priority);
+else (above threshold)
+  :Route to payment ops queue\n(high priority);
+endif
+|Payment Operator|
+:Claim task;
+:Review exception details;
+:Determine resolution type;
+if (Action needed) then (retry / correct)
+  :Record corrective action;
+  |BankFlow Orchestrator|
+  if (Requires approval?) then (yes)
+    :Create approval task;
+    |Approver|
+    :Review action and amount;
+    if (Decision) then (approve)
+      :Approve;
+    else (reject)
+      :Reject with reason;
+      |BankFlow Orchestrator|
+      :Reopen for operator;
+      stop
+    endif
+  else (no)
+  endif
+  |BankFlow Orchestrator|
+  :Execute resolution automation\n(retry, reversal, correction);
+  :Record outcome;
+else (refer / reject)
+  |Payment Operator|
+  :Record decision and reason;
+endif
+|BankFlow Orchestrator|
+:Set case = resolved;
+:Close case;
+stop
+@enduml

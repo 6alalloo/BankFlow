@@ -1,0 +1,60 @@
+@startuml
+!theme plain
+skinparam dpi 150
+skinparam backgroundColor #FFFFFF
+skinparam shadowing false
+skinparam defaultFontName Arial
+skinparam defaultFontSize 12
+skinparam activity {
+  BackgroundColor #EBF8FF
+  BorderColor #2B6CB0
+  DiamondBackgroundColor #FEFCBF
+  DiamondBorderColor #B7791F
+  ArrowColor #2B6CB0
+  FontStyle bold
+}
+
+title UC-1: AML Alert Review — Activity Diagram
+
+|#F7FAFC|Operator / Analyst|
+|#EBF8FF|BankFlow Orchestrator|
+|#FED7D7|Supervisor / Approver|
+
+|BankFlow Orchestrator|
+start
+:Receive alert from AML source\n(API intake);
+:Create case, set priority,\ninit payload;
+:Run data enrichment\n(customer, transaction history);
+:Route to AML analyst queue;
+|Operator / Analyst|
+:Claim alert review task;
+:Inspect enriched data\nand transaction context;
+:Attach supporting documents;
+:Record findings;
+if (Risk level) then (low / false positive)
+  :Record outcome\n"no action needed";
+  |BankFlow Orchestrator|
+  :Set case status = resolved;
+else (high / suspicious)
+  :Submit for supervisor approval;
+  |BankFlow Orchestrator|
+  :Create approval task;
+  |Supervisor / Approver|
+  :Review case and findings;
+  if (Decision) then (approve escalation)
+    :Approve SAR filing /\naccount action;
+    |BankFlow Orchestrator|
+    :Trigger downstream\nnotification automation;
+    :Set status = resolved;
+  else (reject / rework)
+    :Return with comments;
+    |BankFlow Orchestrator|
+    :Reopen for analyst;
+    stop
+  endif
+endif
+|BankFlow Orchestrator|
+:Append final case event;
+:Close case;
+stop
+@enduml

@@ -1,0 +1,74 @@
+@startmindmap
+!theme plain
+skinparam dpi 150
+skinparam backgroundColor #FFFFFF
+skinparam shadowing false
+skinparam defaultFontName Arial
+skinparam defaultFontSize 10
+skinparam NodeBackgroundColor #EBF8FF
+skinparam NodeBorderColor #2B6CB0
+skinparam ArrowColor #4A5568
+
+<style>
+mindmapDiagram {
+  .problem {
+    BackgroundColor #2B6CB0
+    FontColor #FFFFFF
+    FontStyle bold
+    FontSize 13
+  }
+  .category {
+    BackgroundColor #BEE3F8
+    FontStyle bold
+    FontSize 11
+  }
+  .sub {
+    BackgroundColor #EBF8FF
+    FontSize 10
+  }
+}
+</style>
+
+title BankFlow - Ishikawa Diagram (6 Ms)
+
+* Demo-Ready\nBankFlow MVP\nAt Risk <<problem>>
+
+** Manpower <<category>>
+*** Limited internship-prototype bandwidth <<sub>>
+*** Banking-domain learning curve <<sub>>
+*** Split ownership across builder,\nbackend, and runtime changes <<sub>>
+*** Security and audit implementation\nskills still maturing <<sub>>
+
+** Methods <<category>>
+*** Legacy HRFlow execution model\nis too n8n-centric <<sub>>
+*** Flow publish/versioning strategy\nnot fully settled <<sub>>
+*** Route hardening and auth coverage\nstill incomplete in places <<sub>>
+*** Migration path from workflow runs\nto BankFlow case runtime is complex <<sub>>
+
+** Machine <<category>>
+*** In-process orchestrator still\nneeds to become the runtime core <<sub>>
+*** Scheduler/polling approach may\nstrain SLA handling as scope grows <<sub>>
+*** n8n callback and correlation handling\nadds integration fragility <<sub>>
+*** Local Docker/dev stack adds\nsetup and debugging overhead <<sub>>
+
+left side
+
+** Materials <<category>>
+*** HR-specific templates, labels,\nand sample flows still need cleanup <<sub>>
+*** Unsupported builder nodes exist\nwithout full runtime support <<sub>>
+*** Schema and migration debt from\nthe HRFlow fork remains <<sub>>
+*** Committed runtime artifacts/backups\nneed sanitization and removal <<sub>>
+
+** Measurement <<category>>
+*** Regression coverage is still limited\nfor approvals, escalations, and SLA flows <<sub>>
+*** Audit completeness is a requirement\nbut not yet automatically verified <<sub>>
+*** Approval time, escalation rate,\nand overdue metrics are not yet baselined <<sub>>
+*** Dashboard and oversight success\ncriteria need concrete acceptance checks <<sub>>
+
+** Mother Nature <<category>>
+*** Tight MVP timeline constrains\nscope and engineering depth <<sub>>
+*** Banking governance raises the bar\nfor security and traceability <<sub>>
+*** External integration variability\ncan disrupt demo reliability <<sub>>
+*** Evolving requirements pressure the team\nto prioritize only two core use cases <<sub>>
+
+@endmindmap

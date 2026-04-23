@@ -1,0 +1,71 @@
+@startuml
+!theme plain
+skinparam dpi 150
+skinparam backgroundColor #FFFFFF
+skinparam shadowing false
+skinparam defaultFontName Arial
+skinparam defaultFontSize 12
+skinparam roundcorner 8
+skinparam nodesep 30
+skinparam ranksep 40
+skinparam rectangleBackgroundColor #EBF8FF
+skinparam rectangleBorderColor #2B6CB0
+skinparam rectangleFontStyle bold
+
+title BankFlow — GUI Hierarchy
+
+rectangle "BankFlow Application" as root #BEE3F8
+
+rectangle "Dashboard" as dash
+rectangle "Operations" as ops
+rectangle "Flow Design" as design
+rectangle "Administration" as admin
+
+root --> dash
+root --> ops
+root --> design
+root --> admin
+
+rectangle "Supervisor Overview" as s_ov
+rectangle "Overdue / SLA" as s_sla
+rectangle "Pending Approvals" as s_appr
+rectangle "Queue Workload" as s_q
+dash --> s_ov
+dash --> s_sla
+dash --> s_appr
+dash --> s_q
+
+rectangle "Cases List" as c_list
+rectangle "Case Detail\n(Overview · Tasks ·\nDocuments · Events · Audit)" as c_detail
+rectangle "My Tasks" as c_mytasks
+rectangle "Approvals Inbox" as c_appr
+rectangle "Escalations" as c_esc
+ops --> c_list
+ops --> c_detail
+ops --> c_mytasks
+ops --> c_appr
+ops --> c_esc
+
+rectangle "Flows List" as f_list
+rectangle "Flow Builder\n(Canvas + Node Config)" as f_build
+rectangle "Flow Versions /\nPublish" as f_ver
+rectangle "Schedules" as f_sched
+rectangle "Templates\n(AML, Payment, KYC,\nDormant, Reports)" as f_tpl
+design --> f_list
+design --> f_build
+design --> f_ver
+design --> f_sched
+design --> f_tpl
+
+rectangle "Users" as a_users
+rectangle "Roles" as a_roles
+rectangle "Teams / Queues" as a_teams
+rectangle "Audit Logs" as a_audit
+rectangle "Platform Settings" as a_set
+admin --> a_users
+admin --> a_roles
+admin --> a_teams
+admin --> a_audit
+admin --> a_set
+
+@enduml

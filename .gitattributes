@@ -1,0 +1,11 @@
+# Ensure consistent line endings across all platforms
+* text=auto
+
+# Force LF for shell scripts (critical for Docker on Alpine Linux)
+*.sh text eol=lf
+
+# Force LF for SQL scripts
+*.sql text eol=lf
+
+# Force LF for Dockerfiles
+Dockerfile text eol=lf

@@ -1,0 +1,162 @@
+@startuml
+!theme plain
+skinparam dpi 150
+skinparam backgroundColor #FFFFFF
+skinparam shadowing false
+skinparam defaultFontName Arial
+skinparam defaultFontSize 11
+skinparam roundcorner 8
+skinparam nodesep 14
+skinparam ranksep 28
+skinparam arrowThickness 1.2
+
+skinparam actor {
+  BackgroundColor #EDF2F7
+  BorderColor #2B6CB0
+  FontSize 11
+  FontStyle bold
+}
+skinparam usecase {
+  BackgroundColor #EBF8FF
+  BorderColor #2B6CB0
+  FontSize 10
+}
+skinparam package {
+  BackgroundColor #FAFAFA
+  BorderColor #A0AEC0
+  FontStyle bold
+  FontSize 12
+}
+
+title BankFlow — Use Case Diagram
+
+left to right direction
+
+' ═══════════════════════════════════
+' LEFT ACTORS (declared first → left)
+' ═══════════════════════════════════
+actor "Operator"   as op
+actor "Approver"   as appr
+actor "Supervisor" as sup
+
+' ═══════════════════════════════════
+' LEFT PACKAGE  — Operational
+' ═══════════════════════════════════
+package "Operational" as PKop {
+  usecase "Submit Manual\nCase Intake"         as UC01
+  usecase "Browse &\nFilter Cases"             as UC02
+  usecase "View Case Detail\n& Timeline"       as UC03
+  usecase "Claim &\nComplete Task"             as UC04
+  usecase "Upload Document"                    as UC05
+  usecase "Manually\nEscalate Case"            as UC06
+  usecase "Review Approval\nRequest"           as UC07
+  usecase "Approve Decision"                   as UC08
+  usecase "Reject Decision"                    as UC09
+  usecase "Monitor Supervisor\nDashboard"      as UC10
+  usecase "Monitor SLA &\nOverdue Work"        as UC11
+  usecase "View Escalated\nCases"              as UC12
+}
+
+' ═══════════════════════════════════
+' RIGHT PACKAGE — Platform
+' ═══════════════════════════════════
+package "Platform" as PKpl {
+  usecase "Create &\nEdit Flow"                as UC13
+  usecase "Publish Flow\nVersion"              as UC14
+  usecase "Manage Flow\nSchedules"             as UC15
+  usecase "Apply Flow\nTemplate"               as UC16
+  usecase "Manage Users\n& Roles"              as UC17
+  usecase "Manage Teams\n& Queues"             as UC18
+  usecase "View Audit Logs"                    as UC19
+  usecase "Configure Platform\nSettings"       as UC20
+  usecase "Run KYC\nRefresh Cycle"             as UC21
+  usecase "Run Dormant\nAccount Scan"          as UC22
+  usecase "Generate Regulatory\nReport"        as UC23
+}
+
+' ═══════════════════════════════════
+' RIGHT ACTORS (declared last → right)
+' ═══════════════════════════════════
+actor "Designer"                   as des
+actor "Admin"                      as adm
+actor "Auditor"                    as aud
+actor "Intake Scheduler\n(System)" as sched
+
+' ═══════════════════════════════════
+' HIDDEN: force packages side by side
+' and actors to their sides
+' ═══════════════════════════════════
+PKop -[hidden]right- PKpl
+
+' Pin left actors to the left of PKop
+op   -[hidden]- PKop
+appr -[hidden]- PKop
+sup  -[hidden]- PKop
+
+' Pin right actors to the right of PKpl
+PKpl -[hidden]- des
+PKpl -[hidden]- adm
+PKpl -[hidden]- aud
+PKpl -[hidden]- sched
+
+' Stack left actors vertically
+op   -[hidden]down- appr
+appr -[hidden]down- sup
+
+' Stack right actors vertically
+des  -[hidden]down- adm
+adm  -[hidden]down- aud
+aud  -[hidden]down- sched
+
+' ═══════════════════════════════════
+' LEFT ACTOR → USE CASE ARROWS
+' ═══════════════════════════════════
+op   --> UC01
+op   --> UC02
+op   --> UC03
+op   --> UC04
+op   --> UC05
+op   --> UC06
+
+appr --> UC07
+appr --> UC08
+appr --> UC09
+appr --> UC02
+
+sup  --> UC10
+sup  --> UC11
+sup  --> UC12
+sup  --> UC08
+sup  --> UC09
+
+' ═══════════════════════════════════
+' RIGHT ACTOR → USE CASE ARROWS
+' ═══════════════════════════════════
+des  --> UC13
+des  --> UC14
+des  --> UC15
+des  --> UC16
+
+adm  --> UC17
+adm  --> UC18
+adm  --> UC19
+adm  --> UC20
+
+aud  --> UC19
+aud  --> UC02
+aud  --> UC03
+
+sched --> UC21
+sched --> UC22
+sched --> UC23
+
+' ═══════════════════════════════════
+' INCLUDE / EXTEND
+' ═══════════════════════════════════
+UC08 .> UC07 : <<include>>
+UC09 .> UC07 : <<include>>
+UC14 .> UC13 : <<include>>
+UC04 .> UC03 : <<extend>>
+UC05 .> UC03 : <<extend>>
+
+@enduml

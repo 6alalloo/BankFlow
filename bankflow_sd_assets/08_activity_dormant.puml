@@ -1,0 +1,58 @@
+@startuml
+!theme plain
+skinparam dpi 150
+skinparam backgroundColor #FFFFFF
+skinparam shadowing false
+skinparam defaultFontName Arial
+skinparam defaultFontSize 12
+skinparam activity {
+  BackgroundColor #EBF8FF
+  BorderColor #2B6CB0
+  DiamondBackgroundColor #FEFCBF
+  DiamondBorderColor #B7791F
+  ArrowColor #2B6CB0
+  FontStyle bold
+}
+
+title UC-4: Dormant Account Flagging — Activity Diagram
+
+|#FEFCBF|Intake Scheduler|
+|#EBF8FF|BankFlow Orchestrator|
+|#F7FAFC|Compliance Officer\n(reporting path only)|
+
+|Intake Scheduler|
+start
+:Cycle trigger fires\n(scheduled scan);
+:Scan accounts for inactivity\nbeyond dormancy threshold;
+repeat
+  |BankFlow Orchestrator|
+  :Create dormant-account case;
+  :Send customer notification\n(email automation);
+  :Set response SLA timer;
+  if (Customer responds?) then (yes, active intent)
+    :Record response;
+    :Reset dormancy flag\n(automation → core banking);
+    :Set case = resolved;
+    :Close case;
+  else (no response before SLA)
+    :Send follow-up notification;
+    :Extend timer;
+    if (Final deadline passed?) then (no, responded)
+      :Reset account;
+      :Close case;
+    else (yes, still silent)
+      :Restrict account\n(automation → core banking);
+      :Create regulatory reporting task;
+      |Compliance Officer\n(reporting path only)|
+      :Review flagged account;
+      :Validate reporting details;
+      :Submit regulator report;
+      |BankFlow Orchestrator|
+      :Record submission;
+      :Close case;
+    endif
+  endif
+repeat while (More accounts?) is (yes)
+->no;
+stop
+@enduml

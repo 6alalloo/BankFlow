@@ -1,0 +1,58 @@
+@startuml
+!theme plain
+skinparam dpi 150
+skinparam backgroundColor #FFFFFF
+skinparam shadowing false
+skinparam defaultFontName Arial
+skinparam defaultFontSize 12
+skinparam activity {
+  BackgroundColor #EBF8FF
+  BorderColor #2B6CB0
+  DiamondBackgroundColor #FEFCBF
+  DiamondBorderColor #B7791F
+  ArrowColor #2B6CB0
+  FontStyle bold
+}
+
+title UC-5: Regulatory Report Generation — Activity Diagram
+
+|#FEFCBF|Intake Scheduler|
+|#EBF8FF|BankFlow Orchestrator|
+|#F7FAFC|Compliance Analyst\n(error path only)|
+
+|Intake Scheduler|
+start
+:Deadline trigger fires\n(cron aligned to reporting period);
+|BankFlow Orchestrator|
+:Create regulatory-report case;
+:Pull source data\n(automation → data stores, APIs);
+:Run validation checks\n(schema, totals, integrity);
+if (Data valid?) then (yes)
+  :Compile report artifact;
+  :Apply digital signature /\nmetadata;
+  :Submit to regulator portal\n(automation);
+  :Record submission receipt;
+  :Set case = resolved;
+  :Close case;
+else (errors found)
+  :Collect error details;
+  :Create human task\n"fix report data";
+  |Compliance Analyst\n(error path only)|
+  :Claim task;
+  :Review validation errors;
+  :Investigate root cause\n(source system, mapping);
+  :Apply corrections;
+  :Attach supporting docs;
+  :Mark task complete;
+  |BankFlow Orchestrator|
+  :Re-run validation;
+  if (Valid now?) then (yes)
+    :Compile and submit;
+    :Close case;
+  else (still failing)
+    :Escalate to supervisor;
+    stop
+  endif
+endif
+stop
+@enduml

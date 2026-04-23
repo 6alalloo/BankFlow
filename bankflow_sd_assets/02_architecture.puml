@@ -1,0 +1,50 @@
+@startuml
+!theme plain
+skinparam dpi 150
+skinparam backgroundColor #FFFFFF
+skinparam shadowing false
+skinparam defaultFontName Arial
+skinparam defaultFontSize 12
+skinparam roundcorner 8
+skinparam nodesep 80
+skinparam ranksep 100
+skinparam arrowThickness 1.5
+skinparam noteBorderColor #CBD5E0
+skinparam noteBackgroundColor #F7FAFC
+
+title BankFlow — High-Level System Architecture
+
+left to right direction
+
+actor "Internal User\n(Designer / Operator /\nApprover / Supervisor /\nAuditor / Admin)" as user
+
+rectangle "Browser\n\nBankFlow Frontend\n(React + TypeScript + Vite)" as browser #EBF8FF
+
+rectangle "BankFlow Application Server\n\nBackend API  (Express + TypeScript)\nCase Orchestrator  (in-process service)\nSLA Scheduler  ·  Intake Scheduler" as app #FEFCBF
+
+database "PostgreSQL\n(Prisma ORM)\n\nIdentity · Flow Defs · Cases\nTasks · Events · Approvals\nEscalations · Documents · Audit" as db #E6FFFA
+
+queue "n8n\nAutomation Worker" as n8n #FED7D7
+
+rectangle "Document Store\n(local volume / object store)" as files #F0FFF4
+
+' ── Main chain (left → right) ──
+user    -->  browser : HTTPS
+browser -->  app     : REST / JSON (JWT)
+app     -->  db      : SQL (Prisma)
+
+' ── External services (below in LTR layout) ──
+app -down-> n8n   : HTTP call (with correlation ID)
+n8n -up->   app   : webhook callback (result)
+app -down-> files : upload / retrieve
+
+' Force files below n8n in the right column
+n8n -[hidden]down-> files
+
+note right of n8n
+  Executes automation nodes only
+  (notifications, integrations).
+  Not the source of truth for case state.
+end note
+
+@enduml

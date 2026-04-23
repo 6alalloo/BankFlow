@@ -1,0 +1,265 @@
+@startuml
+!theme plain
+skinparam dpi 150
+skinparam backgroundColor #FFFFFF
+skinparam shadowing false
+skinparam defaultFontName Arial
+skinparam defaultFontSize 10
+skinparam roundcorner 4
+skinparam linetype ortho
+skinparam classBackgroundColor #EBF8FF
+skinparam classBorderColor #2B6CB0
+skinparam classHeaderBackgroundColor #BEE3F8
+skinparam classFontStyle bold
+skinparam classFontSize 11
+skinparam packageBackgroundColor #FAFAFA
+skinparam packageBorderColor #718096
+skinparam packageFontStyle bold
+skinparam packageFontSize 12
+skinparam nodesep 40
+skinparam ranksep 50
+
+title BankFlow — Enhanced Entity Relationship Diagram
+
+' ═══════════════════════════════════════
+' Identity & Access
+' ═══════════════════════════════════════
+package "Identity & Access" as IA {
+
+  entity "roles" as roles {
+    PK  id : serial
+    --
+        name : varchar
+  }
+
+  entity "users" as users {
+    PK  id : serial
+    --
+        email : varchar
+        password_hash : varchar
+        full_name : varchar
+        is_active : boolean
+    FK  role_id : int
+  }
+
+  entity "teams" as teams {
+    PK  id : serial
+    --
+        name : varchar
+        description : varchar
+        is_active : boolean
+  }
+
+  entity "team_memberships" as tm {
+    PK  id : serial
+    --
+    FK  user_id : int
+    FK  team_id : int
+        membership_role : varchar
+  }
+}
+
+' ═══════════════════════════════════════
+' Case Flow Definition
+' ═══════════════════════════════════════
+package "Case Flow Definition" as CFD {
+
+  entity "case_flows" as cf {
+    PK  id : serial
+    --
+        name : varchar
+        case_type : varchar
+        status : varchar
+    FK  owner_user_id : int
+    FK  active_version_id : int
+  }
+
+  entity "case_flow_versions" as cfv {
+    PK  id : serial
+    --
+    FK  case_flow_id : int
+        version_number : int
+        status : varchar
+        graph_snapshot_json : jsonb
+    FK  published_by : int
+  }
+
+  entity "case_flow_nodes" as cfn {
+    PK  id : serial
+    --
+    FK  case_flow_version_id : int
+        node_key : varchar
+        kind : varchar
+        name : varchar
+        config_json : jsonb
+  }
+
+  entity "case_flow_edges" as cfe {
+    PK  id : serial
+    --
+    FK  case_flow_version_id : int
+    FK  from_node_id : int
+    FK  to_node_id : int
+        condition_json : jsonb
+        label : varchar
+        priority : int
+  }
+
+  entity "case_flow_schedules" as cfs {
+    PK  id : serial
+    --
+    FK  case_flow_id : int
+        cron_expression : varchar
+        timezone : varchar
+        is_active : boolean
+        next_run_at : timestamptz
+  }
+}
+
+' ═══════════════════════════════════════
+' Case Runtime
+' ═══════════════════════════════════════
+package "Case Runtime" as CR {
+
+  entity "cases" as cases {
+    PK  id : serial
+    --
+        case_reference : varchar
+    FK  case_flow_version_id : int
+        case_type : varchar
+        status : varchar
+        priority : varchar
+    FK  current_node_id : int
+    FK  current_task_id : int
+    FK  assignee_user_id : int
+    FK  assignee_team_id : int
+        intake_source : varchar
+        payload_json : jsonb
+        opened_at : timestamptz
+  }
+
+  entity "case_tasks" as ct {
+    PK  id : serial
+    --
+    FK  case_id : int
+    FK  node_id : int
+        task_type : varchar
+        status : varchar
+    FK  assigned_user_id : int
+    FK  assigned_team_id : int
+        due_at : timestamptz
+        decision : varchar
+        output_json : jsonb
+  }
+
+  entity "case_approvals" as ca {
+    PK  id : serial
+    --
+    FK  case_id : int
+    FK  task_id : int
+        approval_type : varchar
+        status : varchar
+    FK  requested_from_user_id : int
+    FK  requested_from_role_id : int
+    FK  decided_by : int
+        decision_reason : varchar
+  }
+
+  entity "case_escalations" as cesc {
+    PK  id : serial
+    --
+    FK  case_id : int
+    FK  source_task_id : int
+        escalation_type : varchar
+        reason : varchar
+    FK  from_user_id : int
+    FK  to_user_id : int
+    FK  to_team_id : int
+  }
+
+  entity "case_events" as ce {
+    PK  id : serial
+    --
+    FK  case_id : int
+        event_type : varchar
+    FK  node_id : int
+    FK  task_id : int
+    FK  actor_user_id : int
+        data_json : jsonb
+        created_at : timestamptz
+  }
+
+  entity "case_documents" as cd {
+    PK  id : serial
+    --
+    FK  case_id : int
+    FK  task_id : int
+        filename : varchar
+        mime_type : varchar
+        storage_path : varchar
+        file_size_bytes : bigint
+        document_type : varchar
+    FK  uploaded_by : int
+  }
+}
+
+' ═══════════════════════════════════════
+' Audit
+' ═══════════════════════════════════════
+package "Audit" as AU {
+
+  entity "audit_logs" as al {
+    PK  id : serial
+    --
+    FK  actor_user_id : int
+        action : varchar
+        entity_type : varchar
+        entity_id : int
+        data_json : jsonb
+        created_at : timestamptz
+  }
+}
+
+' ═══════════════════════════════════════
+' Relationships
+' ═══════════════════════════════════════
+roles  ||--o{ users    : "role_id"
+users  ||--o{ tm       : "user_id"
+teams  ||--o{ tm       : "team_id"
+
+users  ||--o{ cf       : "owner"
+cf     ||--o{ cfv      : "versions"
+cf     ||--o{ cfs      : "schedules"
+cfv    ||--o{ cfn      : "nodes"
+cfv    ||--o{ cfe      : "edges"
+
+cfv    ||--o{ cases    : "flow version"
+teams  ||--o{ cases    : "assignee team"
+users  ||--o{ cases    : "assignee / created by"
+
+cases  ||--o{ ct       : "tasks"
+cfn    ||--o{ ct       : "node"
+teams  ||--o{ ct       : "assigned team"
+users  ||--o{ ct       : "assigned user"
+
+cases  ||--o{ ca       : "approvals"
+ct     ||--o{ ca       : "task"
+roles  ||--o{ ca       : "requested role"
+users  ||--o{ ca       : "decided by"
+
+cases  ||--o{ cesc     : "escalations"
+ct     ||--o{ cesc     : "source task"
+users  ||--o{ cesc     : "from / to user"
+teams  ||--o{ cesc     : "to team"
+
+cases  ||--o{ ce       : "events"
+ct     ||--o{ ce       : "task"
+users  ||--o{ ce       : "actor"
+
+cases  ||--o{ cd       : "documents"
+ct     ||--o{ cd       : "task"
+users  ||--o{ cd       : "uploaded by"
+
+users  ||--o{ al       : "actor"
+
+@enduml

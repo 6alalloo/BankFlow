@@ -1,0 +1,57 @@
+@startuml
+!theme plain
+skinparam dpi 150
+skinparam backgroundColor #FFFFFF
+skinparam shadowing false
+skinparam defaultFontName Arial
+skinparam defaultFontSize 12
+skinparam sequenceArrowThickness 1.5
+skinparam sequenceParticipantBackgroundColor #EBF8FF
+skinparam sequenceParticipantBorderColor #2B6CB0
+skinparam sequenceLifeLineBackgroundColor #F7FAFC
+skinparam sequenceLifeLineBorderColor #2B6CB0
+
+title Sequence — Human Task Claim, Complete, and Approval
+
+actor "Operator" as op
+actor "Approver" as appr
+participant "taskController" as tctrl
+participant "taskService" as tsvc
+participant "approvalService" as asvc
+participant "caseOrchestrator" as orch
+database "PostgreSQL" as db
+
+== Claim and Complete ==
+op -> tctrl : POST /api/tasks/:id/claim
+tctrl -> tsvc : claimTask(taskId, userId)
+tsvc -> db : UPDATE case_tasks\n(status=claimed, claimed_at)
+tsvc -> db : INSERT case_events (task_claimed)
+tsvc --> tctrl : ok
+tctrl --> op : 200
+
+op -> tctrl : POST /api/tasks/:id/complete\n(decision, output)
+tctrl -> tsvc : completeTask(taskId, output)
+tsvc -> db : UPDATE case_tasks\n(status=completed, output_json)
+tsvc -> db : INSERT case_events (task_completed)
+tsvc -> orch : advance(caseId)
+
+== Approval Required ==
+orch -> db : load next node (approval)
+orch -> db : INSERT case_approvals (status=requested)
+orch -> db : INSERT case_tasks\n(task_type=approval, assigned=approver)
+orch -> db : UPDATE cases (status=pending_approval)
+orch --> tsvc : awaiting approval
+
+== Approver Decides ==
+appr -> tctrl : POST /api/approvals/:id/approve\n(reason)
+tctrl -> asvc : approve(approvalId, userId, reason)
+asvc -> db : UPDATE case_approvals\n(status=approved, decided_by)
+asvc -> db : UPDATE case_tasks\n(decision=approved, status=completed)
+asvc -> db : INSERT case_events (approval_approved)
+asvc -> orch : advance(caseId)
+
+== Resume Flow ==
+orch -> db : load next node via edge\n(approved branch)
+orch -> orch : continue orchestration\n(next automation or task)
+
+@enduml

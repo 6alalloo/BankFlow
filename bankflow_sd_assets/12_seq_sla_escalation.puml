@@ -1,0 +1,51 @@
+@startuml
+!theme plain
+skinparam dpi 150
+skinparam backgroundColor #FFFFFF
+skinparam shadowing false
+skinparam defaultFontName Arial
+skinparam defaultFontSize 12
+skinparam sequenceArrowThickness 1.5
+skinparam sequenceParticipantBackgroundColor #EBF8FF
+skinparam sequenceParticipantBorderColor #2B6CB0
+skinparam sequenceLifeLineBackgroundColor #F7FAFC
+skinparam sequenceLifeLineBorderColor #2B6CB0
+
+title Sequence — SLA Breach and Escalation
+
+participant "slaScheduler\n(periodic job)" as sched
+database "PostgreSQL" as db
+participant "caseOrchestrator" as orch
+participant "escalationService" as esc
+participant "caseEventService" as ev
+participant "automationClient" as autom
+queue "n8n Worker" as n8n
+actor "Supervisor" as sup
+
+loop every N minutes
+  sched -> db : SELECT case_tasks\nWHERE due_at < now()\nAND status IN (pending, assigned, claimed)
+  db --> sched : overdue tasks
+  alt overdue tasks found
+    loop for each overdue task
+      sched -> orch : handleSlaBreach(taskId)
+      orch -> db : UPDATE case_tasks\n(status=overdue)
+      orch -> ev : record "sla_breached"
+      ev -> db : INSERT case_events
+
+      orch -> esc : createEscalation(taskId, reason)
+      esc -> db : INSERT case_escalations\n(to_team_id / to_user_id)
+      esc -> db : UPDATE cases\n(status=escalated,\nassignee → escalation target)
+      esc -> ev : record "case_escalated"
+
+      orch -> autom : sendEscalationNotification(caseId)
+      autom -> n8n : POST /webhook/notify\n(correlation: caseId, eventId)
+      n8n --> autom : 202 accepted
+      n8n -> sup : email / internal alert
+    end
+  end
+end
+
+sup -> db : GET /api/dashboard/overdue
+db --> sup : escalated cases list
+
+@enduml

@@ -1,0 +1,76 @@
+@startuml
+!theme plain
+skinparam dpi 150
+skinparam backgroundColor #FFFFFF
+skinparam shadowing false
+skinparam defaultFontName Arial
+skinparam defaultFontSize 12
+skinparam roundcorner 8
+skinparam nodesep 40
+skinparam ranksep 50
+skinparam nodeBackgroundColor #F7FAFC
+skinparam nodeBorderColor #2B6CB0
+skinparam nodeFontStyle bold
+skinparam artifactBackgroundColor #EBF8FF
+skinparam artifactBorderColor #2B6CB0
+skinparam databaseBackgroundColor #E6FFFA
+skinparam databaseBorderColor #2C7A7B
+
+title BankFlow — Deployment Diagram (Local / Dockerized)
+
+node "Developer / Demo Host" as host {
+
+  node "Docker Engine" as docker {
+
+    node "frontend\n(nginx + static bundle)" as fe {
+      artifact "React build\n(Vite output)" as fe_art
+    }
+
+    node "backend\n(Node.js 20, Express)" as be {
+      artifact "BankFlow API" as api_art
+      artifact "Case Orchestrator" as orch_art
+      artifact "SLA + Intake Schedulers" as sched_art
+    }
+
+    node "postgres:15" as pg {
+      database "bankflow DB\n(Prisma schema)" as pg_db
+    }
+
+    node "n8n (automation)" as n8n {
+      artifact "automation\nworkflows" as n8n_art
+    }
+
+    node "shared volume" as vol {
+      artifact "uploaded documents\n(dev storage)" as docs_vol
+    }
+  }
+}
+
+actor "Internal User\n(Browser)" as user
+
+user -down-> fe : HTTPS :443
+fe -down-> be : REST\n:3000
+be -down-> pg : TCP :5432
+be -right-> n8n : HTTP :5678\n(automation calls)
+n8n -left-> be : HTTP :3000\n(callback webhooks)
+be -right-> vol : read/write
+n8n -up-> vol : read (documents)
+
+note right of be
+  Environment:
+  - JWT secret
+  - DB connection string
+  - n8n base URL + shared
+    correlation secret
+  - storage path
+end note
+
+note bottom of n8n
+  Automation credentials
+  managed inside n8n (not
+  committed). BankFlow
+  passes correlation IDs;
+  n8n posts results back.
+end note
+
+@enduml

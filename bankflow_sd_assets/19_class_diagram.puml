@@ -1,0 +1,454 @@
+@startuml
+!theme plain
+skinparam dpi 150
+skinparam backgroundColor #FFFFFF
+skinparam shadowing false
+skinparam defaultFontName Arial
+skinparam defaultFontSize 9
+skinparam roundcorner 6
+skinparam nodesep 18
+skinparam ranksep 28
+
+skinparam class {
+  BackgroundColor #EBF8FF
+  BorderColor #2B6CB0
+  HeaderBackgroundColor #BEE3F8
+  FontStyle bold
+  FontSize 9
+  AttributeFontSize 8
+  StereotypeFontSize 8
+}
+skinparam package {
+  BackgroundColor #FAFAFA
+  BorderColor #718096
+  FontStyle bold
+  FontSize 11
+}
+skinparam interface {
+  BackgroundColor #FFF9C4
+  BorderColor #B7791F
+  FontSize 9
+}
+skinparam enum {
+  BackgroundColor #E6FFFA
+  BorderColor #2C7A7B
+  FontSize 8
+  AttributeFontSize 8
+}
+skinparam arrow {
+  Color #4A5568
+  Thickness 1.0
+}
+
+title BankFlow — Class Diagram
+
+left to right direction
+
+' ══════════════════════════════════════════════════════
+' COL 1 — CONTROLLERS
+' ══════════════════════════════════════════════════════
+package "API Layer · Controllers" as API #EFF6FF {
+
+  class CaseController <<ctrl>> {
+    +listCases(req, res)
+    +createCase(req, res)
+    +getCase(req, res)
+    +updateStatus(req, res)
+    +getCaseEvents(req, res)
+  }
+  class TaskController <<ctrl>> {
+    +listMyTasks(req, res)
+    +claimTask(req, res)
+    +completeTask(req, res)
+    +reassignTask(req, res)
+  }
+  class ApprovalController <<ctrl>> {
+    +listApprovals(req, res)
+    +approve(req, res)
+    +reject(req, res)
+  }
+  class FlowController <<ctrl>> {
+    +listFlows(req, res)
+    +createFlow(req, res)
+    +publishFlow(req, res)
+    +saveGraph(req, res)
+  }
+  class DashboardController <<ctrl>> {
+    +getOverview(req, res)
+    +getQueues(req, res)
+    +getOverdue(req, res)
+  }
+  class AdminController <<ctrl>> {
+    +listUsers(req, res)
+    +createUser(req, res)
+    +listTeams(req, res)
+    +getAuditLogs(req, res)
+  }
+}
+
+' ══════════════════════════════════════════════════════
+' COL 2 — SERVICES
+' ══════════════════════════════════════════════════════
+package "Service Layer" as SVC #F0FFF4 {
+
+  class CaseService <<svc>> {
+    +getCases(filters) : Case[]
+    +createCase(flowId, payload) : Case
+    +getCaseById(id) : Case
+    +updateStatus(id, status) : Case
+  }
+  class TaskService <<svc>> {
+    +getMyTasks(userId) : CaseTask[]
+    +claimTask(taskId, userId) : CaseTask
+    +completeTask(taskId, output) : CaseTask
+    +reassignTask(taskId, target) : CaseTask
+  }
+  class ApprovalService <<svc>> {
+    +getPending(userId) : CaseApproval[]
+    +approve(id, userId, reason) : CaseApproval
+    +reject(id, userId, reason) : CaseApproval
+  }
+  class FlowService <<svc>> {
+    +getFlows() : CaseFlow[]
+    +createFlow(data) : CaseFlow
+    +publishFlow(id, uid) : CaseFlowVersion
+    +saveGraph(id, nodes, edges) : void
+  }
+  class CaseEventService <<svc>> {
+    +record(caseId, type, actorId, data) : CaseEvent
+    +getTimeline(caseId) : CaseEvent[]
+  }
+  class EscalationService <<svc>> {
+    +createEscalation(caseId, taskId, reason, target) : CaseEscalation
+  }
+  class DashboardService <<svc>> {
+    +getOverview() : DashboardStats
+    +getQueueWorkload() : QueueStats[]
+    +getOverdueTasks() : CaseTask[]
+  }
+  class AuthService <<svc>> {
+    +validateCredentials(email, pwd) : User
+    +generateToken(user) : string
+    +verifyToken(token) : Payload
+  }
+  class AuditService <<svc>> {
+    +log(actorId, action, entity, id) : AuditLog
+    +getAuditLogs(filters) : AuditLog[]
+  }
+}
+
+' ══════════════════════════════════════════════════════
+' COL 3 — ORCHESTRATION
+' ══════════════════════════════════════════════════════
+package "Orchestration" as ORCH #FFFBF0 {
+
+  class CaseOrchestrator <<svc>> {
+    +start(caseId) : void
+    +advance(caseId) : void
+    +handleSlaBreach(taskId) : void
+    -loadGraph(caseId) : GraphSnapshot
+    -identifyNextNode(nodeId, decision) : CaseFlowNode
+  }
+
+  interface NodeExecutor {
+    +execute(node, context) : NodeResult
+  }
+
+  class DecisionExecutor <<exec>> {
+    -evaluateCondition(expr, payload) : bool
+    +execute(node, context) : NodeResult
+  }
+  class ApprovalNodeExecutor <<exec>> {
+    +execute(node, context) : NodeResult
+  }
+  class RoutingExecutor <<exec>> {
+    +execute(node, context) : NodeResult
+  }
+  class AutomationNodeExecutor <<exec>> {
+    +execute(node, context) : NodeResult
+  }
+
+  class SlaScheduler <<sched>> {
+    -intervalMs : number
+    +start() : void
+    -detectOverdueTasks() : CaseTask[]
+  }
+  class IntakeScheduler <<sched>> {
+    -intervalMs : number
+    +start() : void
+    -getDueSchedules() : CaseFlowSchedule[]
+  }
+  class AutomationClient <<client>> {
+    -n8nBaseUrl : string
+    +call(path, payload, correlation) : void
+    +handleCallback(correlationId, result) : void
+  }
+
+  NodeExecutor       <|..  DecisionExecutor
+  NodeExecutor       <|..  ApprovalNodeExecutor
+  NodeExecutor       <|..  RoutingExecutor
+  NodeExecutor       <|..  AutomationNodeExecutor
+  CaseOrchestrator   ..>   NodeExecutor        : delegates
+  CaseOrchestrator   ..>   AutomationClient    : calls
+  AutomationNodeExecutor ..> AutomationClient
+  SlaScheduler       ..>   CaseOrchestrator    : handleSlaBreach()
+  IntakeScheduler    ..>   CaseOrchestrator    : start()
+}
+
+' ══════════════════════════════════════════════════════
+' COL 4A — IDENTITY & FLOW DEFINITION
+' ══════════════════════════════════════════════════════
+package "Identity & Access" as IA #F5F0FF {
+
+  class Role <<entity>> {
+    +id : int
+    +name : string
+  }
+  class User <<entity>> {
+    +id : int
+    +email : string
+    +fullName : string
+    +isActive : boolean
+    +roleId : int
+  }
+  class Team <<entity>> {
+    +id : int
+    +name : string
+    +isActive : boolean
+  }
+  class TeamMembership <<entity>> {
+    +id : int
+    +userId : int
+    +teamId : int
+    +membershipRole : string
+  }
+
+  Role "1" --o "0..*" User            : has role
+  User "1" --o "0..*" TeamMembership  : belongs to
+  Team "1" --o "0..*" TeamMembership  : has members
+}
+
+package "Flow Definition" as FD #FFF5F5 {
+
+  class CaseFlow <<entity>> {
+    +id : int
+    +name : string
+    +caseType : string
+    +status : string
+    +ownerUserId : int
+    +activeVersionId : int
+  }
+  class CaseFlowVersion <<entity>> {
+    +id : int
+    +caseFlowId : int
+    +versionNumber : int
+    +status : string
+    +graphSnapshotJson : object
+    +publishedAt : Date
+  }
+  class CaseFlowNode <<entity>> {
+    +id : int
+    +caseFlowVersionId : int
+    +nodeKey : string
+    +kind : NodeKind
+    +configJson : object
+  }
+  class CaseFlowEdge <<entity>> {
+    +id : int
+    +fromNodeId : int
+    +toNodeId : int
+    +conditionJson : object
+    +label : string
+  }
+  class CaseFlowSchedule <<entity>> {
+    +id : int
+    +caseFlowId : int
+    +cronExpression : string
+    +isActive : boolean
+    +nextRunAt : Date
+  }
+
+  CaseFlow        "1" --o "1..*" CaseFlowVersion   : versions
+  CaseFlowVersion "1" --o "0..*" CaseFlowNode      : nodes
+  CaseFlowVersion "1" --o "0..*" CaseFlowEdge      : edges
+  CaseFlow        "1" --o "0..*" CaseFlowSchedule  : schedules
+}
+
+' ══════════════════════════════════════════════════════
+' COL 4B — CASE RUNTIME  +  ENUMS
+' ══════════════════════════════════════════════════════
+package "Case Runtime" as CRT #F0F8FF {
+
+  class Case <<entity>> {
+    +id : int
+    +caseReference : string
+    +caseFlowVersionId : int
+    +caseType : string
+    +status : CaseStatus
+    +priority : string
+    +currentNodeId : int
+    +currentTaskId : int
+    +assigneeUserId : int
+    +assigneeTeamId : int
+    +payloadJson : object
+    +openedAt : Date
+  }
+  class CaseTask <<entity>> {
+    +id : int
+    +caseId : int
+    +nodeId : int
+    +taskType : string
+    +status : TaskStatus
+    +assignedUserId : int
+    +dueAt : Date
+    +decision : string
+    +outputJson : object
+  }
+  class CaseApproval <<entity>> {
+    +id : int
+    +caseId : int
+    +taskId : int
+    +approvalType : string
+    +status : ApprovalStatus
+    +requestedFromUserId : int
+    +decidedBy : int
+    +decisionReason : string
+  }
+  class CaseEscalation <<entity>> {
+    +id : int
+    +caseId : int
+    +escalationType : string
+    +reason : string
+    +toUserId : int
+    +toTeamId : int
+    +triggeredAt : Date
+  }
+  class CaseEvent <<entity>> {
+    +id : int
+    +caseId : int
+    +eventType : string
+    +actorUserId : int
+    +dataJson : object
+    +createdAt : Date
+  }
+  class CaseDocument <<entity>> {
+    +id : int
+    +caseId : int
+    +taskId : int
+    +filename : string
+    +mimeType : string
+    +storagePath : string
+    +documentType : string
+  }
+  class AuditLog <<entity>> {
+    +id : int
+    +actorUserId : int
+    +action : string
+    +entityType : string
+    +entityId : int
+    +createdAt : Date
+  }
+
+  Case "1" --o "0..*" CaseTask       : tasks
+  Case "1" --o "0..*" CaseApproval   : approvals
+  Case "1" --o "0..*" CaseEscalation : escalations
+  Case "1" --o "0..*" CaseEvent      : events
+  Case "1" --o "0..*" CaseDocument   : documents
+}
+
+package "Enumerations" as EN #F5F5F5 {
+
+  enum CaseStatus {
+    INTAKE
+    IN_REVIEW
+    PENDING_ACTION
+    PENDING_APPROVAL
+    ESCALATED
+    RESOLVED
+    CLOSED
+    CANCELLED
+  }
+  enum TaskStatus {
+    PENDING
+    ASSIGNED
+    CLAIMED
+    COMPLETED
+    REJECTED
+    OVERDUE
+    CANCELLED
+  }
+  enum ApprovalStatus {
+    REQUESTED
+    APPROVED
+    REJECTED
+    EXPIRED
+  }
+  enum NodeKind {
+    CASE_INTAKE
+    DATA_CAPTURE
+    APPROVAL
+    DECISION
+    ROUTING
+    NOTIFICATION
+    DOCUMENT_UPLOAD
+    TIMER_SLA
+    INTEGRATION
+    STATUS_UPDATE
+    ESCALATION
+  }
+}
+
+' ══════════════════════════════════════════════════════
+' LAYOUT HINTS — force left-to-right column order
+' ══════════════════════════════════════════════════════
+API  -[hidden]right- SVC
+SVC  -[hidden]right- ORCH
+ORCH -[hidden]right- IA
+IA   -[hidden]right- FD
+FD   -[hidden]right- CRT
+CRT  -[hidden]right- EN
+
+IA   -[hidden]down-  FD
+CRT  -[hidden]down-  EN
+
+' ══════════════════════════════════════════════════════
+' CROSS-LAYER DEPENDENCIES
+' ══════════════════════════════════════════════════════
+
+' Controllers → Services
+CaseController       ..>  CaseService       : uses
+CaseController       ..>  CaseEventService  : uses
+TaskController       ..>  TaskService       : uses
+ApprovalController   ..>  ApprovalService   : uses
+FlowController       ..>  FlowService       : uses
+DashboardController  ..>  DashboardService  : uses
+AdminController      ..>  AuditService      : uses
+
+' Services → Orchestration
+CaseService      ..>  CaseOrchestrator  : triggers
+TaskService      ..>  CaseOrchestrator  : advance()
+ApprovalService  ..>  CaseOrchestrator  : advance()
+TaskService      ..>  CaseEventService
+ApprovalService  ..>  CaseEventService
+EscalationService ..> CaseEventService
+
+' Services → Domain
+CaseService       ..>  Case
+TaskService       ..>  CaseTask
+ApprovalService   ..>  CaseApproval
+EscalationService ..>  CaseEscalation
+FlowService       ..>  CaseFlow
+
+' Cross-domain
+CaseFlowVersion  ..>  Case       : instantiates
+CaseFlowNode     ..>  CaseTask   : drives
+User             ..>  Case       : assignee
+Team             ..>  Case       : assignee team
+
+' Enum associations
+Case         ..>  CaseStatus
+CaseTask     ..>  TaskStatus
+CaseApproval ..>  ApprovalStatus
+CaseFlowNode ..>  NodeKind
+
+@enduml

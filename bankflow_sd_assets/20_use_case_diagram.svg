@@ -1,0 +1,305 @@
+<svg xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" width="1700" height="980" viewBox="0 0 1700 980" role="img" aria-labelledby="title desc">
+  <title id="title">BankFlow Use Case Diagram</title>
+  <desc id="desc">A hand-positioned SVG use case diagram for BankFlow with actors on the left and right sides of centered use cases.</desc>
+
+  <defs>
+    <marker id="arrow" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="8" markerHeight="8" orient="auto-start-reverse">
+      <path d="M 0 0 L 10 5 L 0 10 z" fill="#2D3748" />
+    </marker>
+    <style>
+      .bg { fill: #FFFFFF; }
+      .title { font: 700 28px Arial, sans-serif; fill: #111827; }
+      .boundary { fill: #FFFFFF; stroke: #718096; stroke-width: 2; rx: 14; }
+      .group { fill: #FAFAFA; stroke: #A0AEC0; stroke-width: 2; rx: 12; }
+      .group-title { font: 700 22px Arial, sans-serif; fill: #111827; }
+      .uc { fill: #EBF8FF; stroke: #2B6CB0; stroke-width: 2; }
+      .uc-text { font: 700 16px Arial, sans-serif; fill: #1F2937; text-anchor: middle; dominant-baseline: middle; }
+      .actor-line { stroke: #2B6CB0; stroke-width: 2.4; fill: none; stroke-linecap: round; }
+      .actor-label { font: 700 15px Arial, sans-serif; fill: #111827; text-anchor: middle; }
+      .assoc { fill: none; stroke: #2D3748; stroke-width: 2.2; marker-end: url(#arrow); }
+      .include { fill: none; stroke: #4A5568; stroke-width: 1.8; stroke-dasharray: 7 6; marker-end: url(#arrow); }
+      .extend { fill: none; stroke: #4A5568; stroke-width: 1.8; stroke-dasharray: 7 6; marker-end: url(#arrow); }
+      .label-path { fill: none; stroke: none; }
+      .include-text { font: italic 14px Arial, sans-serif; fill: #4A5568; text-anchor: middle; paint-order: stroke fill; stroke: #FFFFFF; stroke-width: 6; stroke-linejoin: round; }
+      .extend-text { font: italic 14px Arial, sans-serif; fill: #4A5568; text-anchor: middle; paint-order: stroke fill; stroke: #FFFFFF; stroke-width: 6; stroke-linejoin: round; }
+    </style>
+  </defs>
+
+  <rect class="bg" x="0" y="0" width="1700" height="980" />
+  <text class="title" x="850" y="52" text-anchor="middle">BankFlow - Use Case Diagram</text>
+
+  <rect class="boundary" x="280" y="90" width="1080" height="840" />
+  <text class="group-title" x="820" y="124" text-anchor="middle">BankFlow System</text>
+
+  <rect class="group" x="330" y="150" width="420" height="720" />
+  <text class="group-title" x="540" y="188" text-anchor="middle">Operational</text>
+
+  <rect class="group" x="820" y="150" width="480" height="720" />
+  <text class="group-title" x="1060" y="188" text-anchor="middle">Platform</text>
+
+  <path class="assoc" d="M 150 520 C 240 470, 300 410, 405 394" />
+  <path class="assoc" d="M 150 520 C 240 500, 300 470, 405 452" />
+  <path class="assoc" d="M 150 520 C 240 520, 300 515, 405 510" />
+  <path class="assoc" d="M 150 520 C 240 540, 300 560, 405 568" />
+  <path class="assoc" d="M 150 520 C 240 575, 300 615, 405 626" />
+
+  <path class="assoc" d="M 150 730 C 240 700, 300 690, 405 684" />
+  <path class="assoc" d="M 150 730 C 240 732, 300 738, 405 742" />
+  <path class="assoc" d="M 150 730 C 240 760, 300 790, 405 800" />
+
+  <path class="assoc" d="M 150 255 C 245 220, 305 220, 405 220" />
+  <path class="assoc" d="M 150 255 C 245 245, 305 258, 405 278" />
+  <path class="assoc" d="M 150 255 C 245 280, 305 310, 405 336" />
+
+  <path class="assoc" d="M 1440 180 C 1360 185, 1280 200, 1195 220" />
+  <path class="assoc" d="M 1440 180 C 1360 210, 1280 245, 1195 278" />
+  <path class="assoc" d="M 1440 180 C 1360 240, 1280 295, 1195 336" />
+
+  <path class="assoc" d="M 1440 470 C 1360 420, 1280 398, 1195 394" />
+  <path class="assoc" d="M 1440 470 C 1385 470, 1340 475, 1315 488 L 1315 548 C 1110 548, 900 540, 675 510" />
+
+  <path class="assoc" d="M 1440 620 C 1360 585, 1280 520, 1195 484" />
+  <path class="assoc" d="M 1440 620 C 1360 610, 1280 565, 1195 542" />
+  <path class="assoc" d="M 1440 620 C 1360 625, 1280 610, 1195 600" />
+  <path class="assoc" d="M 1440 620 C 1360 645, 1280 662, 1195 658" />
+
+  <path class="assoc" d="M 1440 780 C 1360 748, 1280 724, 1195 716" />
+  <path class="assoc" d="M 1440 780 C 1360 772, 1280 776, 1195 774" />
+  <path class="assoc" d="M 1440 780 C 1360 805, 1280 836, 1195 832" />
+
+  <path id="rel-platform-include" class="include" d="M 995 542 C 995 530, 995 510, 995 484" />
+  <path id="rel-platform-include-label" class="label-path" d="M 995 565 L 995 455" />
+  <text class="include-text">
+    <textPath xlink:href="#rel-platform-include-label" startOffset="50%">&lt;&lt;include&gt;&gt;</textPath>
+  </text>
+
+  <path id="rel-approve-include" class="include" d="M 495 742 C 470 722, 470 705, 495 684" />
+  <path id="rel-reject-include" class="include" d="M 495 800 C 450 770, 450 710, 495 684" />
+  <path id="rel-approve-include-label" class="label-path" d="M 430 750 C 450 730, 455 708, 500 682" />
+  <path id="rel-reject-include-label" class="label-path" d="M 405 810 C 445 782, 450 720, 500 682" />
+  <text class="include-text">
+    <textPath xlink:href="#rel-approve-include-label" startOffset="50%">&lt;&lt;include&gt;&gt;</textPath>
+  </text>
+  <text class="include-text">
+    <textPath xlink:href="#rel-reject-include-label" startOffset="50%">&lt;&lt;include&gt;&gt;</textPath>
+  </text>
+
+  <path id="rel-claim-extend" class="extend" d="M 495 568 C 455 568, 445 532, 495 520" />
+  <path id="rel-upload-extend" class="extend" d="M 495 626 C 450 618, 440 545, 495 520" />
+  <path id="rel-claim-extend-label" class="label-path" d="M 425 573 C 448 568, 455 540, 500 520" />
+  <path id="rel-upload-extend-label" class="label-path" d="M 405 630 C 440 612, 448 553, 500 520" />
+  <text class="extend-text">
+    <textPath xlink:href="#rel-claim-extend-label" startOffset="50%">&lt;&lt;extend&gt;&gt;</textPath>
+  </text>
+  <text class="extend-text">
+    <textPath xlink:href="#rel-upload-extend-label" startOffset="50%">&lt;&lt;extend&gt;&gt;</textPath>
+  </text>
+
+  <g transform="translate(110,520)">
+    <circle class="actor-line" cx="0" cy="-42" r="12" />
+    <line class="actor-line" x1="0" y1="-30" x2="0" y2="8" />
+    <line class="actor-line" x1="-18" y1="-10" x2="18" y2="-10" />
+    <line class="actor-line" x1="0" y1="8" x2="-18" y2="32" />
+    <line class="actor-line" x1="0" y1="8" x2="18" y2="32" />
+    <text class="actor-label" x="0" y="58">Operator</text>
+  </g>
+
+  <g transform="translate(110,730)">
+    <circle class="actor-line" cx="0" cy="-42" r="12" />
+    <line class="actor-line" x1="0" y1="-30" x2="0" y2="8" />
+    <line class="actor-line" x1="-18" y1="-10" x2="18" y2="-10" />
+    <line class="actor-line" x1="0" y1="8" x2="-18" y2="32" />
+    <line class="actor-line" x1="0" y1="8" x2="18" y2="32" />
+    <text class="actor-label" x="0" y="58">Approver</text>
+  </g>
+
+  <g transform="translate(1480,180)">
+    <circle class="actor-line" cx="0" cy="-42" r="12" />
+    <line class="actor-line" x1="0" y1="-30" x2="0" y2="8" />
+    <line class="actor-line" x1="-18" y1="-10" x2="18" y2="-10" />
+    <line class="actor-line" x1="0" y1="8" x2="-18" y2="32" />
+    <line class="actor-line" x1="0" y1="8" x2="18" y2="32" />
+    <text class="actor-label" x="0" y="58">Intake Scheduler</text>
+    <text class="actor-label" x="0" y="78">(System)</text>
+  </g>
+
+  <g transform="translate(1480,470)">
+    <circle class="actor-line" cx="0" cy="-42" r="12" />
+    <line class="actor-line" x1="0" y1="-30" x2="0" y2="8" />
+    <line class="actor-line" x1="-18" y1="-10" x2="18" y2="-10" />
+    <line class="actor-line" x1="0" y1="8" x2="-18" y2="32" />
+    <line class="actor-line" x1="0" y1="8" x2="18" y2="32" />
+    <text class="actor-label" x="0" y="58">Auditor</text>
+  </g>
+
+  <g transform="translate(1480,620)">
+    <circle class="actor-line" cx="0" cy="-42" r="12" />
+    <line class="actor-line" x1="0" y1="-30" x2="0" y2="8" />
+    <line class="actor-line" x1="-18" y1="-10" x2="18" y2="-10" />
+    <line class="actor-line" x1="0" y1="8" x2="-18" y2="32" />
+    <line class="actor-line" x1="0" y1="8" x2="18" y2="32" />
+    <text class="actor-label" x="0" y="58">Designer</text>
+  </g>
+
+  <g transform="translate(1480,780)">
+    <circle class="actor-line" cx="0" cy="-42" r="12" />
+    <line class="actor-line" x1="0" y1="-30" x2="0" y2="8" />
+    <line class="actor-line" x1="-18" y1="-10" x2="18" y2="-10" />
+    <line class="actor-line" x1="0" y1="8" x2="-18" y2="32" />
+    <line class="actor-line" x1="0" y1="8" x2="18" y2="32" />
+    <text class="actor-label" x="0" y="58">Admin</text>
+  </g>
+
+  <g transform="translate(110,255)">
+    <circle class="actor-line" cx="0" cy="-42" r="12" />
+    <line class="actor-line" x1="0" y1="-30" x2="0" y2="8" />
+    <line class="actor-line" x1="-18" y1="-10" x2="18" y2="-10" />
+    <line class="actor-line" x1="0" y1="8" x2="-18" y2="32" />
+    <line class="actor-line" x1="0" y1="8" x2="18" y2="32" />
+    <text class="actor-label" x="0" y="58">Supervisor</text>
+  </g>
+
+  <g>
+    <ellipse class="uc" cx="540" cy="220" rx="135" ry="30" />
+    <text class="uc-text" x="540" y="220">
+      <tspan x="540" dy="-9">Monitor Supervisor</tspan>
+      <tspan x="540" dy="18">Dashboard</tspan>
+    </text>
+  </g>
+  <g>
+    <ellipse class="uc" cx="540" cy="278" rx="135" ry="30" />
+    <text class="uc-text" x="540" y="278">
+      <tspan x="540" dy="-9">Monitor SLA &amp;</tspan>
+      <tspan x="540" dy="18">Overdue Work</tspan>
+    </text>
+  </g>
+  <g>
+    <ellipse class="uc" cx="540" cy="336" rx="135" ry="30" />
+    <text class="uc-text" x="540" y="336">
+      <tspan x="540" dy="-9">View Escalated</tspan>
+      <tspan x="540" dy="18">Cases</tspan>
+    </text>
+  </g>
+  <g>
+    <ellipse class="uc" cx="540" cy="394" rx="135" ry="30" />
+    <text class="uc-text" x="540" y="394">
+      <tspan x="540" dy="-9">Browse &amp;</tspan>
+      <tspan x="540" dy="18">Filter Cases</tspan>
+    </text>
+  </g>
+  <g>
+    <ellipse class="uc" cx="540" cy="452" rx="135" ry="30" />
+    <text class="uc-text" x="540" y="452">
+      <tspan x="540" dy="-9">Submit Manual</tspan>
+      <tspan x="540" dy="18">Case Intake</tspan>
+    </text>
+  </g>
+  <g>
+    <ellipse class="uc" cx="540" cy="510" rx="135" ry="30" />
+    <text class="uc-text" x="540" y="510">
+      <tspan x="540" dy="-9">View Case Detail &amp;</tspan>
+      <tspan x="540" dy="18">Timeline</tspan>
+    </text>
+  </g>
+  <g>
+    <ellipse class="uc" cx="540" cy="568" rx="135" ry="30" />
+    <text class="uc-text" x="540" y="568">
+      <tspan x="540" dy="-9">Claim &amp;</tspan>
+      <tspan x="540" dy="18">Complete Task</tspan>
+    </text>
+  </g>
+  <g>
+    <ellipse class="uc" cx="540" cy="626" rx="135" ry="30" />
+    <text class="uc-text" x="540" y="626">Upload Document</text>
+  </g>
+  <g>
+    <ellipse class="uc" cx="540" cy="684" rx="135" ry="30" />
+    <text class="uc-text" x="540" y="684">
+      <tspan x="540" dy="-9">Review Approval</tspan>
+      <tspan x="540" dy="18">Request</tspan>
+    </text>
+  </g>
+  <g>
+    <ellipse class="uc" cx="540" cy="742" rx="135" ry="30" />
+    <text class="uc-text" x="540" y="742">Approve Decision</text>
+  </g>
+  <g>
+    <ellipse class="uc" cx="540" cy="800" rx="135" ry="30" />
+    <text class="uc-text" x="540" y="800">Reject Decision</text>
+  </g>
+
+  <g>
+    <ellipse class="uc" cx="1060" cy="220" rx="135" ry="30" />
+    <text class="uc-text" x="1060" y="220">
+      <tspan x="1060" dy="-9">Run KYC</tspan>
+      <tspan x="1060" dy="18">Refresh Cycle</tspan>
+    </text>
+  </g>
+  <g>
+    <ellipse class="uc" cx="1060" cy="278" rx="135" ry="30" />
+    <text class="uc-text" x="1060" y="278">
+      <tspan x="1060" dy="-9">Run Dormant</tspan>
+      <tspan x="1060" dy="18">Account Scan</tspan>
+    </text>
+  </g>
+  <g>
+    <ellipse class="uc" cx="1060" cy="336" rx="135" ry="30" />
+    <text class="uc-text" x="1060" y="336">
+      <tspan x="1060" dy="-9">Generate Regulatory</tspan>
+      <tspan x="1060" dy="18">Report</tspan>
+    </text>
+  </g>
+  <g>
+    <ellipse class="uc" cx="1060" cy="394" rx="135" ry="30" />
+    <text class="uc-text" x="1060" y="394">View Audit Logs</text>
+  </g>
+  <g>
+    <ellipse class="uc" cx="1060" cy="484" rx="135" ry="30" />
+    <text class="uc-text" x="1060" y="484">
+      <tspan x="1060" dy="-9">Create &amp;</tspan>
+      <tspan x="1060" dy="18">Edit Flow</tspan>
+    </text>
+  </g>
+  <g>
+    <ellipse class="uc" cx="1060" cy="542" rx="135" ry="30" />
+    <text class="uc-text" x="1060" y="542">
+      <tspan x="1060" dy="-9">Publish Flow</tspan>
+      <tspan x="1060" dy="18">Version</tspan>
+    </text>
+  </g>
+  <g>
+    <ellipse class="uc" cx="1060" cy="600" rx="135" ry="30" />
+    <text class="uc-text" x="1060" y="600">
+      <tspan x="1060" dy="-9">Manage Flow</tspan>
+      <tspan x="1060" dy="18">Schedules</tspan>
+    </text>
+  </g>
+  <g>
+    <ellipse class="uc" cx="1060" cy="658" rx="135" ry="30" />
+    <text class="uc-text" x="1060" y="658">
+      <tspan x="1060" dy="-9">Apply Flow</tspan>
+      <tspan x="1060" dy="18">Template</tspan>
+    </text>
+  </g>
+  <g>
+    <ellipse class="uc" cx="1060" cy="716" rx="135" ry="30" />
+    <text class="uc-text" x="1060" y="716">
+      <tspan x="1060" dy="-9">Manage Users &amp;</tspan>
+      <tspan x="1060" dy="18">Roles</tspan>
+    </text>
+  </g>
+  <g>
+    <ellipse class="uc" cx="1060" cy="774" rx="135" ry="30" />
+    <text class="uc-text" x="1060" y="774">
+      <tspan x="1060" dy="-9">Manage Teams &amp;</tspan>
+      <tspan x="1060" dy="18">Queues</tspan>
+    </text>
+  </g>
+  <g>
+    <ellipse class="uc" cx="1060" cy="832" rx="135" ry="30" />
+    <text class="uc-text" x="1060" y="832">
+      <tspan x="1060" dy="-9">Configure Platform</tspan>
+      <tspan x="1060" dy="18">Settings</tspan>
+    </text>
+  </g>
+</svg>

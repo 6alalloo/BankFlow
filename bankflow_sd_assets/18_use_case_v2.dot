@@ -1,0 +1,227 @@
+digraph BankFlowUseCases {
+  rankdir=LR
+  splines=polyline
+  nodesep=0.35
+  ranksep=2.4
+  fontname="Arial"
+  fontsize=13
+  bgcolor="white"
+
+  label="BankFlow — Use Case Diagram"
+  labelloc="t"
+  labeljust="c"
+  fontsize=18
+  fontcolor="#2B6CB0"
+
+  // ─── ACTOR style (ellipse with head icon simulated via label) ───
+  node [shape=none fontname="Arial" fontsize=11]
+
+  // ─── USE CASE style ───────────────────────────────────────────
+  // defined per node below
+
+  // ═══════════════════════════════════════════════════════════
+  // LEFT ACTORS
+  // ═══════════════════════════════════════════════════════════
+  subgraph cluster_left_actors {
+    style=invis
+    rank=same
+
+    Operator [label=<<TABLE BORDER="0" CELLBORDER="0" CELLSPACING="2">
+      <TR><TD><FONT POINT-SIZE="22">&#x1F464;</FONT></TD></TR>
+      <TR><TD><B>Operator</B></TD></TR>
+    </TABLE>>]
+
+    Approver [label=<<TABLE BORDER="0" CELLBORDER="0" CELLSPACING="2">
+      <TR><TD><FONT POINT-SIZE="22">&#x1F464;</FONT></TD></TR>
+      <TR><TD><B>Approver</B></TD></TR>
+    </TABLE>>]
+
+    Supervisor [label=<<TABLE BORDER="0" CELLBORDER="0" CELLSPACING="2">
+      <TR><TD><FONT POINT-SIZE="22">&#x1F464;</FONT></TD></TR>
+      <TR><TD><B>Supervisor</B></TD></TR>
+    </TABLE>>]
+
+    Operator -> Approver [style=invis]
+    Approver -> Supervisor [style=invis]
+  }
+
+  // ═══════════════════════════════════════════════════════════
+  // RIGHT ACTORS
+  // ═══════════════════════════════════════════════════════════
+  subgraph cluster_right_actors {
+    style=invis
+    rank=same
+
+    Designer [label=<<TABLE BORDER="0" CELLBORDER="0" CELLSPACING="2">
+      <TR><TD><FONT POINT-SIZE="22">&#x1F464;</FONT></TD></TR>
+      <TR><TD><B>Designer</B></TD></TR>
+    </TABLE>>]
+
+    Admin [label=<<TABLE BORDER="0" CELLBORDER="0" CELLSPACING="2">
+      <TR><TD><FONT POINT-SIZE="22">&#x1F464;</FONT></TD></TR>
+      <TR><TD><B>Admin</B></TD></TR>
+    </TABLE>>]
+
+    Auditor [label=<<TABLE BORDER="0" CELLBORDER="0" CELLSPACING="2">
+      <TR><TD><FONT POINT-SIZE="22">&#x1F464;</FONT></TD></TR>
+      <TR><TD><B>Auditor</B></TD></TR>
+    </TABLE>>]
+
+    Scheduler [label=<<TABLE BORDER="0" CELLBORDER="0" CELLSPACING="2">
+      <TR><TD><FONT POINT-SIZE="22">&#x2699;</FONT></TD></TR>
+      <TR><TD><B>Intake Scheduler</B></TD></TR>
+      <TR><TD>(System)</TD></TR>
+    </TABLE>>]
+
+    Designer -> Admin [style=invis]
+    Admin -> Auditor [style=invis]
+    Auditor -> Scheduler [style=invis]
+  }
+
+  // ═══════════════════════════════════════════════════════════
+  // OPERATIONAL USE CASES  (left package)
+  // ═══════════════════════════════════════════════════════════
+  subgraph cluster_operational {
+    label="Operational"
+    style="rounded,filled"
+    fillcolor="#FAFAFA"
+    color="#718096"
+    penwidth=2
+    fontname="Arial Bold"
+    fontsize=13
+    fontcolor="#2D3748"
+    margin=20
+
+    node [shape=ellipse style=filled fillcolor="#EBF8FF" color="#2B6CB0"
+          fontname="Arial" fontsize=10 margin="0.15,0.08"]
+
+    UC01 [label="Submit Manual\nCase Intake"]
+    UC02 [label="Browse &\nFilter Cases"]
+    UC03 [label="View Case Detail\n& Timeline"]
+    UC04 [label="Claim &\nComplete Task"]
+    UC05 [label="Upload\nDocument"]
+    UC06 [label="Manually\nEscalate Case"]
+    UC07 [label="Review Approval\nRequest"]
+    UC08 [label="Approve\nDecision"]
+    UC09 [label="Reject\nDecision"]
+    UC10 [label="Monitor Supervisor\nDashboard"]
+    UC11 [label="Monitor SLA &\nOverdue Work"]
+    UC12 [label="View Escalated\nCases"]
+
+    // vertical stacking hints
+    UC01 -> UC02 [style=invis]
+    UC02 -> UC03 [style=invis]
+    UC03 -> UC04 [style=invis]
+    UC04 -> UC05 [style=invis]
+    UC05 -> UC06 [style=invis]
+    UC06 -> UC07 [style=invis]
+    UC07 -> UC08 [style=invis]
+    UC08 -> UC09 [style=invis]
+    UC09 -> UC10 [style=invis]
+    UC10 -> UC11 [style=invis]
+    UC11 -> UC12 [style=invis]
+  }
+
+  // ═══════════════════════════════════════════════════════════
+  // PLATFORM USE CASES  (right package)
+  // ═══════════════════════════════════════════════════════════
+  subgraph cluster_platform {
+    label="Platform"
+    style="rounded,filled"
+    fillcolor="#FAFAFA"
+    color="#718096"
+    penwidth=2
+    fontname="Arial Bold"
+    fontsize=13
+    fontcolor="#2D3748"
+    margin=20
+
+    node [shape=ellipse style=filled fillcolor="#EBF8FF" color="#2B6CB0"
+          fontname="Arial" fontsize=10 margin="0.15,0.08"]
+
+    UC13 [label="Create &\nEdit Flow"]
+    UC14 [label="Publish Flow\nVersion"]
+    UC15 [label="Manage Flow\nSchedules"]
+    UC16 [label="Apply Flow\nTemplate"]
+    UC17 [label="Manage Users\n& Roles"]
+    UC18 [label="Manage Teams\n& Queues"]
+    UC19 [label="View\nAudit Logs"]
+    UC20 [label="Configure Platform\nSettings"]
+    UC21 [label="Run KYC\nRefresh Cycle"]
+    UC22 [label="Run Dormant\nAccount Scan"]
+    UC23 [label="Generate Regulatory\nReport"]
+
+    // vertical stacking hints
+    UC13 -> UC14 [style=invis]
+    UC14 -> UC15 [style=invis]
+    UC15 -> UC16 [style=invis]
+    UC16 -> UC17 [style=invis]
+    UC17 -> UC18 [style=invis]
+    UC18 -> UC19 [style=invis]
+    UC19 -> UC20 [style=invis]
+    UC20 -> UC21 [style=invis]
+    UC21 -> UC22 [style=invis]
+    UC22 -> UC23 [style=invis]
+  }
+
+  // ═══════════════════════════════════════════════════════════
+  // INCLUDE / EXTEND  (dashed arrows between use cases)
+  // ═══════════════════════════════════════════════════════════
+  edge [style=dashed arrowhead=open color="#718096" fontname="Arial" fontsize=9 fontcolor="#718096"]
+
+  UC08 -> UC07 [label="  «include»"]
+  UC09 -> UC07 [label="  «include»"]
+  UC14 -> UC13 [label="  «include»"]
+  UC04 -> UC03 [label="  «extend»"]
+  UC05 -> UC03 [label="  «extend»"]
+
+  // ═══════════════════════════════════════════════════════════
+  // LEFT ACTOR → USE CASE  (solid, from left)
+  // ═══════════════════════════════════════════════════════════
+  edge [style=solid arrowhead=none color="#4A5568" penwidth=1.1]
+
+  Operator  -> UC01
+  Operator  -> UC02
+  Operator  -> UC03
+  Operator  -> UC04
+  Operator  -> UC05
+  Operator  -> UC06
+
+  Approver  -> UC07
+  Approver  -> UC08
+  Approver  -> UC09
+  Approver  -> UC02
+
+  Supervisor -> UC10
+  Supervisor -> UC11
+  Supervisor -> UC12
+  Supervisor -> UC08
+  Supervisor -> UC09
+
+  // ═══════════════════════════════════════════════════════════
+  // RIGHT ACTOR → USE CASE  (solid, from right)
+  // ═══════════════════════════════════════════════════════════
+  Designer  -> UC13
+  Designer  -> UC14
+  Designer  -> UC15
+  Designer  -> UC16
+
+  Admin     -> UC17
+  Admin     -> UC18
+  Admin     -> UC19
+  Admin     -> UC20
+
+  Auditor   -> UC19
+  Auditor   -> UC02
+  Auditor   -> UC03
+
+  Scheduler -> UC21
+  Scheduler -> UC22
+  Scheduler -> UC23
+
+  // ═══════════════════════════════════════════════════════════
+  // RANK CONSTRAINTS  — force actors to stay on their sides
+  // ═══════════════════════════════════════════════════════════
+  { rank=source; Operator; Approver; Supervisor }
+  { rank=sink;   Designer; Admin; Auditor; Scheduler }
+}

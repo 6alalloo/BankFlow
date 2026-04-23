@@ -1,0 +1,115 @@
+@startuml
+!theme plain
+skinparam dpi 150
+skinparam backgroundColor #FFFFFF
+skinparam shadowing false
+skinparam defaultFontName Arial
+skinparam defaultFontSize 11
+skinparam roundcorner 8
+skinparam actorBackgroundColor #EDF2F7
+skinparam actorBorderColor #2B6CB0
+skinparam usecaseBackgroundColor #EBF8FF
+skinparam usecaseBorderColor #2B6CB0
+skinparam usecaseFontSize 10
+skinparam packageBackgroundColor #FAFAFA
+skinparam packageBorderColor #A0AEC0
+skinparam packageFontStyle bold
+skinparam packageFontSize 11
+skinparam nodesep 14
+skinparam ranksep 30
+skinparam arrowThickness 1.2
+
+title BankFlow — Use Case Diagram
+
+' ──────────────────────────────────────────────────────────
+' No left to right direction — use per-arrow hints instead
+' ──────────────────────────────────────────────────────────
+
+' ══ LEFT actors ══
+actor "Operator"   as op
+actor "Approver"   as appr
+actor "Supervisor" as sup
+
+' ══ LEFT use-case block (operational) ══
+package "Operational" as PK_L {
+  usecase "Submit Manual Intake"        as UC_manual
+  usecase "Browse & Filter Cases"       as UC_browse
+  usecase "View Case Detail & Timeline" as UC_detail
+  usecase "Claim & Complete Task"       as UC_task
+  usecase "Upload Document"             as UC_doc
+  usecase "Manually Escalate Case"      as UC_esc
+  usecase "Review Approval Request"     as UC_appr
+  usecase "Approve Decision"            as UC_approve
+  usecase "Reject Decision"             as UC_reject
+  usecase "View Supervisor Dashboard"   as UC_dash
+  usecase "Monitor SLA & Overdue Work"  as UC_sla
+  usecase "View Escalations"            as UC_escview
+}
+
+' ══ RIGHT use-case block (platform) ══
+package "Platform" as PK_R {
+  usecase "Create & Edit Flow"          as UC_edit
+  usecase "Publish Flow Version"        as UC_pub
+  usecase "Manage Flow Schedules"       as UC_schedmgmt
+  usecase "Use Flow Template"           as UC_tpl
+  usecase "Manage Users & Roles"        as UC_users
+  usecase "Manage Teams & Queues"       as UC_teams
+  usecase "View Audit Logs"             as UC_audit
+  usecase "Configure Platform"          as UC_config
+  usecase "Run KYC Refresh Cycle"       as UC_kyc
+  usecase "Run Dormant Account Scan"    as UC_dorm
+  usecase "Generate Regulatory Report"  as UC_reg
+}
+
+' ══ RIGHT actors ══
+actor "Designer"                   as des
+actor "Admin"                      as admin
+actor "Auditor"                    as aud
+actor "Intake Scheduler\n(System)" as sched
+
+' ── Place packages side-by-side ──
+PK_L -[hidden]right- PK_R
+
+' ══ LEFT actor connections  (-right- keeps actors on LEFT) ══
+op   -right-> UC_manual
+op   -right-> UC_browse
+op   -right-> UC_detail
+op   -right-> UC_task
+op   -right-> UC_doc
+op   -right-> UC_esc
+
+appr -right-> UC_appr
+appr -right-> UC_approve
+appr -right-> UC_reject
+appr -right-> UC_browse
+
+sup  -right-> UC_dash
+sup  -right-> UC_sla
+sup  -right-> UC_escview
+sup  -right-> UC_approve
+sup  -right-> UC_reject
+
+' ══ RIGHT actor connections  (-left- keeps actors on RIGHT) ══
+des   -left-> UC_edit
+des   -left-> UC_pub
+des   -left-> UC_schedmgmt
+des   -left-> UC_tpl
+
+admin -left-> UC_users
+admin -left-> UC_teams
+admin -left-> UC_audit
+admin -left-> UC_config
+
+aud   -left-> UC_audit
+aud   -left-> UC_browse
+
+sched -left-> UC_kyc
+sched -left-> UC_dorm
+sched -left-> UC_reg
+
+' ══ Include / Extend ══
+UC_approve .> UC_appr  : <<include>>
+UC_reject  .> UC_appr  : <<include>>
+UC_pub     .> UC_edit  : <<include>>
+
+@enduml

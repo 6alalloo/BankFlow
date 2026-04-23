@@ -1,0 +1,38 @@
+# Docker volumes (don't commit database state)
+postgres_data/
+n8n_data/
+
+# Docker override files (optional - commit if you want a shared dev config)
+# docker-compose.override.yml
+
+# Environment variables
+.env
+.env.local
+.env.*.local
+
+# Runtime and backup artifacts
+n8n-backup.tar.gz
+n8n-database.sql
+backend/uploads/*
+!backend/uploads/.gitkeep
+
+# Node modules
+node_modules/
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Logs
+*.log
+npm-debug.log*
+
+# Documentation
+docs/

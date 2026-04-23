@@ -1,0 +1,48 @@
+@startuml
+!theme plain
+skinparam dpi 150
+skinparam backgroundColor #FFFFFF
+skinparam shadowing false
+skinparam defaultFontName Arial
+skinparam defaultFontSize 13
+skinparam state {
+  BackgroundColor #EBF8FF
+  BorderColor #2B6CB0
+  FontStyle bold
+  ArrowColor #2B6CB0
+}
+
+title BankFlow — Case Lifecycle State Diagram
+
+[*] --> intake : case created\n(manual / api / scheduled)
+
+intake --> in_review : routed to operator\nor team queue
+intake --> pending_action : automation-only path\n(no human needed yet)
+
+in_review --> pending_action : data capture or\ndocument upload required
+in_review --> pending_approval : approval node reached
+in_review --> escalated : SLA breach or\nmanual escalation
+in_review --> resolved : analyst completes\nnon-approval outcome
+
+pending_action --> in_review : action completed
+pending_action --> escalated : SLA breach
+pending_action --> pending_approval : next step requires approval
+
+pending_approval --> in_review : rework needed\n(reject with rework)
+pending_approval --> resolved : approved
+pending_approval --> escalated : rejected or SLA breach
+
+escalated --> in_review : reassigned / picked up
+escalated --> resolved : escalation resolved
+
+resolved --> closed : post-resolution automation\ncomplete (reports, notifications)
+resolved --> in_review : reopened
+
+closed --> [*]
+
+intake --> cancelled : cancelled before pickup
+in_review --> cancelled : cancelled by supervisor
+pending_action --> cancelled : cancelled by supervisor
+cancelled --> [*]
+
+@enduml

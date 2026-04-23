@@ -1,0 +1,53 @@
+@startuml
+!theme plain
+skinparam dpi 150
+skinparam backgroundColor #FFFFFF
+skinparam shadowing false
+skinparam defaultFontName Arial
+skinparam defaultFontSize 12
+skinparam sequenceArrowThickness 1.5
+skinparam sequenceParticipantBackgroundColor #EBF8FF
+skinparam sequenceParticipantBorderColor #2B6CB0
+skinparam sequenceLifeLineBackgroundColor #F7FAFC
+skinparam sequenceLifeLineBorderColor #2B6CB0
+
+title Sequence — Scheduled Intake with n8n Automation
+
+participant "intakeScheduler\n(cron dispatcher)" as sched
+database "PostgreSQL" as db
+participant "caseService" as svc
+participant "caseOrchestrator" as orch
+participant "nodeExecutor\n(integration node)" as exec
+participant "automationClient" as autom
+queue "n8n Worker" as n8n
+participant "External System\n(core banking / KYC data)" as ext
+
+loop every minute
+  sched -> db : SELECT case_flow_schedules\nWHERE next_run_at <= now()\nAND is_active = true
+  db --> sched : due schedules
+  alt schedule due
+    sched -> ext : query target set\n(e.g., customers due for KYC refresh)
+    ext --> sched : batch of targets
+
+    loop for each target
+      sched -> svc : createScheduledCase(flowId, payload)
+      svc -> db : INSERT cases\n(intake_source=scheduled)
+      svc -> orch : start(caseId)
+
+      orch -> db : load flow graph
+      orch -> exec : execute integration node
+      exec -> autom : call automation\n(correlation: caseId, nodeId, eventId)
+      autom -> n8n : POST /webhook/{action}\n(with correlation header)
+      n8n -> ext : perform action\n(send notification,\nfetch docs, run checks)
+      ext --> n8n : result
+      n8n -> autom : POST /api/automation/callback\n(correlation id, result)
+      autom -> db : UPDATE case_events\nmatched by correlation id
+      autom --> exec : completion
+      exec --> orch : next edge
+    end
+
+    sched -> db : UPDATE case_flow_schedules\n(last_run_at, next_run_at)
+  end
+end
+
+@enduml

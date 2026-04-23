@@ -1,0 +1,70 @@
+@startuml
+!theme plain
+skinparam dpi 150
+skinparam backgroundColor #FFFFFF
+skinparam shadowing false
+skinparam defaultFontName Arial
+skinparam defaultFontSize 12
+skinparam activity {
+  BackgroundColor #EBF8FF
+  BorderColor #2B6CB0
+  DiamondBackgroundColor #FEFCBF
+  DiamondBorderColor #B7791F
+  ArrowColor #2B6CB0
+  FontStyle bold
+}
+
+title UC-3: KYC Refresh — Activity Diagram
+
+|#FEFCBF|Intake Scheduler|
+|#EBF8FF|BankFlow Orchestrator|
+|#F7FAFC|KYC Analyst\n(exception path only)|
+
+|Intake Scheduler|
+start
+:Scheduled trigger fires\n(cron from case_flow_schedules);
+:Query customer DB for\ncustomers due for refresh;
+repeat
+  |BankFlow Orchestrator|
+  :Create KYC refresh case\nfor customer;
+  :Send contact notification\n(email / SMS via automation);
+  :Set SLA timer for\ncustomer response;
+  if (Customer responds with docs?) then (yes, within SLA)
+    :Ingest documents;
+    :Run identity / sanctions /\nrisk checks (automation);
+    if (All checks clean?) then (yes)
+      :Update customer KYC record;
+      :Set case = resolved;
+      :Close case;
+    else (any hit or anomaly)
+      |KYC Analyst\n(exception path only)|
+      :Claim case;
+      :Review check results;
+      :Decide: request more info,\nupdate risk tier, or escalate;
+      |BankFlow Orchestrator|
+      if (Risk profile changed?) then (yes)
+        :Flag for enhanced due diligence;
+        :Route to compliance queue;
+      else (no)
+        :Record outcome;
+      endif
+      :Close case;
+    endif
+  else (no response before SLA)
+    |BankFlow Orchestrator|
+    :Send reminder;
+    if (Reminder responded?) then (yes)
+      :Resume automated path;
+    else (no)
+      |KYC Analyst\n(exception path only)|
+      :Handle non-responsive customer;
+      :Decide: restrict account,\nflag, or extend deadline;
+      |BankFlow Orchestrator|
+      :Execute decision;
+      :Close case;
+    endif
+  endif
+repeat while (More customers?) is (yes)
+->no;
+stop
+@enduml

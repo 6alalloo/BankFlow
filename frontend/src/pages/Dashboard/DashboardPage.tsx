@@ -2,13 +2,13 @@ import { useEffect, useState } from "react";
 
 import { Link, useNavigate } from "react-router-dom";
 import { useAuth } from "../../contexts/AuthContext";
-import { createWorkflow, createWorkflowNode, createWorkflowEdge } from "../../api/workflows";
+import { createFlow, createFlowNode, createFlowEdge } from "../../api/flows";
 import { apiGet } from "../../api/apiClient";
 import { fetchDashboardStats, fetchDashboardCharts, type DashboardStats, type ChartData } from "../../api/dashboard";
 import StatCard from "../../components/Dashboard/DashboardStatCard";
 import { ActivityChart, StatusChart, VolumeChart } from "../../components/Dashboard/DashboardCharts";
 import TemplatePreviewModal from "../../components/TemplatePreviewModal";
-import { templates, type WorkflowTemplate } from "../../data/templates";
+import { templates, type FlowTemplate } from "../../data/templates";
 import {
     FiPlusCircle,
     FiActivity,
@@ -41,7 +41,7 @@ interface RecentActivity {
     action: string;
     target: string;
     timestamp: string;
-    type: 'workflow' | 'execution' | 'system';
+    type: 'flow' | 'case' | 'system';
     status?: string;
     duration?: string;
 }
@@ -65,25 +65,6 @@ function formatTimeAgo(dateString: string | Date) {
     const hours = Math.floor(minutes / 60);
     if (hours < 24) return `${hours}h ago`;
     return date.toLocaleDateString();
-}
-
-function calculateDuration(durationMs?: number | null, start?: string | null, end?: string | null): string {
-    let seconds = 0;
-    
-    if (typeof durationMs === 'number') {
-        seconds = Math.floor(durationMs / 1000);
-    } else if (start && end) {
-        const startDate = new Date(start);
-        const endDate = new Date(end);
-        seconds = Math.floor((endDate.getTime() - startDate.getTime()) / 1000);
-    } else {
-        return '...';
-    }
-    
-    if (seconds < 60) return `${seconds}s`;
-    const minutes = Math.floor(seconds / 60);
-    const remainingSeconds = seconds % 60;
-    return `${minutes}m ${remainingSeconds}s`;
 }
 
 // Format duration from milliseconds to human readable
@@ -117,7 +98,7 @@ export default function DashboardPage() {
     const [isLoading, setIsLoading] = useState(true);
 
     // Template modal state
-    const [selectedTemplate, setSelectedTemplate] = useState<WorkflowTemplate | null>(null);
+    const [selectedTemplate, setSelectedTemplate] = useState<FlowTemplate | null>(null);
     const [isTemplateModalOpen, setIsTemplateModalOpen] = useState(false);
     // eslint-disable-next-line @typescript-eslint/no-unused-vars
     const [_isCreatingFromTemplate, setIsCreatingFromTemplate] = useState(false);
@@ -125,11 +106,11 @@ export default function DashboardPage() {
     // Stats State
     const [stats, setStats] = useState<DashboardStats>({
         totalUsers: 0,
-        activeWorkflows: 0,
-        executions24h: 0,
-        totalExecutions: 0,
+        activeFlows: 0,
+        openCases: 0,
+        totalCases: 0,
         avgDurationMs: 0,
-        executionsByStatus: {
+        casesByStatus: {
             completed: 0,
             failed: 0,
             running: 0,
@@ -144,36 +125,36 @@ export default function DashboardPage() {
         statusBreakdown: [],
     });
 
-    const handleCreateWorkflow = async () => {
+    const handleCreateFlow = async () => {
         try {
-            const newWorkflow = await createWorkflow({ name: "Untitled Workflow" });
+            const newFlow = await createFlow({ name: "Untitled Flow" });
             // Auto-add trigger node
-            await createWorkflowNode(newWorkflow.id, { kind: 'trigger', posX: 200, posY: 200 });
-            navigate(`/workflows/${newWorkflow.id}/builder`);
+            await createFlowNode(newFlow.id, { kind: 'trigger', posX: 200, posY: 200 });
+            navigate(`/flows/${newFlow.id}/builder`);
         } catch (error) {
-            console.error("Failed to create workflow", error);
+            console.error("Failed to create flow", error);
         }
     };
 
-    const handlePreviewTemplate = (template: WorkflowTemplate) => {
+    const handlePreviewTemplate = (template: FlowTemplate) => {
         setSelectedTemplate(template);
         setIsTemplateModalOpen(true);
     };
 
-    const handleUseTemplate = async (template: WorkflowTemplate) => {
+    const handleUseTemplate = async (template: FlowTemplate) => {
         try {
             setIsCreatingFromTemplate(true);
 
-            // Create new workflow with template name
-            const newWorkflow = await createWorkflow({ name: template.name, description: template.description });
-            const workflowId = newWorkflow.id;
+            // Create new flow with template name
+            const newFlow = await createFlow({ name: template.name, description: template.description });
+            const flowId = newFlow.id;
 
             // Create a mapping of template node IDs to actual node IDs
             const nodeIdMap: Record<string, number> = {};
 
             // Add nodes from template
             for (const templateNode of template.nodes) {
-                const nodeResponse = await createWorkflowNode(workflowId, {
+                const nodeResponse = await createFlowNode(flowId, {
                     kind: templateNode.kind,
                     name: templateNode.name,
                     posX: templateNode.pos_x,
@@ -189,7 +170,7 @@ export default function DashboardPage() {
                 const toNodeId = nodeIdMap[templateEdge.to];
 
                 if (fromNodeId && toNodeId) {
-                    await createWorkflowEdge(workflowId, {
+                    await createFlowEdge(flowId, {
                         fromNodeId: fromNodeId,
                         toNodeId: toNodeId,
                         label: templateEdge.label,
@@ -199,9 +180,9 @@ export default function DashboardPage() {
             }
 
             setIsTemplateModalOpen(false);
-            navigate(`/workflows/${workflowId}/builder`);
+            navigate(`/flows/${flowId}/builder`);
         } catch (error) {
-            console.error("Failed to create workflow from template", error);
+            console.error("Failed to create flow from template", error);
         } finally {
             setIsCreatingFromTemplate(false);
         }
@@ -241,16 +222,14 @@ export default function DashboardPage() {
                     }));
                     setActivities(mapped);
                 } else {
-                    // Operator: Fetch recent executions for activity feed
-                    const execRes = await apiGet<{ id: number; status: string; started_at: string; duration_ms?: number; finished_at?: string; workflows?: { name: string } }[]>('/executions?limit=5');
-                    const mapped = execRes.map((ex) => ({
-                        id: ex.id,
-                        action: `Execution ${ex.status}`,
-                        target: ex.workflows?.name || 'Untitled Workflow',
-                        timestamp: formatTimeAgo(ex.started_at || new Date()),
-                        type: 'execution' as const,
-                        status: ex.status,
-                        duration: ex.status === 'completed' ? calculateDuration(ex.duration_ms, ex.started_at, ex.finished_at) : undefined
+                    const caseRes = await apiGet<{ data: { id: number; status: string; title?: string | null; case_reference: string; created_at: string; updated_at: string }[] }>('/cases?limit=5');
+                    const mapped = caseRes.data.map((item) => ({
+                        id: item.id,
+                        action: `Case ${item.status}`,
+                        target: item.title || item.case_reference,
+                        timestamp: formatTimeAgo(item.updated_at || item.created_at),
+                        type: 'case' as const,
+                        status: item.status,
                     }));
                     setActivities(mapped);
                 }
@@ -324,24 +303,24 @@ export default function DashboardPage() {
                             color="blue"
                         />
                         <StatCard
-                            title="Active Workflows"
-                            value={isLoading ? "..." : stats.activeWorkflows}
+                            title="Active Flows"
+                            value={isLoading ? "..." : stats.activeFlows}
                             icon={FiLayers}
                             trend="neutral"
                             trendValue="Online"
                             color="cyan"
                         />
                         <StatCard
-                            title="Avg. Duration"
+                            title="Avg. Case Age"
                             value={isLoading ? "..." : formatDurationFromMs(stats.avgDurationMs)}
                             icon={FiClock}
                             trend="neutral"
-                            trendValue="Per Exec"
+                            trendValue="Per Case"
                             color="purple"
                         />
                         <StatCard
-                            title="24h Executions"
-                            value={isLoading ? "..." : stats.executions24h}
+                            title="Open Cases"
+                            value={isLoading ? "..." : stats.openCases}
                             icon={FiActivity}
                             trend="neutral"
                             trendValue="Today"
@@ -371,10 +350,10 @@ export default function DashboardPage() {
                                 <p className="text-[10px] text-slate-500 font-mono">View Security Events</p>
                             </Link>
 
-                             {/* Quick Action: New Workflow */}
-                            <div onClick={handleCreateWorkflow} className="bg-[#050b14] border border-cyan-500/20 rounded-xl p-6 hover:border-cyan-500/50 hover:bg-cyan-950/10 transition-all flex flex-col justify-center items-center text-center group cursor-pointer">
+                             {/* Quick Action: New Flow */}
+                            <div onClick={handleCreateFlow} className="bg-[#050b14] border border-cyan-500/20 rounded-xl p-6 hover:border-cyan-500/50 hover:bg-cyan-950/10 transition-all flex flex-col justify-center items-center text-center group cursor-pointer">
                                 <FiPlusCircle className="text-3xl text-cyan-500 mb-3 group-hover:scale-110 transition-transform" />
-                                <h3 className="text-cyan-400 font-bold mb-1">New Workflow</h3>
+                                <h3 className="text-cyan-400 font-bold mb-1">New Flow</h3>
                                 <p className="text-[10px] text-slate-500 font-mono">Deploy Protocol</p>
                             </div>
                         </div>
@@ -385,8 +364,8 @@ export default function DashboardPage() {
                         {/* Column 1: Stats */}
                         <div className="space-y-6">
                             <StatCard
-                                title="My Executions"
-                                value={isLoading ? "..." : stats.totalExecutions}
+                                title="My Cases"
+                                value={isLoading ? "..." : stats.totalCases}
                                 icon={FiActivity}
                                 trend="neutral"
                                 trendValue="Total"
@@ -394,30 +373,30 @@ export default function DashboardPage() {
                             />
                             <StatCard
                                 title="Success Rate"
-                                value={isLoading ? "..." : `${stats.totalExecutions > 0 ? Math.round((stats.executionsByStatus.completed / stats.totalExecutions) * 100) : 0}%`}
+                                value={isLoading ? "..." : `${stats.totalCases > 0 ? Math.round((stats.casesByStatus.completed / stats.totalCases) * 100) : 0}%`}
                                 icon={FiCheckCircle}
-                                trend={stats.executionsByStatus.completed > stats.executionsByStatus.failed ? 'up' : 'down'}
-                                trendValue={stats.executionsByStatus.completed > stats.executionsByStatus.failed ? 'Good' : 'Attn'}
-                                color={stats.executionsByStatus.completed > stats.executionsByStatus.failed ? 'emerald' : 'rose'}
+                                trend={stats.casesByStatus.completed > stats.casesByStatus.failed ? 'up' : 'down'}
+                                trendValue={stats.casesByStatus.completed > stats.casesByStatus.failed ? 'Good' : 'Attn'}
+                                color={stats.casesByStatus.completed > stats.casesByStatus.failed ? 'emerald' : 'rose'}
                             />
                             <StatCard
                                 title="Avg. Duration"
                                 value={isLoading ? "..." : formatDurationFromMs(stats.avgDurationMs)}
                                 icon={FiClock}
                                 trend="neutral"
-                                trendValue="Per Exec"
+                                trendValue="Per Case"
                                 color="purple"
                             />
                         </div>
 
                          {/* Column 2: Status Chart & Volume */}
                         <div className="bg-[#050b14] border border-white/5 rounded-xl p-6 flex flex-col gap-6">
-                            {/* Execution Status */}
+                            {/* Case Status */}
                             <div>
                                 <div className="flex items-center justify-between mb-4">
                                      <h3 className="text-white font-mono text-sm uppercase tracking-widest flex items-center gap-2">
                                         <FiActivity className="text-indigo-400" />
-                                        Execution Status
+                                        Case Status
                                     </h3>
                                     <span className="text-[10px] font-mono text-slate-500 bg-white/5 px-2 py-1 rounded">
                                         Last 7 Days
@@ -443,7 +422,7 @@ export default function DashboardPage() {
                                     <FiCpu className="text-slate-400" />
                                     Live Feed
                                 </h3>
-                                <Link to="/executions" className="text-[10px] text-cyan-500 hover:text-cyan-400 font-mono uppercase">View All</Link>
+                                <Link to="/cases" className="text-[10px] text-cyan-500 hover:text-cyan-400 font-mono uppercase">View All</Link>
                             </div>
                             <div className="flex-1 overflow-y-auto custom-scrollbar p-2 space-y-1">
                                 {activities.map((activity) => (
@@ -526,10 +505,10 @@ export default function DashboardPage() {
                             </p>
                         </div>
                         <Link
-                            to="/workflows"
+                            to="/flows"
                             className="text-xs text-cyan-500 hover:text-cyan-400 font-mono uppercase flex items-center gap-1"
                         >
-                            All Workflows <FiArrowRight className="w-3 h-3" />
+                            All Flows <FiArrowRight className="w-3 h-3" />
                         </Link>
                     </div>
 
@@ -543,11 +522,7 @@ export default function DashboardPage() {
                                 <div className="flex items-start justify-between mb-3">
                                     <span
                                         className={`text-[10px] font-bold uppercase tracking-wider px-2 py-0.5 rounded ${
-                                            template.category === 'hr'
-                                                ? 'bg-blue-500/10 text-blue-400'
-                                                : template.category === 'it'
-                                                ? 'bg-green-500/10 text-green-400'
-                                                : 'bg-slate-500/10 text-slate-400'
+                                            'bg-slate-500/10 text-slate-400'
                                         }`}
                                     >
                                         {template.category}
@@ -590,14 +565,14 @@ export default function DashboardPage() {
                             </div>
                         ))}
 
-                        {/* Create Blank Workflow Card */}
+                        {/* Create Blank Flow Card */}
                         <div
                             className="group bg-[#050b14] border border-dashed border-white/10 rounded-xl p-5 hover:border-cyan-500/30 hover:bg-cyan-950/5 transition-all cursor-pointer flex flex-col items-center justify-center min-h-[180px]"
-                            onClick={handleCreateWorkflow}
+                            onClick={handleCreateFlow}
                         >
                             <FiPlusCircle className="text-3xl text-slate-600 group-hover:text-cyan-500 transition-colors mb-3" />
                             <h3 className="text-white font-semibold mb-1 group-hover:text-cyan-400 transition-colors">
-                                Blank Workflow
+                                Blank Flow
                             </h3>
                             <p className="text-xs text-slate-500 text-center">
                                 Start from scratch with an empty canvas

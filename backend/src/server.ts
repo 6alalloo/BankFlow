@@ -9,7 +9,7 @@ import logger from "./lib/logger";
 import app from "./app";
 
 app.listen(config.server.port, () => {
-  logger.info('HRFlow backend started', {
+logger.info('BankFlow backend started', {
     port: config.server.port,
     environment: config.server.nodeEnv,
     nodeVersion: process.version

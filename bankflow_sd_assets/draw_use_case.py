@@ -6,8 +6,7 @@ import matplotlib
 matplotlib.use("Agg")
 import matplotlib.pyplot as plt
 import matplotlib.patches as mpatches
-from matplotlib.patches import FancyBboxPatch, FancyArrowPatch
-import matplotlib.patheffects as pe
+from matplotlib.patches import FancyBboxPatch
 import numpy as np
 
 # ── canvas ──────────────────────────────────────────────────────────────────
@@ -23,7 +22,6 @@ C_PKG_BG   = "#FAFAFA"
 C_PKG_ED   = "#718096"
 C_UC_BG    = "#EBF8FF"
 C_UC_ED    = "#2B6CB0"
-C_ACTOR_BG = "#EDF2F7"
 C_ACTOR_ED = "#2B6CB0"
 C_ARROW    = "#4A5568"
 C_DASH     = "#718096"

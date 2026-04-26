@@ -5,8 +5,8 @@ import { config } from '../config/appConfig';
 const API_BASE_URL = config.apiBaseUrl;
 
 // Storage keys
-const TOKEN_KEY = 'hrflow_token';
-const USER_KEY = 'hrflow_user';
+const TOKEN_KEY = 'bankflow_token';
+const USER_KEY = 'bankflow_user';
 
 // Types
 export interface AuthUser {

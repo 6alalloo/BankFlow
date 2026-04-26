@@ -37,9 +37,9 @@ const LoginPage = () => {
       <div className="w-full max-w-md p-8 rounded-2xl bg-white/5 backdrop-blur-xl border border-white/10 shadow-2xl relative z-10 m-4">
         <div className="text-center mb-8">
           <h1 className="text-5xl font-bold tracking-tight bg-gradient-to-r from-blue-500 via-cyan-400 to-blue-500 bg-clip-text text-transparent mb-2 animate-gradient-x bg-[length:200%_auto]">
-            HRFlow
+              BankFlow
           </h1>
-          <p className="text-slate-400 text-sm">Workflow Automation Platform</p>
+          <p className="text-slate-400 text-sm">Flow Automation Platform</p>
         </div>
 
         {error && (
@@ -58,7 +58,7 @@ const LoginPage = () => {
               id="email"
               value={email}
               onChange={(e) => setEmail(e.target.value)}
-              placeholder="admin@hrflow.local"
+                  placeholder="admin@bankflow.local"
               required
               className="w-full bg-black/20 border border-white/10 rounded-xl px-4 py-3 text-white placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-blue-500/50 focus:border-transparent transition-all"
             />
@@ -114,7 +114,7 @@ const LoginPage = () => {
 
         <div className="mt-6 pt-6 border-t border-white/5 text-center">
           <p className="text-slate-500 text-xs">
-            Default credentials: <span className="text-slate-400 font-mono">admin@hrflow.local</span> / <span className="text-slate-400 font-mono">admin123</span>
+            Default credentials: <span className="text-slate-400 font-mono">admin@bankflow.local</span> / <span className="text-slate-400 font-mono">admin123</span>
           </p>
         </div>
       </div>

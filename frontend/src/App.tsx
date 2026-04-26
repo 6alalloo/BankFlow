@@ -3,15 +3,12 @@ import { Routes, Route, Navigate, useLocation } from "react-router-dom";
 import { Toaster } from 'sonner';
 
 import { useAuth } from "./contexts/AuthContext";
-import { ExecutionNotificationProvider } from "./contexts/ExecutionNotificationContext";
 import AppLayout from "./layout/appLayout";
 import LoginPage from "./pages/Auth/LoginPage";
-import LandingPage from "./pages/Dashboard/LandingPage";
 import DashboardPage from "./pages/Dashboard/DashboardPage";
-import WorkflowsListPage from "./pages/Workflows/workflowListPage";
-import ExecutionDetailPage from "./pages/Executions/executionDetailPage";
-import WorkflowBuilderPage from "./pages/Workflows/workflowBuilderPage";
-import ExecutionsListPage from "./pages/Executions/executionListPage";
+import FlowsListPage from "./pages/Flows/flowListPage";
+import FlowBuilderPage from "./pages/Flows/flowBuilderPage";
+import CasesListPage from "./pages/Cases/CasesListPage";
 import AuditLogPage from "./pages/Admin/AuditLogPage";
 import SecurityPage from "./pages/Admin/SecurityPage";
 import UserManagementPage from "./pages/Admin/UserManagementPage";
@@ -50,7 +47,7 @@ const App: React.FC = () => {
   const { isAuthenticated, isLoading } = useAuth();
 
   return (
-    <ExecutionNotificationProvider>
+    <>
       <Routes>
       {/* Public routes */}
       <Route
@@ -81,15 +78,14 @@ const App: React.FC = () => {
             <AppLayout>
               <Routes>
                 {/* Dashboard / Landing */}
-                <Route path="/" element={<LandingPage />} />
+                <Route path="/" element={<DashboardPage />} />
                 <Route path="/dashboard" element={<DashboardPage />} />
 
-                {/* Workflows */}
-                <Route path="/workflows" element={<WorkflowsListPage />} />
+                {/* Flows */}
+                <Route path="/flows" element={<FlowsListPage />} />
 
-                {/* Executions */}
-                <Route path="/executions/:id" element={<ExecutionDetailPage />} />
-                <Route path="/executions" element={<ExecutionsListPage />} />
+                {/* Cases */}
+                <Route path="/cases" element={<CasesListPage />} />
 
                 {/* Admin */}
                 <Route path="/admin/audit-logs" element={<AuditLogPage />} />
@@ -117,22 +113,22 @@ const App: React.FC = () => {
         path="/builder"
         element={
           <ProtectedRoute>
-            <WorkflowBuilderPage />
+            <FlowBuilderPage />
           </ProtectedRoute>
         }
       />
       <Route
-        path="/workflows/:id/builder"
+        path="/flows/:id/builder"
         element={
           <ProtectedRoute>
-            <WorkflowBuilderPage />
+            <FlowBuilderPage />
           </ProtectedRoute>
         }
       />
 
       </Routes>
       <Toaster position="bottom-right" richColors />
-    </ExecutionNotificationProvider>
+    </>
   );
 };
 

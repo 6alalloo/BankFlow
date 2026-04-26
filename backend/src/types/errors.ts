@@ -37,8 +37,8 @@ export const ErrorCodes = {
 
   // Resource Errors (404)
   NOT_FOUND: 'NOT_FOUND',
-  WORKFLOW_NOT_FOUND: 'WORKFLOW_NOT_FOUND',
-  EXECUTION_NOT_FOUND: 'EXECUTION_NOT_FOUND',
+  FLOW_NOT_FOUND: 'FLOW_NOT_FOUND',
+  CASE_NOT_FOUND: 'CASE_NOT_FOUND',
   USER_NOT_FOUND: 'USER_NOT_FOUND',
   NODE_NOT_FOUND: 'NODE_NOT_FOUND',
   EDGE_NOT_FOUND: 'EDGE_NOT_FOUND',
@@ -47,21 +47,18 @@ export const ErrorCodes = {
   VALIDATION_ERROR: 'VALIDATION_ERROR',
   INVALID_INPUT: 'INVALID_INPUT',
   INVALID_NODE_TYPE: 'INVALID_NODE_TYPE',
-  INVALID_WORKFLOW_STATE: 'INVALID_WORKFLOW_STATE',
+  INVALID_FLOW_STATE: 'INVALID_FLOW_STATE',
   MISSING_REQUIRED_FIELD: 'MISSING_REQUIRED_FIELD',
 
   // Business Logic Errors (400, 409)
-  WORKFLOW_ALREADY_EXISTS: 'WORKFLOW_ALREADY_EXISTS',
-  WORKFLOW_NOT_ACTIVE: 'WORKFLOW_NOT_ACTIVE',
-  EXECUTION_ALREADY_RUNNING: 'EXECUTION_ALREADY_RUNNING',
+  FLOW_ALREADY_EXISTS: 'FLOW_ALREADY_EXISTS',
+  FLOW_NOT_ACTIVE: 'FLOW_NOT_ACTIVE',
+  CASE_ALREADY_RUNNING: 'CASE_ALREADY_RUNNING',
   CIRCULAR_DEPENDENCY: 'CIRCULAR_DEPENDENCY',
   DUPLICATE_ENTRY: 'DUPLICATE_ENTRY',
 
   // External Service Errors (502, 503)
-  N8N_ERROR: 'N8N_ERROR',
-  N8N_UNAVAILABLE: 'N8N_UNAVAILABLE',
   DATABASE_ERROR: 'DATABASE_ERROR',
-  CV_PARSER_ERROR: 'CV_PARSER_ERROR',
 
   // Internal Errors (500)
   INTERNAL_ERROR: 'INTERNAL_ERROR',
@@ -105,10 +102,6 @@ export function createConflictError(message: string, errorCode: string = ErrorCo
 
 export function createInternalError(message: string = 'Internal server error'): AppError {
   return new AppError(message, 500, ErrorCodes.INTERNAL_ERROR);
-}
-
-export function createN8nError(message: string, statusCode: number = 502): AppError {
-  return new AppError(message, statusCode, ErrorCodes.N8N_ERROR);
 }
 
 export function createDatabaseError(message: string): AppError {

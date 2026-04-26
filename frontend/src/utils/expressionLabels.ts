@@ -2,7 +2,7 @@
  * Expression Labels Utility
  *
  * Converts template expressions to user-friendly labels
- * for display on node cards in the workflow builder.
+ * for display on node cards in the flow builder.
  */
 
 // Map template expressions to friendly labels
@@ -93,13 +93,14 @@ export function getConfigPreview(
   const parts: string[] = [];
 
   switch (kind) {
-    case 'email':
+    case 'email': {
       if (!config.to || config.to === '') {
         return 'Click to configure';
       }
       const toLabel = getFriendlyLabel(String(config.to));
       parts.push(`To: ${toLabel}`);
       break;
+    }
 
     case 'database':
       if (config.table) {
@@ -140,20 +141,21 @@ export function getConfigPreview(
       }
       break;
 
-    case 'trigger':
+    case 'trigger': {
       // Count configured fields
       const configuredFields = Object.entries(config).filter(
-        ([_, v]) => v !== '' && v !== null && v !== undefined
+        ([, v]) => v !== '' && v !== null && v !== undefined
       ).length;
       if (configuredFields > 0) {
         parts.push(`${configuredFields} field(s) set`);
       }
       break;
+    }
 
-    default:
+    default: {
       // Generic: show first key-value
       const firstEntry = Object.entries(config).find(
-        ([_, v]) => v !== '' && v !== null && v !== undefined
+        ([, v]) => v !== '' && v !== null && v !== undefined
       );
       if (firstEntry) {
         const [key, value] = firstEntry;
@@ -162,6 +164,7 @@ export function getConfigPreview(
           : String(value);
         parts.push(`${key}: ${displayValue.slice(0, 20)}`);
       }
+    }
   }
 
   return parts.length > 0 ? parts.join(' | ') : 'Click to configure';

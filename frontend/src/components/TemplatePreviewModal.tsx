@@ -2,13 +2,13 @@
 import React from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { LuX, LuArrowRight, LuCircleCheck, LuGlobe, LuMail, LuDatabase, LuSplit, LuClock, LuTerminal, LuBox, LuCalendar, LuZap } from 'react-icons/lu';
-import type { WorkflowTemplate } from '../data/templates';
+import type { FlowTemplate } from '../data/templates';
 
 interface TemplatePreviewModalProps {
     isOpen: boolean;
-    template: WorkflowTemplate | null;
+    template: FlowTemplate | null;
     onClose: () => void;
-    onUseTemplate: (template: WorkflowTemplate) => void;
+    onUseTemplate: (template: FlowTemplate) => void;
 }
 
 // Icon mapping for node kinds
@@ -86,9 +86,9 @@ const TemplatePreviewModal: React.FC<TemplatePreviewModalProps> = ({
                             <p className="text-sm text-slate-300 leading-relaxed">{template.useCase}</p>
                         </div>
 
-                        {/* Workflow Preview */}
+                        {/* Flow Preview */}
                         <div>
-                            <h3 className="text-sm font-bold text-white mb-3">Workflow Steps</h3>
+                            <h3 className="text-sm font-bold text-white mb-3">Flow Steps</h3>
                             <div className="space-y-2">
                                 {template.nodes.map((node, index) => {
                                     const Icon = nodeIcons[node.kind] || LuBox;

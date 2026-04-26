@@ -228,7 +228,7 @@ export default function AuditLogPage() {
 
       const bannedKeys = [
           'ipaddress', 'useragent', 'ip_address', 'user_agent',
-          'node_id', 'nodeid', 'id', 'workflow_id', 'execution_id', 'org_id',
+    'node_id', 'nodeid', 'id', 'flow_id', 'case_id', 'org_id',
           'nodetype', 'node_type', 'kind'
       ];
 
@@ -309,12 +309,12 @@ export default function AuditLogPage() {
                             className="pl-9 pr-8 py-2 bg-[#050b14]/80 border border-cyan-900/30 text-xs font-mono text-cyan-300 focus:outline-none focus:border-cyan-500/50 appearance-none hover:bg-cyan-950/20 transition-colors cursor-pointer min-w-[180px] uppercase tracking-wider"
                         >
                             <option value="" className="bg-[#020408]">All Events</option>
-                            <option value="workflow_created" className="bg-[#020408]">Workflow Created</option>
-                            <option value="workflow_updated" className="bg-[#020408]">Workflow Updated</option>
-                            <option value="workflow_deleted" className="bg-[#020408]">Workflow Deleted</option>
-                            <option value="execution_started" className="bg-[#020408]">Execution Started</option>
-                            <option value="execution_completed" className="bg-[#020408]">Execution Completed</option>
-                            <option value="execution_failed" className="bg-[#020408]">Execution Failed</option>
+                            <option value="flow_created" className="bg-[#020408]">Flow Created</option>
+                            <option value="flow_updated" className="bg-[#020408]">Flow Updated</option>
+                            <option value="flow_deleted" className="bg-[#020408]">Flow Deleted</option>
+                    <option value="case_created" className="bg-[#020408]">Case Created</option>
+                    <option value="case_completed" className="bg-[#020408]">Case Completed</option>
+                    <option value="approval_decided" className="bg-[#020408]">Approval Decided</option>
                             <option value="user_login" className="bg-[#020408]">User Login</option>
                         </select>
                         <div className="absolute inset-y-0 right-0 pr-2 flex items-center pointer-events-none text-cyan-700">
@@ -332,8 +332,8 @@ export default function AuditLogPage() {
                             className="pl-9 pr-8 py-2 bg-[#050b14]/80 border border-cyan-900/30 text-xs font-mono text-cyan-300 focus:outline-none focus:border-cyan-500/50 appearance-none hover:bg-cyan-950/20 transition-colors cursor-pointer min-w-[150px] uppercase tracking-wider"
                         >
                             <option value="" className="bg-[#020408]">All Targets</option>
-                            <option value="workflow" className="bg-[#020408]">Workflow</option>
-                            <option value="execution" className="bg-[#020408]">Execution</option>
+                            <option value="flow" className="bg-[#020408]">Flow</option>
+                    <option value="case" className="bg-[#020408]">Case</option>
                             <option value="user" className="bg-[#020408]">User</option>
                         </select>
                         <div className="absolute inset-y-0 right-0 pr-2 flex items-center pointer-events-none text-cyan-700">

@@ -36,3 +36,6 @@ npm-debug.log*
 
 # Documentation
 docs/
+*.md
+!readme.md
+!README.md

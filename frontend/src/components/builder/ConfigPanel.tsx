@@ -1,21 +1,19 @@
 import React, { useEffect, useState, useMemo, useRef, useCallback } from 'react';
 import { motion } from 'framer-motion';
 import {
-    LuX, LuTrash2, LuPlus, LuMinus, LuUpload, LuFile,
+    LuX, LuTrash2, LuPlus, LuMinus,
     LuMail, LuUser, LuCalendar, LuClock, LuDatabase, LuGlobe,
-    LuMessageSquare, LuZap, LuArrowRight, LuInfo, LuCheck, LuLoader,
-    LuCopy, LuExternalLink
+    LuMessageSquare, LuZap, LuArrowRight, LuInfo, LuCheck
 } from 'react-icons/lu';
 import DatePicker from 'react-datepicker';
 import 'react-datepicker/dist/react-datepicker.css';
-import { CONDITION_OPERATORS, CV_PARSER_FIELDS } from '../../types/nodeConfigs';
-import { fetchDatabaseTables, type DatabaseTable } from '../../api/workflows';
-import { apiUploadFile } from '../../api/apiClient';
+import { CONDITION_OPERATORS } from '../../types/nodeConfigs';
+import { fetchDatabaseTables, type DatabaseTable } from '../../api/flows';
 import type { NodeKind } from '../../types/nodeConfigs';
 import SmartField from './SmartField';
 
-// Node structure from the workflow builder
-interface WorkflowNode {
+// Node structure from the flow builder
+interface FlowNode {
     id: number;
     name: string;
     kind: NodeKind;
@@ -24,7 +22,7 @@ interface WorkflowNode {
 
 type ConfigPanelProps = {
     isOpen: boolean;
-    node: WorkflowNode | null;
+    node: FlowNode | null;
     onClose: () => void;
     onUpdate: (id: number, update: { config?: Record<string, unknown>; name?: string }) => void;
     onDelete: (id: number) => void;
@@ -48,11 +46,6 @@ const getNumber = (config: Record<string, unknown>, key: string, fallback = 0): 
 //     const val = config[key];
 //     return Array.isArray(val) ? val as KeyValuePair[] : [];
 // };
-
-const getStringArray = (config: Record<string, unknown>, key: string): string[] => {
-    const val = config[key];
-    return Array.isArray(val) ? val as string[] : [];
-};
 
 // Reusable form field components
 const FormField: React.FC<{
@@ -210,124 +203,6 @@ const InfoBox: React.FC<{
     );
 };
 
-// Checkbox Group Component
-const CheckboxGroup: React.FC<{
-    options: { value: string; label: string }[];
-    selected: string[];
-    onChange: (selected: string[]) => void;
-}> = ({ options, selected = [], onChange }) => {
-    const handleToggle = (value: string) => {
-        if (selected.includes(value)) {
-            onChange(selected.filter((v) => v !== value));
-        } else {
-            onChange([...selected, value]);
-        }
-    };
-
-    return (
-        <div className="grid grid-cols-2 gap-1.5">
-            {options.map((opt) => (
-                <button
-                    key={opt.value}
-                    type="button"
-                    onClick={() => handleToggle(opt.value)}
-                    className={`flex items-center gap-1.5 px-2 py-1.5 rounded-md border transition-all text-left ${
-                        selected.includes(opt.value)
-                            ? 'border-cyan-glow bg-cyan-glow/10 text-white'
-                            : 'border-white/10 hover:border-white/20 text-slate-400 hover:text-white'
-                    }`}
-                >
-                    <div
-                        className={`w-3 h-3 rounded border flex items-center justify-center transition-colors ${
-                            selected.includes(opt.value)
-                                ? 'bg-cyan-glow border-cyan-glow'
-                                : 'border-white/30'
-                        }`}
-                    >
-                        {selected.includes(opt.value) && (
-                            <svg className="w-2 h-2 text-navy-950" fill="currentColor" viewBox="0 0 20 20">
-                                <path
-                                    fillRule="evenodd"
-                                    d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z"
-                                    clipRule="evenodd"
-                                />
-                            </svg>
-                        )}
-                    </div>
-                    <span className="text-xs">{opt.label}</span>
-                </button>
-            ))}
-        </div>
-    );
-};
-
-// File Upload Component - currently unused, commented out to fix build
-// const FileUploadButton: React.FC<{
-//     onFileSelect: (file: File) => void;
-//     accept?: string;
-//     currentFile?: string;
-// }> = ({ onFileSelect, accept = ".pdf,.docx,.doc", currentFile }) => {
-//     const fileInputRef = useRef<HTMLInputElement>(null);
-//     const [isDragging, setIsDragging] = useState(false);
-
-//     const handleDrop = (e: React.DragEvent) => {
-//         e.preventDefault();
-//         setIsDragging(false);
-//         const file = e.dataTransfer.files[0];
-//         if (file) onFileSelect(file);
-//     };
-
-//     return (
-//         <div
-//             onClick={() => fileInputRef.current?.click()}
-//             onDragOver={(e) => { e.preventDefault(); setIsDragging(true); }}
-//             onDragLeave={() => setIsDragging(false)}
-//             onDrop={handleDrop}
-//             className={`border-2 border-dashed rounded-xl p-6 text-center cursor-pointer transition-all ${
-//                 isDragging
-//                     ? 'border-cyan-glow bg-cyan-glow/10'
-//                     : 'border-white/20 hover:border-white/40 hover:bg-white/5'
-//             }`}
-//         >
-//             <input
-//                 ref={fileInputRef}
-//                 type="file"
-//                 accept={accept}
-//                 onChange={(e) => e.target.files?.[0] && onFileSelect(e.target.files[0])}
-//                 className="hidden"
-//             />
-//             <div className="flex flex-col items-center gap-3">
-//                 {currentFile ? (
-//                     <>
-//                         <div className="w-12 h-12 rounded-xl bg-emerald-500/20 flex items-center justify-center">
-//                             <LuFile className="w-6 h-6 text-emerald-400" />
-//                         </div>
-//                         <div>
-//                             <div className="text-sm font-medium text-white">{currentFile}</div>
-//                             <div className="text-xs text-slate-500 mt-1">Click to change file</div>
-//                         </div>
-//                     </>
-//                 ) : (
-//                     <>
-//                         <div className="w-12 h-12 rounded-xl bg-white/10 flex items-center justify-center">
-//                             <LuUpload className="w-6 h-6 text-slate-400" />
-//                         </div>
-//                         <div>
-//                             <div className="text-sm font-medium text-white">Upload CV/Resume</div>
-//                             <div className="text-xs text-slate-500 mt-1">
-//                                 Drag & drop or click to browse
-//                             </div>
-//                             <div className="text-xs text-slate-600 mt-1">
-//                                 Supports PDF, DOCX (max 5MB)
-//                             </div>
-//                         </div>
-//                     </>
-//                 )}
-//             </div>
-//         </div>
-//     );
-// };
-
 const ConfigPanel: React.FC<ConfigPanelProps> = ({ isOpen, node, onClose, onUpdate, onDelete }) => {
     // Use useMemo to derive initial config, avoiding setState in effect
     const initialConfig = useMemo(() => node?.config || {}, [node]);
@@ -336,14 +211,10 @@ const ConfigPanel: React.FC<ConfigPanelProps> = ({ isOpen, node, onClose, onUpda
     const [databaseTables, setDatabaseTables] = useState<DatabaseTable[]>([]);
     const firstInputRef = React.useRef<HTMLInputElement>(null);
 
-    // CV parser file upload state (always declared, conditionally used)
-    const [isUploading, setIsUploading] = useState(false);
-    const [uploadError, setUploadError] = useState<string | null>(null);
-    const fileInputRef = useRef<HTMLInputElement>(null);
-
     // Sync localConfig when node changes - this is intentional state synchronization
     const nodeId = node?.id;
     useEffect(() => {
+        // eslint-disable-next-line react-hooks/set-state-in-effect
         setLocalConfig(initialConfig);
     }, [nodeId, initialConfig]);
 
@@ -434,9 +305,9 @@ const ConfigPanel: React.FC<ConfigPanelProps> = ({ isOpen, node, onClose, onUpda
     // Update lastSavedConfigRef when node changes (to prevent immediate autosave on open)
     useEffect(() => {
         if (node) {
-            lastSavedConfigRef.current = JSON.stringify(localConfig);
+            lastSavedConfigRef.current = JSON.stringify(initialConfig);
         }
-    }, [node?.id]); // Only when node ID changes, not on every localConfig change
+    }, [node, initialConfig]);
 
     const handleSave = useCallback(() => {
         if (node) {
@@ -475,8 +346,8 @@ const ConfigPanel: React.FC<ConfigPanelProps> = ({ isOpen, node, onClose, onUpda
                             <div className="flex items-start gap-2">
                                 <LuInfo className="w-4 h-4 mt-0.5 flex-shrink-0" />
                                 <div>
-                                    <strong>Workflow Starting Point</strong>
-                                    <p className="mt-1 opacity-80">Choose how this workflow should be triggered.</p>
+                                    <strong>Flow Starting Point</strong>
+                                    <p className="mt-1 opacity-80">Choose how this flow should be triggered.</p>
                                 </div>
                             </div>
                         </InfoBox>
@@ -578,7 +449,7 @@ const ConfigPanel: React.FC<ConfigPanelProps> = ({ isOpen, node, onClose, onUpda
                                 <LuMail className="w-4 h-4 mt-0.5 flex-shrink-0" />
                                 <div>
                                     <strong>Send Email Notification</strong>
-                                    <p className="mt-1 opacity-80">This step will send an email when the workflow reaches this point.</p>
+                                    <p className="mt-1 opacity-80">This step will send an email when the flow reaches this point.</p>
                                 </div>
                             </div>
                         </InfoBox>
@@ -897,7 +768,7 @@ Operations Team"
                                 <LuArrowRight className="w-4 h-4 mt-0.5 flex-shrink-0" />
                                 <div>
                                     <strong>Decision Point</strong>
-                                    <p className="mt-1 opacity-80">Split the workflow based on a condition. Different paths will be taken depending on the result.</p>
+                                    <p className="mt-1 opacity-80">Split the flow based on a condition. Different paths will be taken depending on the result.</p>
                                 </div>
                             </div>
                         </InfoBox>
@@ -970,124 +841,6 @@ Operations Team"
                 );
             }
 
-            case 'cv_parser': {
-                const extractFields = getStringArray(localConfig, 'extractFields');
-                const fileId = getString(localConfig, 'fileId', '');
-                const fileName = getString(localConfig, 'fileName', '');
-
-                const handleFileUpload = async (file: File) => {
-                    setIsUploading(true);
-                    setUploadError(null);
-                    try {
-                        const response = await apiUploadFile('/files/upload', file);
-                        if (response.success) {
-                            handleChange('fileId', response.file.id);
-                            handleChange('fileName', response.file.originalName);
-                        }
-                    } catch (err) {
-                        setUploadError(err instanceof Error ? err.message : 'Upload failed');
-                    } finally {
-                        setIsUploading(false);
-                    }
-                };
-
-                return (
-                    <div className="space-y-5">
-                        <InfoBox variant="info">
-                            <div className="flex items-start gap-2">
-                                <LuFile className="w-4 h-4 mt-0.5 flex-shrink-0" />
-                                <div>
-                                    <strong>CV/Resume Parser</strong>
-                                    <p className="mt-1 opacity-80">Extract information from a CV or resume file automatically.</p>
-                                </div>
-                            </div>
-                        </InfoBox>
-
-                        <div className="space-y-4 border-t border-white/5 pt-4">
-                            <h3 className="text-sm font-bold text-white">Upload CV/Resume</h3>
-
-                            <input
-                                ref={fileInputRef}
-                                type="file"
-                                accept=".pdf,.docx,.doc"
-                                onChange={(e) => {
-                                    const file = e.target.files?.[0];
-                                    if (file) handleFileUpload(file);
-                                }}
-                                className="hidden"
-                            />
-
-                            <div
-                                onClick={() => !isUploading && fileInputRef.current?.click()}
-                                className={`border-2 border-dashed rounded-xl p-6 text-center cursor-pointer transition-all ${
-                                    isUploading
-                                        ? 'border-cyan-glow/50 bg-cyan-glow/5'
-                                        : fileId
-                                            ? 'border-emerald-500/30 bg-emerald-500/5'
-                                            : 'border-white/20 hover:border-white/40 hover:bg-white/5'
-                                }`}
-                            >
-                                <div className="flex flex-col items-center gap-3">
-                                    {isUploading ? (
-                                        <>
-                                            <div className="w-12 h-12 rounded-xl bg-cyan-glow/20 flex items-center justify-center">
-                                                <LuLoader className="w-6 h-6 text-cyan-glow animate-spin" />
-                                            </div>
-                                            <div className="text-sm text-cyan-glow">Uploading...</div>
-                                        </>
-                                    ) : fileId && fileName ? (
-                                        <>
-                                            <div className="w-12 h-12 rounded-xl bg-emerald-500/20 flex items-center justify-center">
-                                                <LuFile className="w-6 h-6 text-emerald-400" />
-                                            </div>
-                                            <div>
-                                                <div className="text-sm font-medium text-white">{fileName}</div>
-                                                <div className="text-xs text-slate-500 mt-1">Click to change file</div>
-                                            </div>
-                                        </>
-                                    ) : (
-                                        <>
-                                            <div className="w-12 h-12 rounded-xl bg-white/10 flex items-center justify-center">
-                                                <LuUpload className="w-6 h-6 text-slate-400" />
-                                            </div>
-                                            <div>
-                                                <div className="text-sm font-medium text-white">Drop file here or click to upload</div>
-                                                <div className="text-xs text-slate-500 mt-1">PDF or DOCX (max 10MB)</div>
-                                            </div>
-                                        </>
-                                    )}
-                                </div>
-                            </div>
-
-                            {uploadError && (
-                                <InfoBox variant="error">
-                                    <strong>Upload failed:</strong> {uploadError}
-                                </InfoBox>
-                            )}
-
-                            <FormField label="Information to Extract" hint="Select what you want to pull from the CV">
-                                <CheckboxGroup
-                                    options={CV_PARSER_FIELDS}
-                                    selected={extractFields}
-                                    onChange={(selected) => handleChange('extractFields', selected)}
-                                />
-                            </FormField>
-
-                            {extractFields.length > 0 && (
-                                <InfoBox variant="success">
-                                    <strong>Extracted data will include:</strong>
-                                    <ul className="list-disc list-inside mt-1 space-y-0.5">
-                                        {extractFields.map((field: string) => (
-                                            <li key={field}>{CV_PARSER_FIELDS.find(f => f.value === field)?.label || field}</li>
-                                        ))}
-                                    </ul>
-                                </InfoBox>
-                            )}
-                        </div>
-                    </div>
-                );
-            }
-
             case 'wait': {
                 const duration = getNumber(localConfig, 'duration', 30);
                 const unit = getString(localConfig, 'unit', 'seconds');
@@ -1097,7 +850,7 @@ Operations Team"
                             <div className="flex items-start gap-2">
                                 <LuClock className="w-4 h-4 mt-0.5 flex-shrink-0" />
                                 <div>
-                                    <strong>Pause Workflow</strong>
+                                    <strong>Pause Flow</strong>
                                     <p className="mt-1 opacity-80">Wait for a specified amount of time before continuing to the next step.</p>
                                 </div>
                             </div>
@@ -1131,7 +884,7 @@ Operations Team"
                                 <div className="flex items-center gap-2">
                                     <LuClock className="w-4 h-4" />
                                     <span>
-                                        The workflow will pause for <strong>{duration} {unit}</strong> before continuing.
+                                        The flow will pause for <strong>{duration} {unit}</strong> before continuing.
                                     </span>
                                 </div>
                             </InfoBox>
@@ -1148,7 +901,7 @@ Operations Team"
                                 <LuMessageSquare className="w-4 h-4 mt-0.5 flex-shrink-0" />
                                 <div>
                                     <strong>Add Log Entry</strong>
-                                    <p className="mt-1 opacity-80">Record a message in the workflow execution log for tracking and debugging.</p>
+                                    <p className="mt-1 opacity-80">Record a message in the case event log for tracking and debugging.</p>
                                 </div>
                             </div>
                         </InfoBox>
@@ -1168,7 +921,7 @@ Operations Team"
                                 />
                             </FormField>
 
-                            <FormField label="Log Message" hint="This message will be recorded in the execution history">
+                            <FormField label="Log Message" hint="This message will be recorded in the case event history">
                                 <TextArea
                                     rows={3}
                                     value={getString(localConfig, 'message')}
@@ -1182,7 +935,7 @@ Operations Team"
                             </div>
                             <div className="flex flex-wrap gap-2">
                                 {[
-                                    'Workflow step completed',
+                                    'Flow step completed',
                                     'Processing case data',
                                     'Sending notification',
                                     'Task completed successfully',
@@ -1210,7 +963,7 @@ Operations Team"
                                 <LuCalendar className="w-4 h-4 mt-0.5 flex-shrink-0" />
                                 <div>
                                     <strong>Date & Time Operation</strong>
-                                    <p className="mt-1 opacity-80">Work with dates and times in your workflow.</p>
+                                    <p className="mt-1 opacity-80">Work with dates and times in your flow.</p>
                                 </div>
                             </div>
                         </InfoBox>
@@ -1331,7 +1084,7 @@ Operations Team"
                                 <LuZap className="w-4 h-4 mt-0.5 flex-shrink-0" />
                                 <div>
                                     <strong>Store Data for Later</strong>
-                                    <p className="mt-1 opacity-80">Save information that you want to use in later steps of this workflow.</p>
+                                    <p className="mt-1 opacity-80">Save information that you want to use in later steps of this flow.</p>
                                 </div>
                             </div>
                         </InfoBox>

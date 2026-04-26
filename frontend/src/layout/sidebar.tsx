@@ -1,8 +1,8 @@
 import React, { useState } from "react";
 import { NavLink, useNavigate, useLocation, Link } from "react-router-dom";
-import { FiGitBranch, FiActivity, FiZap, FiLogOut, FiUser, FiShield, FiBarChart2, FiHome, FiUsers } from "react-icons/fi";
+import { FiGitBranch, FiBriefcase, FiZap, FiLogOut, FiUser, FiShield, FiBarChart2, FiHome, FiUsers } from "react-icons/fi";
 import { useAuth } from "../contexts/AuthContext";
-import { createWorkflow, fetchWorkflows } from "../api/workflows";
+import { createFlow, fetchFlows } from "../api/flows";
 import { Logo } from "../components/common/Logo";
 
 const Sidebar: React.FC = () => {
@@ -18,33 +18,24 @@ const Sidebar: React.FC = () => {
 
   const handleBuilderClick = async (e: React.MouseEvent) => {
     e.preventDefault();
-    if (location.pathname.startsWith('/builder') || location.pathname.match(/\/workflows\/\d+\/builder/)) {
+    if (location.pathname.startsWith('/builder') || location.pathname.match(/\/flows\/\d+\/builder/)) {
       // Already in builder, do nothing or maybe reset?
       return;
     }
 
     setIsCreating(true);
     try {
-        // "Resume" logic: If the last modified workflow is a "Draft" (e.g., Untitled and recent), resume it.
-        // For now, simpler heuristic: If there are workflows, pick the latest one?
-        // User requested: "if there's a workflow saved but not ran".
-        // We lack 'executions_count' here efficiently without fetching all executions.
-        // Strategy: Create New always ensures a clean slate, BUT user asked for resume.
-        // Let's Find the most recently updated workflow.
-        
-        const workflows = await fetchWorkflows();
+        const flows = await fetchFlows();
         // Sort by updated_at desc
-        const sorted = workflows.sort((a, b) => new Date(b.updated_at).getTime() - new Date(a.updated_at).getTime());
+        const sorted = flows.sort((a, b) => new Date(b.updated_at).getTime() - new Date(a.updated_at).getTime());
         
         const latest = sorted[0];
         
-        // Use a heuristic: If it is named "Untitled Workflow", assume it's a draft
-        if (latest && latest.name === "Untitled Workflow") {
-            navigate(`/workflows/${latest.id}/builder`);
+        if (latest && latest.name === "Untitled Flow") {
+            navigate(`/flows/${latest.id}/builder`);
         } else {
-            // Create new
-            const newWorkflow = await createWorkflow({ name: "Untitled Workflow" });
-            navigate(`/workflows/${newWorkflow.id}/builder`);
+            const newFlow = await createFlow({ name: "Untitled Flow" });
+            navigate(`/flows/${newFlow.id}/builder`);
         }
     } catch (err) {
         console.error("Failed to handle builder click", err);
@@ -64,8 +55,8 @@ const Sidebar: React.FC = () => {
         <Link to="/" className="d-flex align-items-center gap-3 no-underline group">
             <Logo style={{ width: '100px', height: 'auto' }} />
             <div>
-                <div className="fw-bold text-white tracking-tight leading-4 text-xl group-hover:text-cyan-400 transition-colors">HRFlow</div>
-                <div className="text-cyan-500 font-medium text-[10px] tracking-[0.2em] mt-1 whitespace-nowrap drop-shadow-[0_0_5px_rgba(6,182,212,0.5)]">WORKFLOW AUTOMATION</div>
+                <div className="fw-bold text-white tracking-tight leading-4 text-xl group-hover:text-cyan-400 transition-colors">BankFlow</div>
+                <div className="text-cyan-500 font-medium text-[10px] tracking-[0.2em] mt-1 whitespace-nowrap drop-shadow-[0_0_5px_rgba(6,182,212,0.5)]">CASE ORCHESTRATION</div>
             </div>
         </Link>
       </div>
@@ -103,9 +94,9 @@ const Sidebar: React.FC = () => {
           <span className="text-base tracking-wide">Dashboard</span>
         </NavLink>
 
-        {/* Workflows */}
+        {/* Flows */}
         <NavLink
-          to="/workflows"
+          to="/flows"
           style={{ textDecoration: 'none' }}
           className={({ isActive }) =>
             "flex items-center gap-3 px-3 py-3 rounded-lg transition-all duration-300 group !no-underline border-l-2 " +
@@ -115,7 +106,7 @@ const Sidebar: React.FC = () => {
           }
         >
           <FiGitBranch size={20} className="shrink-0" />
-          <span className="text-base tracking-wide">Workflows</span>
+          <span className="text-base tracking-wide">Flows</span>
         </NavLink>
 
         {/* Builder */}
@@ -134,9 +125,9 @@ const Sidebar: React.FC = () => {
           <span className="text-base tracking-wide">{isCreating ? "Loading..." : "Builder"}</span>
         </a>
 
-        {/* Executions list */}
+        {/* Cases list */}
         <NavLink
-          to="/executions"
+          to="/cases"
           style={{ textDecoration: 'none' }}
           className={({ isActive }) =>
             "flex items-center gap-3 px-3 py-3 rounded-lg transition-all duration-300 group !no-underline border-l-2 " +
@@ -145,8 +136,8 @@ const Sidebar: React.FC = () => {
                 : "border-transparent !text-slate-400 hover:!text-cyan-200 hover:bg-white/5 font-medium")
           }
         >
-          <FiActivity size={20} className="shrink-0" />
-          <span className="text-base tracking-wide">Executions</span>
+          <FiBriefcase size={20} className="shrink-0" />
+          <span className="text-base tracking-wide">Cases</span>
         </NavLink>
 
         {/* Admin - Audit Logs (only show for Admin users) */}

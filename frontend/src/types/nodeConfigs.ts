@@ -2,10 +2,10 @@
  * Node Configuration Type Definitions
  *
  * These interfaces define the configuration structure for each node type
- * in the HRFlow workflow builder.
+ * in the BankFlow flow builder.
  */
 
-// Trigger Node - Entry point for workflows
+// Trigger Node - Entry point for flows
 export interface TriggerNodeConfig {
   name?: string;
   email?: string;
@@ -38,13 +38,7 @@ export interface ConditionNodeConfig {
   value: string;
 }
 
-// CV Parser Node - Resume/CV data extraction
-export interface CvParserNodeConfig {
-  fileSource: string;
-  extractFields: ('name' | 'email' | 'phone' | 'skills' | 'experience')[];
-}
-
-// Wait/Delay Node - Pause workflow execution
+// Wait/Delay Node - Pause flow execution
 export interface WaitNodeConfig {
   duration: number;
   unit: 'seconds' | 'minutes' | 'hours';
@@ -84,7 +78,6 @@ export type NodeConfig =
   | HttpNodeConfig
   | DatabaseNodeConfig
   | ConditionNodeConfig
-  | CvParserNodeConfig
   | WaitNodeConfig
   | LoggerNodeConfig
   | DateTimeNodeConfig
@@ -98,7 +91,6 @@ export type NodeKind =
   | 'email'
   | 'database'
   | 'condition'
-  | 'cv_parser'
   | 'wait'
   | 'logger'
   | 'datetime'
@@ -136,10 +128,6 @@ export const DEFAULT_NODE_CONFIGS: Record<NodeKind, Partial<NodeConfig>> = {
     operator: 'equals',
     value: '',
   },
-  cv_parser: {
-    fileSource: '{{trigger.cvFile}}',
-    extractFields: ['name', 'email', 'phone', 'skills', 'experience'],
-  },
   wait: {
     duration: 30,
     unit: 'seconds',
@@ -170,13 +158,4 @@ export const CONDITION_OPERATORS = [
   { value: 'less_than', label: 'Less than' },
   { value: 'is_empty', label: 'Is empty' },
   { value: 'is_not_empty', label: 'Is not empty' },
-];
-
-// CV Parser available fields
-export const CV_PARSER_FIELDS = [
-  { value: 'name', label: 'Full Name' },
-  { value: 'email', label: 'Email Address' },
-  { value: 'phone', label: 'Phone Number' },
-  { value: 'skills', label: 'Skills' },
-  { value: 'experience', label: 'Experience' },
 ];

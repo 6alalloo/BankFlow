@@ -18,7 +18,7 @@ const NODE_TYPES = [
     { kind: 'condition', label: 'Condition', icon: LuSplit, color: 'text-purple-400', description: "Branches flow based on logic (If/Else)." },
     { kind: 'database', label: 'Database', icon: LuDatabase, color: 'text-rose-400', description: "Creates, updates, or looks up a case record." },
     { kind: 'variable', label: 'Set Variable', icon: LuBox, color: 'text-teal-400', description: "Store and manipulate data for use in later steps." },
-    { kind: 'wait', label: 'Delay / Wait', icon: LuClock, color: 'text-amber-400', description: "Pauses the workflow for a set duration." },
+    { kind: 'wait', label: 'Delay / Wait', icon: LuClock, color: 'text-amber-400', description: "Pauses the flow for a set duration." },
     { kind: 'datetime', label: 'Date / Time', icon: LuCalendar, color: 'text-orange-400', description: "Format, calculate, or get current date/time." },
     { kind: 'logger', label: 'Logger', icon: LuTerminal, color: 'text-slate-300', description: "Writes an audit-style log entry for traceability." },
 ];

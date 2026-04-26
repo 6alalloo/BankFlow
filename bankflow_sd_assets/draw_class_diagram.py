@@ -10,7 +10,6 @@ Strict 5-column layout:
 import matplotlib
 matplotlib.use("Agg")
 import matplotlib.pyplot as plt
-import matplotlib.patches as mpatches
 from matplotlib.patches import FancyBboxPatch
 import warnings
 warnings.filterwarnings("ignore")
@@ -459,16 +458,6 @@ dep(ia_boxes["User"], rt_boxes["Case"], label="assignee")
 # ═══════════════════════════════════════════════════════════════════════
 # COLUMN HEADER LABELS (below package title)
 # ═══════════════════════════════════════════════════════════════════════
-col_labels = [
-    (C1,  "Controllers"),
-    (C2,  "Services"),
-    (C3,  "Orchestration"),
-    (C4A, "Identity\n& Access"),
-    (C4B, "Flow\nDefinition"),
-    (C5A, "Case\nRuntime"),
-    (C5B, "Enums"),
-]
-
 # ── save ─────────────────────────────────────────────────────────────────
 out = "/sessions/wizardly-nice-allen/mnt/HRFlow/bankflow_sd_assets/19_class_diagram.png"
 plt.tight_layout(pad=0.1)

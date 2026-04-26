@@ -3,7 +3,7 @@
 // Component for picking variables from upstream nodes to insert into text fields
 
 import { useState, useRef, useEffect } from "react";
-import { FiChevronDown, FiBox, FiDatabase, FiMail, FiGlobe, FiClock, FiFile, FiCode, FiZap } from "react-icons/fi";
+import { FiChevronDown, FiBox, FiDatabase, FiMail, FiGlobe, FiClock, FiCode, FiZap } from "react-icons/fi";
 
 interface UpstreamNode {
     id: number;
@@ -25,7 +25,7 @@ interface VariablePickerProps {
 
 // Map node kinds to common output variables
 function getVariablesForNodeKind(kind: string, nodeId: number, nodeName: string): VariableOption[] {
-    const basePath = `$node["HRFlow ${nodeId} ${nodeName}"].json`;
+  const basePath = `$node["BankFlow ${nodeId} ${nodeName}"].json`;
 
     switch (kind.toLowerCase()) {
         case "trigger":
@@ -48,15 +48,6 @@ function getVariablesForNodeKind(kind: string, nodeId: number, nodeName: string)
             return [
                 { label: "Query Result", value: `{{${basePath}}}`, description: "Database query result" },
                 { label: "Row Count", value: `{{${basePath}.length}}`, description: "Number of returned rows" },
-            ];
-        case "cv_parse":
-            return [
-                { label: "Full Name", value: `{{${basePath}.name}}`, description: "Parsed document name" },
-                { label: "Email", value: `{{${basePath}.email}}`, description: "Parsed email" },
-                { label: "Phone", value: `{{${basePath}.phone}}`, description: "Phone number" },
-                { label: "Skills", value: `{{${basePath}.skills}}`, description: "Skills list" },
-                { label: "Education", value: `{{${basePath}.education}}`, description: "Education details" },
-                { label: "Experience", value: `{{${basePath}.experience}}`, description: "Experience summary" },
             ];
         case "variable":
             return [
@@ -81,7 +72,6 @@ function getNodeIcon(kind: string) {
         case "http": return <FiGlobe className="text-blue-400" />;
         case "database": return <FiDatabase className="text-emerald-400" />;
         case "email": return <FiMail className="text-purple-400" />;
-        case "cv_parse": return <FiFile className="text-pink-400" />;
         case "datetime": return <FiClock className="text-cyan-400" />;
         case "variable": return <FiBox className="text-orange-400" />;
         default: return <FiCode className="text-slate-400" />;

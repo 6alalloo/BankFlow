@@ -1,5 +1,8 @@
 import { Request, Response, NextFunction } from 'express';
-import { Prisma } from '@prisma/client';
+import {
+  PrismaClientKnownRequestError,
+  PrismaClientValidationError,
+} from '@prisma/client/runtime/library';
 import { AppError, isAppError, ErrorCodes } from '../types/errors';
 import logger from '../lib/logger';
 
@@ -67,7 +70,7 @@ export function errorHandler(
     }
   }
   // Handle Prisma errors (database errors)
-  else if (error instanceof Prisma.PrismaClientKnownRequestError) {
+  else if (error instanceof PrismaClientKnownRequestError) {
     statusCode = 400;
     errorCode = ErrorCodes.DATABASE_ERROR;
 
@@ -114,7 +117,7 @@ export function errorHandler(
     });
   }
   // Handle Prisma validation errors
-  else if (error instanceof Prisma.PrismaClientValidationError) {
+  else if (error instanceof PrismaClientValidationError) {
     statusCode = 400;
     errorCode = ErrorCodes.VALIDATION_ERROR;
     message = 'Invalid data provided';

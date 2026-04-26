@@ -216,8 +216,8 @@ export default function UserManagementPage() {
       closeModal();
       fetchUsers();
       setTimeout(() => setSuccessMessage(null), 4000);
-    } catch (error: any) {
-      setSubmitError(error.message || "An error occurred");
+    } catch (error: unknown) {
+      setSubmitError(error instanceof Error ? error.message : "An error occurred");
     } finally {
       setIsSubmitting(false);
     }
@@ -232,8 +232,8 @@ export default function UserManagementPage() {
       setSuccessMessage(`User ${user.is_active ? "deactivated" : "activated"} successfully`);
       fetchUsers();
       setTimeout(() => setSuccessMessage(null), 4000);
-    } catch (error: any) {
-      setSuccessMessage(error.message || "Failed to toggle user status");
+    } catch (error: unknown) {
+      setSuccessMessage(error instanceof Error ? error.message : "Failed to toggle user status");
       setTimeout(() => setSuccessMessage(null), 4000);
     } finally {
       setTogglingUserId(null);
@@ -263,8 +263,8 @@ export default function UserManagementPage() {
       setNewPassword("");
       setConfirmNewPassword("");
       setTimeout(() => setSuccessMessage(null), 4000);
-    } catch (error: any) {
-      setPasswordError(error.message || "Failed to change password");
+    } catch (error: unknown) {
+      setPasswordError(error instanceof Error ? error.message : "Failed to change password");
     } finally {
       setIsChangingPassword(false);
     }

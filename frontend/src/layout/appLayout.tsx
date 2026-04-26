@@ -13,15 +13,14 @@ const AppLayout: React.FC<AppLayoutProps> = ({ children }) => {
   const location = useLocation();
 
   const getBreadcrumbs = (path: string) => {
-    if (path.startsWith('/workflows')) {
-        if (path.includes('/builder')) return ['Workflows', 'Builder'];
-        // Check if it's a detail page (has ID)
-        if (path.split('/').length > 2 && !path.endsWith('/workflows')) return ['Workflows', 'Detail'];
-        return ['Workflows', 'Overview'];
+    if (path.startsWith('/flows')) {
+        if (path.includes('/builder')) return ['Flows', 'Builder'];
+        if (path.split('/').length > 2 && !path.endsWith('/flows')) return ['Flows', 'Detail'];
+        return ['Flows', 'Overview'];
     }
-    if (path.startsWith('/executions')) {
-        if (path.split('/').length > 2 && !path.endsWith('/executions')) return ['Executions', 'Detail'];
-        return ['Executions', 'History'];
+    if (path.startsWith('/cases')) {
+        if (path.split('/').length > 2 && !path.endsWith('/cases')) return ['Cases', 'Detail'];
+        return ['Cases', 'Work Queue'];
     }
     if (path.startsWith('/admin')) return ['Admin', 'Audit Logs'];
     return ['Platform', 'Overview'];

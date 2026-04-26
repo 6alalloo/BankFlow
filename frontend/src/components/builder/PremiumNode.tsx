@@ -60,9 +60,6 @@ const PremiumNode = ({ data, selected }: NodeProps) => {
             if (!table && !op) return "Click to configure";
             return `${op} → ${table}`.trim();
         }
-        if (kind === 'cv_parser' || kind === 'cv_parse') {
-            return "Parse uploaded CV";
-        }
         if (kind === 'trigger') {
             // Count how many fields are configured
             const configuredFields = Object.entries(config).filter(

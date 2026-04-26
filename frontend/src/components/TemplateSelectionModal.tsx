@@ -1,12 +1,12 @@
 import React, { useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { LuX, LuArrowRight, LuBriefcaseBusiness, LuZap, LuMail, LuDatabase, LuClock, LuTerminal, LuGlobe, LuSplit, LuBox } from 'react-icons/lu';
-import { templates, type WorkflowTemplate } from '../data/templates';
+import { templates, type FlowTemplate } from '../data/templates';
 
 interface TemplateSelectionModalProps {
     isOpen: boolean;
     onClose: () => void;
-    onSelectTemplate: (template: WorkflowTemplate) => void;
+    onSelectTemplate: (template: FlowTemplate) => void;
     isCreating?: boolean;
 }
 
@@ -37,7 +37,7 @@ const TemplateSelectionModal: React.FC<TemplateSelectionModalProps> = ({
 
     if (!isOpen) return null;
 
-    const handleSelect = (template: WorkflowTemplate) => {
+    const handleSelect = (template: FlowTemplate) => {
         setSelectedId(template.id);
         onSelectTemplate(template);
     };
@@ -95,7 +95,7 @@ const TemplateSelectionModal: React.FC<TemplateSelectionModalProps> = ({
                                             <div className="absolute inset-0 bg-navy-900/80 rounded-xl flex items-center justify-center z-10">
                                                 <div className="flex items-center gap-3 text-cyan-400">
                                                     <div className="w-5 h-5 border-2 border-cyan-400 border-t-transparent rounded-full animate-spin" />
-                                                    <span className="text-sm font-medium">Creating workflow...</span>
+                                                    <span className="text-sm font-medium">Creating flow...</span>
                                                 </div>
                                             </div>
                                         )}

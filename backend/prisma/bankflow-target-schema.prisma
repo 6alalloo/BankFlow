@@ -1,7 +1,4 @@
 // BankFlow active schema.
-//
-// This schema is the hard-cutover BankFlow domain model for case-flow
-// authoring and governed case runtime.
 
 generator client {
   provider = "prisma-client-js"

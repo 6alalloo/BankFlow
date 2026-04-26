@@ -1,3 +1,4 @@
+/* eslint-disable react-refresh/only-export-components */
 import React, { useState } from 'react';
 import { LuUser, LuMail, LuPhone, LuBuilding, LuBriefcase, LuFileText, LuCopy, LuCheck, LuHash, LuCalendar } from 'react-icons/lu';
 

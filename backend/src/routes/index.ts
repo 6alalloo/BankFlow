@@ -1,22 +1,30 @@
 
 import { Router } from "express";
-import workflowRoutes from "./workflowRoutes";
 import userRoutes from "./userRoutes";
 import roleRoutes from "./roleRoutes";
-import executionRoutes from "./executionRoutes";
 import authRoutes from "./authRoutes";
 import auditRoutes from "./auditRoutes";
 import dashboardRoutes from "./dashboardRoutes";
-import settingsRoutes from "./settingsRoutes";
 import fileRoutes from "./fileRoutes";
+import flowRoutes from "./flowRoutes";
+import caseRoutes from "./caseRoutes";
+import taskRoutes from "./taskRoutes";
+import approvalRoutes from "./approvalRoutes";
+import teamRoutes from "./teamRoutes";
 
 const router = Router();
 
 // Auth routes (login, logout, etc.) - must be before protected routes
 router.use("/auth", authRoutes);
 
-// All workflow endpoints under /api/workflows
-router.use("/workflows", workflowRoutes);
+// BankFlow case-flow authoring
+router.use("/flows", flowRoutes);
+
+// BankFlow runtime work surfaces
+router.use("/cases", caseRoutes);
+router.use("/tasks", taskRoutes);
+router.use("/approvals", approvalRoutes);
+router.use("/teams", teamRoutes);
 
 // /api/users/...
 router.use("/users", userRoutes);
@@ -24,17 +32,11 @@ router.use("/users", userRoutes);
 // /api/roles/...
 router.use("/roles", roleRoutes);
 
-// /api/executions/...
-router.use("/executions", executionRoutes);
-
 // /api/audit/... (Admin-only)
 router.use("/audit", auditRoutes);
 
-// /api/dashboard/... (Dashboard statistics)
+// /api/dashboard/... (Case operations summary)
 router.use("/dashboard", dashboardRoutes);
-
-// /api/settings/... (Admin-only settings)
-router.use("/settings", settingsRoutes);
 
 // /api/files/... (File uploads)
 router.use("/files", fileRoutes);

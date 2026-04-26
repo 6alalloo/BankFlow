@@ -1,5 +1,5 @@
 /**
- * Workflow Templates
+ * Flow Templates
  *
  * Starter definitions for the BankFlow fork.
  * These avoid HR-specific onboarding and recruiting scenarios.
@@ -21,7 +21,7 @@ export interface TemplateEdge {
     condition?: Record<string, unknown>;
 }
 
-export interface WorkflowTemplate {
+export interface FlowTemplate {
     id: string;
     name: string;
     description: string;
@@ -32,7 +32,7 @@ export interface WorkflowTemplate {
     requiredConfig: string[];
 }
 
-export const templates: WorkflowTemplate[] = [
+export const templates: FlowTemplate[] = [
     {
         id: 'aml-alert-review',
         name: 'AML Alert Review',
@@ -118,7 +118,7 @@ Open the case workspace and complete disposition notes.`,
         ],
         requiredConfig: [
             'Case intake details in the trigger step',
-            'SMTP credentials configured in n8n',
+        'SMTP credentials configured for BankFlow notifications',
             'Queue mailbox or analyst recipient address',
         ],
     },
@@ -213,15 +213,15 @@ We will update the case once the review is complete.`,
         requiredConfig: [
             'Case intake details in the trigger step',
             'Operations API endpoint if using the HTTP step',
-            'SMTP credentials configured in n8n',
+        'SMTP credentials configured for BankFlow notifications',
         ],
     },
 ];
 
-export const getTemplateById = (id: string): WorkflowTemplate | undefined => {
+export const getTemplateById = (id: string): FlowTemplate | undefined => {
     return templates.find((t) => t.id === id);
 };
 
-export const getTemplatesByCategory = (category: 'general'): WorkflowTemplate[] => {
+export const getTemplatesByCategory = (category: 'general'): FlowTemplate[] => {
     return templates.filter((t) => t.category === category);
 };

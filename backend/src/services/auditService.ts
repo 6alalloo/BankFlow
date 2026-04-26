@@ -3,9 +3,9 @@ import prisma from "../lib/prisma";
 import logger from "../lib/logger";
 
 export interface AuditLogParams {
-  eventType: string; // e.g., "workflow_created", "execution_completed"
+  eventType: string; // e.g., "flow_created", "case_completed"
   userId: number;
-  targetType?: string; // e.g., "workflow", "execution"
+  targetType?: string; // e.g., "flow", "case"
   targetId?: number;
   details?: Record<string, any>;
   ipAddress?: string;
@@ -114,23 +114,12 @@ export async function getAuditLogs(params: GetAuditLogsParams = {}) {
 }
 
 /**
- * Get audit logs for a specific workflow
+ * Get audit logs for a specific flow
  */
-export async function getWorkflowAuditLogs(workflowId: number, limit = 50) {
+export async function getFlowAuditLogs(flowId: number, limit = 50) {
   return getAuditLogs({
-    targetType: "workflow",
-    targetId: workflowId,
-    limit,
-  });
-}
-
-/**
- * Get audit logs for a specific execution
- */
-export async function getExecutionAuditLogs(executionId: number, limit = 50) {
-  return getAuditLogs({
-    targetType: "execution",
-    targetId: executionId,
+    targetType: "flow",
+    targetId: flowId,
     limit,
   });
 }

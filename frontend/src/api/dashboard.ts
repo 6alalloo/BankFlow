@@ -3,11 +3,11 @@ import { apiGet } from "./apiClient";
 
 export interface DashboardStats {
   totalUsers: number;
-  activeWorkflows: number;
-  executions24h: number;
-  totalExecutions: number;
+  activeFlows: number;
+  openCases: number;
+  totalCases: number;
   avgDurationMs: number;
-  executionsByStatus: {
+  casesByStatus: {
     completed: number;
     failed: number;
     running: number;

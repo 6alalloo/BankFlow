@@ -54,64 +54,30 @@ export async function getAuditLogs(req: Request, res: Response) {
 }
 
 /**
- * GET /api/audit/workflow/:workflowId
- * Get audit logs for a specific workflow
+ * GET /api/audit/flow/:flowId
+ * Get audit logs for a specific flow
  */
-export async function getWorkflowAuditLogs(req: Request, res: Response) {
+export async function getFlowAuditLogs(req: Request, res: Response) {
   try {
-    const { workflowId } = req.params;
-    const numericWorkflowId = parseInt(workflowId, 10);
+    const { flowId } = req.params;
+    const numericFlowId = parseInt(flowId, 10);
 
-    if (isNaN(numericWorkflowId)) {
+    if (isNaN(numericFlowId)) {
       return res.status(400).json({
-        message: "Invalid workflow ID",
+        message: "Invalid flow ID",
       });
     }
 
-    const result = await auditService.getWorkflowAuditLogs(numericWorkflowId);
+    const result = await auditService.getFlowAuditLogs(numericFlowId);
 
     return res.status(200).json({
       data: result.logs,
       total: result.total,
     });
   } catch (error) {
-    logger.error("Error getting workflow audit logs", {
+    logger.error("Error getting flow audit logs", {
       service: "AuditController",
-      workflowId: req.params.workflowId,
-      error: error instanceof Error ? error.message : String(error),
-      stack: error instanceof Error ? error.stack : undefined
-    });
-    return res.status(500).json({
-      message: "Internal server error",
-    });
-  }
-}
-
-/**
- * GET /api/audit/execution/:executionId
- * Get audit logs for a specific execution
- */
-export async function getExecutionAuditLogs(req: Request, res: Response) {
-  try {
-    const { executionId } = req.params;
-    const numericExecutionId = parseInt(executionId, 10);
-
-    if (isNaN(numericExecutionId)) {
-      return res.status(400).json({
-        message: "Invalid execution ID",
-      });
-    }
-
-    const result = await auditService.getExecutionAuditLogs(numericExecutionId);
-
-    return res.status(200).json({
-      data: result.logs,
-      total: result.total,
-    });
-  } catch (error) {
-    logger.error("Error getting execution audit logs", {
-      service: "AuditController",
-      executionId: req.params.executionId,
+      flowId: req.params.flowId,
       error: error instanceof Error ? error.message : String(error),
       stack: error instanceof Error ? error.stack : undefined
     });

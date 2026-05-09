@@ -234,5 +234,5 @@ export function cleanupExpiredFiles(): number {
   return cleaned;
 }
 
-// Start cleanup interval (every hour)
-setInterval(cleanupExpiredFiles, 60 * 60 * 1000);
+// Start cleanup interval (every hour) without keeping short-lived test/CLI processes alive.
+setInterval(cleanupExpiredFiles, 60 * 60 * 1000).unref();

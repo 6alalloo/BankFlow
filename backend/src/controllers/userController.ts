@@ -1,7 +1,9 @@
 import { Request, Response } from "express";
 import * as userService from "../services/userService";
+import { logAuditEvent } from "../services/auditService";
 import logger from "../lib/logger";
 import { createValidationError, createForbiddenError, createNotFoundError } from "../types/errors";
+import { pageMeta, parsePageQuery } from "../lib/query";
 
 /**
  * GET /api/users
@@ -13,6 +15,7 @@ import { createValidationError, createForbiddenError, createNotFoundError } from
 export async function getAllUsers(req: Request, res: Response) {
   try {
     const { active, role, q } = req.query;
+    const pageQuery = parsePageQuery(req);
 
     // Parse "active" query param into boolean | undefined.
     let isActiveFilter: boolean | undefined = undefined;
@@ -30,14 +33,17 @@ export async function getAllUsers(req: Request, res: Response) {
     const query =
       typeof q === "string" && q.trim().length > 0 ? q.trim() : undefined;
 
-    const users = await userService.getAllUsers({
+    const result = await userService.getAllUsers({
       isActive: isActiveFilter,
       roleName,
       query,
+      skip: pageQuery.skip,
+      take: pageQuery.take,
     });
 
     return res.status(200).json({
-      data: users,
+      data: result.users,
+      page: pageMeta(pageQuery, result.total),
     });
   } catch (error) {
     logger.error("Error getting all users", {
@@ -148,6 +154,16 @@ export async function createUser(req: Request, res: Response) {
       createdBy: req.user?.userId
     });
 
+    if (req.user?.userId) {
+      await logAuditEvent({
+        eventType: "user_created",
+        userId: req.user.userId,
+        targetType: "user",
+        targetId: user.id,
+        details: { email: user.email, roleId: role_id },
+      });
+    }
+
     return res.status(201).json({
       data: user,
     });
@@ -252,6 +268,20 @@ export async function updateUser(req: Request, res: Response) {
       updatedBy: req.user?.userId
     });
 
+    if (req.user?.userId) {
+      await logAuditEvent({
+        eventType: "user_updated",
+        userId: req.user.userId,
+        targetType: "user",
+        targetId: user.id,
+        details: {
+          emailChanged: email !== undefined,
+          fullNameChanged: full_name !== undefined,
+          roleChanged: role_id !== undefined,
+        },
+      });
+    }
+
     return res.status(200).json({
       data: user,
     });
@@ -323,6 +353,16 @@ export async function toggleUserStatus(req: Request, res: Response) {
       updatedBy: req.user?.userId
     });
 
+    if (req.user?.userId) {
+      await logAuditEvent({
+        eventType: "user_status_updated",
+        userId: req.user.userId,
+        targetType: "user",
+        targetId: user.id,
+        details: { is_active: user.is_active },
+      });
+    }
+
     return res.status(200).json({
       data: user,
     });
@@ -391,6 +431,16 @@ export async function changeUserPassword(req: Request, res: Response) {
       userId: numericId,
       changedBy: req.user?.userId
     });
+
+    if (req.user?.userId) {
+      await logAuditEvent({
+        eventType: "user_password_changed",
+        userId: req.user.userId,
+        targetType: "user",
+        targetId: numericId,
+        details: { changedByAdmin: true },
+      });
+    }
 
     return res.status(200).json({
       message: "Password changed successfully",

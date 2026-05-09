@@ -1042,7 +1042,7 @@ const FlowBuilderContent: React.FC = () => {
                      try {
                          beginSave();
                          // 4. Backend Call
-                         await import('../../api/flows').then(api => api.deleteFlowNode(state.flowId!, nodeId));
+                         await deleteFlowNode(state.flowId!, nodeId);
                      } catch(e) {
                          console.error("Delete failed", e);
                          alert("Failed to delete node");

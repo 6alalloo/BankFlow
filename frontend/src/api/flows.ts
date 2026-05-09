@@ -18,12 +18,13 @@ function getAuthHeaders(): Record<string, string> {
 
 /* ---------- Core API types ---------- */
 
-// Shape of flow as returned by the backend
 export type FlowApi = {
   id: number;
   owner_user_id: number | null;
   name: string;
   description: string | null;
+  case_type: string;
+  status: "draft" | "published" | "archived";
   is_active: boolean;
   version: number;
   default_trigger: string | null;
@@ -35,6 +36,21 @@ export type FlowApi = {
     full_name: string;
     email: string;
   } | null;
+  current_published_version?: {
+    id: number;
+    version_number: number;
+  } | null;
+};
+
+type RawFlowApi = Omit<FlowApi, "case_type" | "status" | "is_active" | "version" | "default_trigger" | "users"> & {
+  case_type?: string;
+  status?: "draft" | "published" | "archived";
+  is_active?: boolean;
+  version?: number;
+  default_trigger?: string | null;
+  users?: FlowApi["users"];
+  owners?: FlowApi["users"];
+  current_published_version?: FlowApi["current_published_version"] | null;
 };
 
 export type CreateFlowNodePayload = {
@@ -48,9 +64,9 @@ export type CreateFlowNodePayload = {
 /* ---------- List flows ---------- */
 
 type FlowsListResponse =
-  | FlowApi[]
-  | { data: FlowApi[] }
-  | { flows: FlowApi[] };
+  | RawFlowApi[]
+  | { data: RawFlowApi[] }
+  | { flows: RawFlowApi[] };
 
 export type FlowGraphMeta = {
   id: number;
@@ -198,6 +214,23 @@ function safeParseJson<T>(value: string | null | undefined, fallback: T): T {
   }
 }
 
+function normalizeFlow(raw: RawFlowApi): FlowApi {
+  const status = raw.status ?? (raw.is_active ? "published" : "draft");
+  return {
+    ...raw,
+    owner_user_id: raw.owner_user_id ?? null,
+    description: raw.description ?? null,
+    case_type: raw.case_type ?? "general_case",
+    status,
+    is_active: raw.is_active ?? status === "published",
+    version: raw.current_published_version?.version_number ?? raw.version ?? 0,
+    default_trigger: raw.default_trigger ?? null,
+    archived_at: raw.archived_at ?? null,
+    users: raw.users ?? raw.owners ?? null,
+    current_published_version: raw.current_published_version ?? null,
+  };
+}
+
 // GET /api/flows
 export async function fetchFlows(): Promise<FlowApi[]> {
   const res = await fetch(`${API_BASE_URL}/flows`, {
@@ -214,18 +247,17 @@ export async function fetchFlows(): Promise<FlowApi[]> {
   }
 
   const data = (await res.json()) as FlowsListResponse;
-  console.log("[fetchFlows] raw response:", data);
 
   if (Array.isArray(data)) {
-    return data;
+    return data.map(normalizeFlow);
   }
 
   if ("data" in data) {
-    return data.data;
+    return data.data.map(normalizeFlow);
   }
 
   if ("flows" in data) {
-    return data.flows;
+    return data.flows.map(normalizeFlow);
   }
 
   throw new Error("Unexpected flows response shape");
@@ -234,7 +266,7 @@ export async function fetchFlows(): Promise<FlowApi[]> {
 /* ---------- Single flow + graph ---------- */
 
 // Response type for GET /api/flows/:id
-type FlowByIdResponse = FlowApi | { data: FlowApi };
+type FlowByIdResponse = RawFlowApi | { data: RawFlowApi };
 
 // GET /api/flows/:id
 export async function fetchFlowById(id: number): Promise<FlowApi> {
@@ -250,13 +282,12 @@ export async function fetchFlowById(id: number): Promise<FlowApi> {
   }
 
   const data = (await res.json()) as FlowByIdResponse;
-  console.log("[fetchFlowById] raw response:", data);
 
   if ("data" in data) {
-    return data.data;
+    return normalizeFlow(data.data);
   }
 
-  return data;
+  return normalizeFlow(data);
 }
 
 export async function fetchFlowGraph(
@@ -280,7 +311,6 @@ export async function fetchFlowGraph(
   }
 
   const raw = (await res.json()) as FlowGraphResponse;
-  console.log("[fetchFlowGraph] raw response:", raw);
 
   const payload: FlowGraphPayload = "data" in raw ? raw.data : raw;
 
@@ -422,7 +452,6 @@ export async function updateFlowNodePosition(
   }
 
   const json = (await res.json()) as UpdateNodePositionResponse;
-  console.log("[updateFlowNodePosition] raw response:", json);
 
   const raw: FlowNodePositionDto =
     "data" in json ? json.data : (json as FlowNodePositionDto);
@@ -495,7 +524,6 @@ export async function updateFlowNode(
   }
 
   const json = (await res.json()) as UpdateFlowNodeResponse;
-  console.log("[updateFlowNode] raw response:", json);
 
   const raw: FlowNodeUpdateDto =
     "data" in json ? json.data : (json as FlowNodeUpdateDto);
@@ -538,7 +566,6 @@ export async function createFlowEdge(
   }
 
   const json = (await res.json()) as FlowEdgeResponse;
-  console.log("[createFlowEdge] raw response:", json);
 
   const raw: FlowEdgeDto =
     "data" in json ? json.data : (json as FlowEdgeDto);
@@ -612,7 +639,7 @@ export async function deleteFlowNode(
   }
 }
 
-type CreateFlowResponse = FlowApi | { data: FlowApi };
+type CreateFlowResponse = RawFlowApi | { data: RawFlowApi };
 
 export type CreateFlowPayload = {
   name: string;
@@ -639,7 +666,7 @@ export async function createFlow(payload: {
   }
 
   const json = (await res.json()) as CreateFlowResponse;
-  return "data" in json ? json.data : json;
+  return normalizeFlow("data" in json ? json.data : json);
 }
 
 export type UpdateFlowPayload = {
@@ -670,7 +697,7 @@ export async function updateFlow(
 
   const json = await res.json();
   const data = "data" in json ? json.data : json;
-  return data as FlowApi;
+  return normalizeFlow(data as RawFlowApi);
 }
 
 // POST /api/flows/:id/duplicate
@@ -687,7 +714,7 @@ export async function duplicateFlow(id: number): Promise<FlowApi> {
 
   const json = await res.json();
   const data = "data" in json ? json.data : json;
-  return data as FlowApi;
+  return normalizeFlow(data as RawFlowApi);
 }
 
 /* ---------- Settings API ---------- */

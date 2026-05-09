@@ -6,6 +6,8 @@ type UserFilters = {
   isActive?: boolean;
   roleName?: string;
   query?: string; // for "q" search
+  skip?: number;
+  take?: number;
 };
 
 /**
@@ -15,7 +17,7 @@ type UserFilters = {
  * - query: text search on email OR full_name
  */
 export async function getAllUsers(filters: UserFilters = {}) {
-  const { isActive, roleName, query } = filters;
+  const { isActive, roleName, query, skip, take } = filters;
 
   // We'll collect conditions here and then AND them together.
   const whereClauses: any[] = [];
@@ -59,27 +61,32 @@ export async function getAllUsers(filters: UserFilters = {}) {
   // If we have any conditions, wrap them in AND; otherwise, use an empty object.
   const where = whereClauses.length > 0 ? { AND: whereClauses } : {};
 
-  const users = await prisma.users.findMany({
-    where,
-    select: {
-      id: true,
-      email: true,
-      full_name: true,
-      is_active: true,
-      created_at: true,
-      roles: {
-        select: {
-          id: true,
-          name: true,
+  const [users, total] = await Promise.all([
+    prisma.users.findMany({
+      where,
+      skip,
+      take,
+      select: {
+        id: true,
+        email: true,
+        full_name: true,
+        is_active: true,
+        created_at: true,
+        roles: {
+          select: {
+            id: true,
+            name: true,
+          },
         },
       },
-    },
-    orderBy: {
-      created_at: "desc",
-    },
-  });
+      orderBy: {
+        created_at: "desc",
+      },
+    }),
+    prisma.users.count({ where }),
+  ]);
 
-  return users;
+  return { users, total };
 }
 
 /**

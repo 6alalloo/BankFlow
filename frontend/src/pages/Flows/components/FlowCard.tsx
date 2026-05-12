@@ -1,5 +1,5 @@
 import React from 'react';
-import { motion } from 'framer-motion';
+import { LazyMotion, domAnimation, m } from 'framer-motion';
 import { FiCheckCircle, FiAlertCircle } from 'react-icons/fi';
 import type { FlowApi } from '../../../api/flows';
 
@@ -18,7 +18,8 @@ const formatTime = (value?: string | null) => {
 
 const FlowCard: React.FC<FlowCardProps> = ({ flow, isActive, onClick }) => {
     return (
-        <motion.div
+        <LazyMotion features={domAnimation}>
+        <m.div
             layoutId={`flow-card-${flow.id}`}
             onClick={onClick}
             className={`
@@ -37,10 +38,10 @@ const FlowCard: React.FC<FlowCardProps> = ({ flow, isActive, onClick }) => {
 
             {/* 1. Status Indicator ( Glowing Hexagon or similar? Let's stick to a sharp pill) */}
              <div className={`
-                flex items-center justify-center w-8 h-8 rounded-sm bg-black/40 border flex-shrink-0 relative overflow-hidden
+                flex items-center justify-center size-8 rounded-sm bg-zinc-950/40 border flex-shrink-0 relative overflow-hidden
                 ${flow.is_active 
                     ? 'border-cyan-500/50 text-cyan-400 shadow-[0_0_15px_rgba(34,211,238,0.4)]' 
-                    : 'border-slate-700 text-slate-600'}
+                    : 'border-zinc-700 text-zinc-600'}
             `}>
                 {flow.is_active && <div className="absolute inset-0 bg-cyan-400/20 animate-pulse" />}
                 {flow.is_active ? <FiCheckCircle size={14} /> : <FiAlertCircle size={14} />}
@@ -49,7 +50,7 @@ const FlowCard: React.FC<FlowCardProps> = ({ flow, isActive, onClick }) => {
             {/* 2. Content */}
             <div className="flex-1 min-w-0 flex flex-col gap-1 z-10">
                  <div className="flex items-center justify-between gap-2">
-                    <h3 className={`text-sm font-bold tracking-wide uppercase truncate ${isActive ? 'text-cyan-100 drop-shadow-md' : 'text-slate-400 group-hover:text-cyan-200 transition-colors'}`}>
+                    <h3 className={`text-sm font-semibold tracking-wide uppercase truncate ${isActive ? 'text-cyan-100 drop-shadow-md' : 'text-zinc-400 group-hover:text-cyan-200 transition-colors'}`}>
                         {flow.name}
                     </h3>
                      <span className={`text-[10px] font-mono text-cyan-500/80 flex-shrink-0 ${isActive ? 'opacity-100' : 'opacity-0 group-hover:opacity-100 transition-opacity'}`}>
@@ -58,7 +59,7 @@ const FlowCard: React.FC<FlowCardProps> = ({ flow, isActive, onClick }) => {
                  </div>
                  
                  <div className="flex items-center gap-2">
-                     <span className={`text-[9px] font-bold uppercase tracking-[0.2em] ${flow.is_active ? 'text-cyan-400' : 'text-slate-600'}`}>
+                     <span className={`text-[9px] font-semibold uppercase tracking-[0.2em] ${flow.is_active ? 'text-cyan-400' : 'text-zinc-600'}`}>
                         {flow.is_active ? 'ONLINE' : 'OFFLINE'}
                      </span>
                      <div className="h-px bg-white/10 flex-1" />
@@ -69,7 +70,8 @@ const FlowCard: React.FC<FlowCardProps> = ({ flow, isActive, onClick }) => {
             {isActive && (
                 <div className="absolute right-0 top-0 bottom-0 w-1 bg-cyan-400 shadow-[0_0_15px_rgba(34,211,238,0.8)]" />
             )}
-        </motion.div>
+        </m.div>
+        </LazyMotion>
     );
 };
 

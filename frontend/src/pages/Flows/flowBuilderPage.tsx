@@ -40,6 +40,7 @@ import Sidebar from '../../layout/sidebar'; // Import Sidebar
 import ConfigPanel from '../../components/builder/ConfigPanel';
 import NodePicker from '../../components/builder/NodePicker';
 import { templates, type FlowTemplate } from '../../data/templates';
+import { DEFAULT_NODE_CONFIGS, type NodeKind } from '../../types/nodeConfigs';
 
 // ... existing types ...
 
@@ -58,7 +59,7 @@ const CustomEdge = ({
   targetY,
   sourcePosition,
   targetPosition,
-  style = {},
+  style = EMPTY_EDGE_STYLE,
   markerEnd,
 }: EdgeProps) => {
   const [edgePath] = getBezierPath({
@@ -100,7 +101,7 @@ const SuggestedEdge = ({
     targetPosition,
   });
 
-  const handleClick = () => {
+  const connectSuggestedEdge = () => {
     if (data?.onConnect) {
       data.onConnect();
     }
@@ -115,7 +116,7 @@ const SuggestedEdge = ({
         stroke="transparent"
         strokeWidth={20}
         style={{ cursor: 'pointer' }}
-        onClick={handleClick}
+        onClick={connectSuggestedEdge}
       />
       {/* Visible dashed path */}
       <path
@@ -133,24 +134,10 @@ const SuggestedEdge = ({
         width={24}
         height={24}
         style={{ overflow: 'visible', cursor: 'pointer' }}
-        onClick={handleClick}
+        onClick={connectSuggestedEdge}
       >
         <div
-          style={{
-            width: 24,
-            height: 24,
-            borderRadius: '50%',
-            backgroundColor: '#1e293b',
-            border: '2px solid #475569',
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'center',
-            color: '#94a3b8',
-            fontSize: 16,
-            fontWeight: 'bold',
-            transition: 'all 0.2s',
-          }}
-          className="hover:bg-cyan-600 hover:border-cyan-500 hover:text-white"
+          className="flex size-6 items-center justify-center rounded-full border-2 border-zinc-600 bg-zinc-800 text-base font-semibold text-zinc-400 transition-colors hover:bg-cyan-600 hover:border-cyan-500 hover:text-white"
           title="Click to connect these nodes"
         >
           +
@@ -169,6 +156,8 @@ const edgeTypes = {
   custom: CustomEdge,
   suggested: SuggestedEdge,
 };
+
+const EMPTY_EDGE_STYLE: React.CSSProperties = {};
 
 
 // Local Type Definition since we removed the old component
@@ -539,10 +528,11 @@ const FlowBuilderContent: React.FC = () => {
   useEffect(() => {
     if (!loading && !hasInitialFit.current && rfNodes.length > 0) {
       // Small delay to allow React Flow to measure the nodes in the DOM
-      setTimeout(() => {
+      const timer = setTimeout(() => {
           fitView({ padding: 0.4, duration: 500 });
           hasInitialFit.current = true;
       }, 100);
+      return () => clearTimeout(timer);
     }
   }, [loading, rfNodes, fitView]);
 
@@ -564,6 +554,7 @@ const FlowBuilderContent: React.FC = () => {
   // Handler for applying template to current flow
   const handleApplyTemplate = async (template: FlowTemplate) => {
     if (!state.flowId || isApplyingTemplate) return;
+    const flowId = state.flowId;
 
     try {
       setIsApplyingTemplate(true);
@@ -571,16 +562,14 @@ const FlowBuilderContent: React.FC = () => {
       setIsTemplateDropdownOpen(false);
 
       // Delete all existing nodes (this also deletes edges due to cascade)
-      for (const node of state.nodes) {
-        await deleteFlowNode(state.flowId, node.id);
-      }
+      await Promise.all(state.nodes.map((node) => deleteFlowNode(flowId, node.id)));
 
       // Create a mapping of template node IDs to actual node IDs
       const nodeIdMap: Record<string, number> = {};
 
       // Add nodes from template
-      for (const templateNode of template.nodes) {
-        const nodeResponse = await createFlowNode(state.flowId, {
+      await Promise.all(template.nodes.map(async (templateNode) => {
+        const nodeResponse = await createFlowNode(flowId, {
           kind: templateNode.kind,
           name: templateNode.name,
           posX: templateNode.pos_x,
@@ -588,28 +577,28 @@ const FlowBuilderContent: React.FC = () => {
           config: templateNode.config,
         });
         nodeIdMap[templateNode.id] = nodeResponse.id;
-      }
+      }));
 
       // Add edges from template
-      for (const templateEdge of template.edges) {
+      await Promise.all(template.edges.map(async (templateEdge) => {
         const fromNodeId = nodeIdMap[templateEdge.from];
         const toNodeId = nodeIdMap[templateEdge.to];
 
         if (fromNodeId && toNodeId) {
-          await createFlowEdge(state.flowId, {
+          await createFlowEdge(flowId, {
             fromNodeId,
             toNodeId,
             label: templateEdge.label || undefined,
             condition: templateEdge.condition || undefined,
           });
         }
-      }
+      }));
 
       // Update flow name to template name
-      await updateFlow(state.flowId, { name: template.name });
+      await updateFlow(flowId, { name: template.name });
 
       // Refresh the graph
-      const graph = await fetchFlowGraph(state.flowId);
+      const graph = await fetchFlowGraph(flowId);
       setState(prev => ({
         ...prev,
         flowMeta: graph.flow,
@@ -787,7 +776,8 @@ const FlowBuilderContent: React.FC = () => {
           const newNode = await createFlowNode(state.flowId, {
               kind,
               posX, 
-              posY
+              posY,
+              config: DEFAULT_NODE_CONFIGS[kind as NodeKind] ?? {},
           });
 
           // 2. Create Edge from Parent -> New Node (ONLY if parent exists)
@@ -827,7 +817,7 @@ const FlowBuilderContent: React.FC = () => {
         className="flex items-center justify-center bg-navy-950"
         style={{ width: '100vw', height: '100vh' }}
       >
-        <div className="text-slate-400 text-lg">Loading flow builder...</div>
+        <div className="text-zinc-400 text-lg">Loading flow builder?</div>
       </div>
     );
   }
@@ -838,7 +828,7 @@ const FlowBuilderContent: React.FC = () => {
         className="flex flex-col items-center justify-center gap-4 bg-navy-950"
         style={{ width: '100vw', height: '100vh' }}
       >
-        <h1 className="text-xl font-bold text-white">Flow Builder</h1>
+        <h1 className="text-xl font-semibold text-white">Flow Builder</h1>
         <div className="px-4 py-3 bg-red-500/20 border border-red-500/30 rounded-lg text-red-300">{error}</div>
         <button
           className="px-4 py-2 bg-white/10 hover:bg-white/20 rounded-lg text-white text-sm transition"
@@ -852,7 +842,7 @@ const FlowBuilderContent: React.FC = () => {
 
 
   return (
-    <div className="flex h-screen w-screen overflow-hidden bg-navy-950">
+    <div className="flex size-screen overflow-hidden bg-navy-950">
         {/* 1. Sidebar */}
         <Sidebar />
 
@@ -863,15 +853,15 @@ const FlowBuilderContent: React.FC = () => {
             <div className="absolute top-4 left-4 z-40 flex items-center gap-4">
                 <div className="bg-navy-900/90 backdrop-blur border border-white/10 rounded-xl px-4 py-2 flex items-center gap-3 shadow-xl">
                     <input 
-                        className="bg-transparent border-none text-white font-bold text-lg focus:ring-0 placeholder-white/30 w-[300px]"
+                        className="bg-transparent border-none text-white font-semibold text-lg focus:ring-0 placeholder-white/30 w-[300px]"
                         value={state.flowMeta?.name || ''}
                         onChange={e => handleRename(e.target.value)}
                         placeholder="Untitled Flow"
                     />
                     <div className="h-4 w-px bg-white/10" />
-                    <div className="flex items-center gap-2 text-xs text-slate-400">
+                    <div className="flex items-center gap-2 text-xs text-zinc-400">
                         {isSaving ? (
-                            <span className="flex items-center gap-1 text-amber-400"><div className="w-2 h-2 rounded-full bg-amber-400 animate-pulse"/> Saving...</span>
+                            <span className="flex items-center gap-1 text-amber-400"><div className="size-2 rounded-full bg-amber-400 animate-pulse"/> Saving?</span>
                         ) : (
                             <span className="flex items-center gap-1"><FiCheck className="text-emerald-400"/> Saved</span>
                         )}
@@ -886,19 +876,19 @@ const FlowBuilderContent: React.FC = () => {
                         className="bg-purple-600/90 hover:bg-purple-500 transition shadow-lg px-3 py-2 rounded-xl text-white font-medium flex items-center gap-2 text-sm disabled:opacity-50"
                     >
                         {isApplyingTemplate ? (
-                            <div className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin" />
+                            <div className="size-4 border-2 border-white/30 border-t-white rounded-full animate-spin" />
                         ) : (
-                            <LuLayoutTemplate className="w-4 h-4" />
+                            <LuLayoutTemplate className="size-4" />
                         )}
                         Templates
-                        <LuChevronDown className={`w-3 h-3 transition-transform ${isTemplateDropdownOpen ? 'rotate-180' : ''}`} />
+                        <LuChevronDown className={`size-3 transition-transform ${isTemplateDropdownOpen ? 'rotate-180' : ''}`} />
                     </button>
                     
                     {/* Dropdown Menu */}
                     {isTemplateDropdownOpen && (
                         <div className="absolute top-full mt-2 left-0 bg-navy-900 border border-white/10 rounded-xl shadow-2xl overflow-hidden min-w-[280px] z-50">
                             <div className="p-2 border-b border-white/10 bg-white/5">
-                                <span className="text-xs font-medium text-slate-400 uppercase tracking-wider">Apply Template</span>
+                                <span className="text-xs font-medium text-zinc-400 uppercase tracking-wider">Apply Template</span>
                             </div>
                             {templates.map((template) => {
                                 const CategoryIcon = LuServer;
@@ -908,14 +898,14 @@ const FlowBuilderContent: React.FC = () => {
                                         onClick={() => setShowTemplateConfirm(template)}
                                         className="w-full px-4 py-3 text-left hover:bg-white/5 transition-colors flex items-center gap-3 border-b border-white/5 last:border-b-0"
                                     >
-                                        <div className={`w-8 h-8 rounded-lg flex items-center justify-center ${
+                                        <div className={`size-8 rounded-lg flex items-center justify-center ${
                                             'bg-green-400/10 text-green-400'
                                         }`}>
-                                            <CategoryIcon className="w-4 h-4" />
+                                            <CategoryIcon className="size-4" />
                                         </div>
                                         <div className="flex-1 min-w-0">
                                             <div className="text-sm font-medium text-white">{template.name}</div>
-                                            <div className="text-xs text-slate-500 truncate">{template.nodes.length} nodes</div>
+                                            <div className="text-xs text-zinc-500 truncate">{template.nodes.length} nodes</div>
                                         </div>
                                     </button>
                                 );
@@ -928,30 +918,31 @@ const FlowBuilderContent: React.FC = () => {
 
             {/* Template Confirmation Modal */}
             {showTemplateConfirm && (
-                <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm" onClick={() => setShowTemplateConfirm(null)}>
-                    <div className="bg-navy-900 border border-white/10 rounded-2xl p-6 max-w-md shadow-2xl" onClick={e => e.stopPropagation()}>
+                <div className="fixed inset-0 z-50 flex items-center justify-center bg-zinc-950/60 backdrop-blur-sm">
+                    <button type="button" aria-label="Close template confirmation" className="absolute inset-0" onClick={() => setShowTemplateConfirm(null)} />
+                    <div className="bg-navy-900 border border-white/10 rounded-2xl p-6 max-w-md shadow-2xl relative z-10">
                         <div className="flex items-center gap-3 mb-4">
-                            <div className="w-10 h-10 rounded-xl bg-amber-500/20 flex items-center justify-center">
-                                <LuTriangleAlert className="w-5 h-5 text-amber-400" />
+                            <div className="size-10 rounded-xl bg-amber-500/20 flex items-center justify-center">
+                                <LuTriangleAlert className="size-5 text-amber-400" />
                             </div>
                             <div>
-                                <h3 className="text-lg font-bold text-white">Apply Template?</h3>
-                                <p className="text-sm text-slate-400">This will replace all existing nodes</p>
+                                <h3 className="text-lg font-semibold text-white">Apply Template?</h3>
+                                <p className="text-sm text-zinc-400">This will replace all existing nodes</p>
                             </div>
                         </div>
-                        <p className="text-sm text-slate-300 mb-6">
+                        <p className="text-sm text-zinc-300 mb-6">
                             Applying "<span className="font-medium text-white">{showTemplateConfirm.name}</span>" will remove all current nodes and replace them with the template's {showTemplateConfirm.nodes.length} nodes.
                         </p>
                         <div className="flex gap-3 justify-end">
                             <button
                                 onClick={() => setShowTemplateConfirm(null)}
-                                className="px-4 py-2 rounded-lg text-sm font-medium text-slate-400 hover:text-white hover:bg-white/5 transition-colors"
+                                className="px-4 py-2 rounded-lg text-sm font-medium text-zinc-400 hover:text-white hover:bg-white/5 transition-colors"
                             >
                                 Cancel
                             </button>
                             <button
                                 onClick={() => handleApplyTemplate(showTemplateConfirm)}
-                                className="px-4 py-2 rounded-lg text-sm font-bold bg-purple-600 hover:bg-purple-500 text-white transition-colors"
+                                className="px-4 py-2 rounded-lg text-sm font-semibold bg-purple-600 hover:bg-purple-500 text-white transition-colors"
                             >
                                 Apply Template
                             </button>
@@ -962,7 +953,7 @@ const FlowBuilderContent: React.FC = () => {
 
 
             {/* Canvas */}
-            <div className="flex-1 w-full h-full" ref={flowWrapperRef}>
+            <div className="flex-1 size-full" ref={flowWrapperRef}>
                 <ReactFlow
                     nodes={rfNodes}
                     edges={rfEdges}
@@ -1005,7 +996,7 @@ const FlowBuilderContent: React.FC = () => {
                     return {
                         id: found.id,
                         name: found.name || '',
-                        kind: found.kind as 'trigger' | 'http' | 'email' | 'database' | 'condition' | 'wait' | 'logger' | 'datetime' | 'variable',
+                        kind: found.kind as NodeKind,
                         config: found.config || {}
                     };
                 })()}

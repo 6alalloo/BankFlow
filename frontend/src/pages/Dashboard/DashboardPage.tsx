@@ -1,10 +1,11 @@
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 
 import { Link, useNavigate } from "react-router-dom";
 import { useAuth } from "../../contexts/AuthContext";
 import { createFlow, createFlowNode, createFlowEdge } from "../../api/flows";
 import { apiGet } from "../../api/apiClient";
 import { fetchDashboardStats, fetchDashboardCharts, type DashboardStats, type ChartData } from "../../api/dashboard";
+import { fetchCases } from "../../api/cases";
 import StatCard from "../../components/Dashboard/DashboardStatCard";
 import { ActivityChart, StatusChart, VolumeChart } from "../../components/Dashboard/DashboardCharts";
 import TemplatePreviewModal from "../../components/TemplatePreviewModal";
@@ -86,7 +87,7 @@ const nodeIconMap: Record<string, { icon: IconType; color: string }> = {
     variable: { icon: LuBox, color: 'text-teal-400' },
     wait: { icon: LuClock, color: 'text-amber-400' },
     datetime: { icon: LuCalendar, color: 'text-orange-400' },
-    logger: { icon: LuTerminal, color: 'text-slate-300' },
+    logger: { icon: LuTerminal, color: 'text-zinc-300' },
 };
 
 export default function DashboardPage() {
@@ -100,8 +101,7 @@ export default function DashboardPage() {
     // Template modal state
     const [selectedTemplate, setSelectedTemplate] = useState<FlowTemplate | null>(null);
     const [isTemplateModalOpen, setIsTemplateModalOpen] = useState(false);
-    // eslint-disable-next-line @typescript-eslint/no-unused-vars
-    const [_isCreatingFromTemplate, setIsCreatingFromTemplate] = useState(false);
+    const isCreatingFromTemplateRef = useRef(false);
 
     // Stats State
     const [stats, setStats] = useState<DashboardStats>({
@@ -111,10 +111,11 @@ export default function DashboardPage() {
         totalCases: 0,
         avgDurationMs: 0,
         casesByStatus: {
-            completed: 0,
-            failed: 0,
-            running: 0,
-            engine_error: 0,
+            resolved: 0,
+            closed: 0,
+            escalated: 0,
+            pending_action: 0,
+            pending_approval: 0,
         },
     });
 
@@ -143,7 +144,7 @@ export default function DashboardPage() {
 
     const handleUseTemplate = async (template: FlowTemplate) => {
         try {
-            setIsCreatingFromTemplate(true);
+            isCreatingFromTemplateRef.current = true;
 
             // Create new flow with template name
             const newFlow = await createFlow({ name: template.name, description: template.description });
@@ -153,7 +154,7 @@ export default function DashboardPage() {
             const nodeIdMap: Record<string, number> = {};
 
             // Add nodes from template
-            for (const templateNode of template.nodes) {
+            await Promise.all(template.nodes.map(async (templateNode) => {
                 const nodeResponse = await createFlowNode(flowId, {
                     kind: templateNode.kind,
                     name: templateNode.name,
@@ -162,10 +163,10 @@ export default function DashboardPage() {
                     config: templateNode.config,
                 });
                 nodeIdMap[templateNode.id] = nodeResponse.id;
-            }
+            }));
 
             // Add edges from template
-            for (const templateEdge of template.edges) {
+            await Promise.all(template.edges.map(async (templateEdge) => {
                 const fromNodeId = nodeIdMap[templateEdge.from];
                 const toNodeId = nodeIdMap[templateEdge.to];
 
@@ -177,14 +178,14 @@ export default function DashboardPage() {
                         condition: templateEdge.condition,
                     });
                 }
-            }
+            }));
 
             setIsTemplateModalOpen(false);
             navigate(`/flows/${flowId}/builder`);
         } catch (error) {
             console.error("Failed to create flow from template", error);
         } finally {
-            setIsCreatingFromTemplate(false);
+            isCreatingFromTemplateRef.current = false;
         }
     };
 
@@ -222,12 +223,12 @@ export default function DashboardPage() {
                     }));
                     setActivities(mapped);
                 } else {
-                    const caseRes = await apiGet<{ data: { id: number; status: string; title?: string | null; case_reference: string; created_at: string; updated_at: string }[] }>('/cases?limit=5');
-                    const mapped = caseRes.data.map((item) => ({
+                    const caseRows = await fetchCases();
+                    const mapped = caseRows.slice(0, 5).map((item) => ({
                         id: item.id,
                         action: `Case ${item.status}`,
                         target: item.title || item.case_reference,
-                        timestamp: formatTimeAgo(item.updated_at || item.created_at),
+                        timestamp: formatTimeAgo(item.opened_at),
                         type: 'case' as const,
                         status: item.status,
                     }));
@@ -266,7 +267,7 @@ export default function DashboardPage() {
             
             {/* Ambient Glows */}
             <div className="absolute top-0 right-[-10%] w-[600px] h-[600px] bg-cyan-500/5 rounded-full blur-[120px] pointer-events-none" />
-            <div className="absolute bottom-[-10%] left-[-10%] w-[600px] h-[600px] bg-indigo-500/5 rounded-full blur-[120px] pointer-events-none" />
+            <div className="absolute bottom-[-10%] left-[-10%] w-[600px] h-[600px] bg-blue-500/5 rounded-full blur-[120px] pointer-events-none" />
 
             {/* Main Content Container */}
             <div className="flex-1 overflow-y-auto custom-scrollbar relative z-10 p-6 md:p-8 pt-16">
@@ -274,8 +275,8 @@ export default function DashboardPage() {
                 {/* 1. Header Section */}
                 <div className="max-w-7xl mx-auto mb-10 flex flex-col md:flex-row items-end justify-between gap-6 border-b border-white/5 pb-6">
                     <div>
-                         <h1 className="text-3xl md:text-4xl font-bold tracking-tight text-white mb-1">
-                            {getGreeting()}, <span className="text-transparent bg-clip-text bg-gradient-to-r from-cyan-400 to-blue-500">{user?.full_name?.split(' ')[0] || 'User'}</span>
+                         <h1 className="text-3xl md:text-4xl font-semibold tracking-tight text-white mb-1">
+                            {getGreeting()}, <span className="text-cyan-300">{user?.full_name?.split(' ')[0] || 'User'}</span>
                          </h1>
                     </div>
 
@@ -296,7 +297,7 @@ export default function DashboardPage() {
                         {/* Row 1: Key Metrics */}
                         <StatCard
                             title="Total Users"
-                            value={isLoading ? "..." : stats.totalUsers}
+                            value={isLoading ? "?" : stats.totalUsers}
                             icon={FiUsers}
                             trend="neutral"
                             trendValue="All Users"
@@ -304,7 +305,7 @@ export default function DashboardPage() {
                         />
                         <StatCard
                             title="Active Flows"
-                            value={isLoading ? "..." : stats.activeFlows}
+                            value={isLoading ? "?" : stats.activeFlows}
                             icon={FiLayers}
                             trend="neutral"
                             trendValue="Online"
@@ -312,7 +313,7 @@ export default function DashboardPage() {
                         />
                         <StatCard
                             title="Avg. Case Age"
-                            value={isLoading ? "..." : formatDurationFromMs(stats.avgDurationMs)}
+                            value={isLoading ? "?" : formatDurationFromMs(stats.avgDurationMs)}
                             icon={FiClock}
                             trend="neutral"
                             trendValue="Per Case"
@@ -320,7 +321,7 @@ export default function DashboardPage() {
                         />
                         <StatCard
                             title="Open Cases"
-                            value={isLoading ? "..." : stats.openCases}
+                            value={isLoading ? "?" : stats.openCases}
                             icon={FiActivity}
                             trend="neutral"
                             trendValue="Today"
@@ -335,7 +336,7 @@ export default function DashboardPage() {
                                     System Load (24h)
                                 </h3>
                                 <div className="flex gap-2">
-                                    <span className="w-2 h-2 rounded-full bg-cyan-500 shadow-[0_0_10px_#06b6d4]" />
+                                    <span className="size-2 rounded-full bg-cyan-500 shadow-[0_0_10px_#06b6d4]" />
                                     <span className="text-[10px] font-mono text-cyan-500">LIVE</span>
                                 </div>
                            </div>
@@ -346,16 +347,16 @@ export default function DashboardPage() {
                             {/* Quick Action: Audit Logs */}
                             <Link to="/admin/audit-logs" className="bg-[#050b14] border border-red-500/20 rounded-xl p-6 hover:border-red-500/50 hover:bg-red-950/10 transition-all flex flex-col justify-center items-center text-center group">
                                 <FiShield className="text-3xl text-red-500 mb-3 group-hover:scale-110 transition-transform" />
-                                <h3 className="text-red-400 font-bold mb-1">Audit Logs</h3>
-                                <p className="text-[10px] text-slate-500 font-mono">View Security Events</p>
+                                <h3 className="text-red-400 font-semibold mb-1">Audit Logs</h3>
+                                <p className="text-[10px] text-zinc-500 font-mono">View Security Events</p>
                             </Link>
 
                              {/* Quick Action: New Flow */}
-                            <div onClick={handleCreateFlow} className="bg-[#050b14] border border-cyan-500/20 rounded-xl p-6 hover:border-cyan-500/50 hover:bg-cyan-950/10 transition-all flex flex-col justify-center items-center text-center group cursor-pointer">
+                            <button type="button" onClick={handleCreateFlow} className="bg-[#050b14] border border-cyan-500/20 rounded-xl p-6 hover:border-cyan-500/50 hover:bg-cyan-950/10 transition-all flex flex-col justify-center items-center text-center group cursor-pointer">
                                 <FiPlusCircle className="text-3xl text-cyan-500 mb-3 group-hover:scale-110 transition-transform" />
-                                <h3 className="text-cyan-400 font-bold mb-1">New Flow</h3>
-                                <p className="text-[10px] text-slate-500 font-mono">Deploy Protocol</p>
-                            </div>
+                                <h3 className="text-cyan-400 font-semibold mb-1">New Flow</h3>
+                                <p className="text-[10px] text-zinc-500 font-mono">Deploy Protocol</p>
+                            </button>
                         </div>
                     </div>
                 ) : (
@@ -365,7 +366,7 @@ export default function DashboardPage() {
                         <div className="space-y-6">
                             <StatCard
                                 title="My Cases"
-                                value={isLoading ? "..." : stats.totalCases}
+                                value={isLoading ? "?" : stats.totalCases}
                                 icon={FiActivity}
                                 trend="neutral"
                                 trendValue="Total"
@@ -373,15 +374,15 @@ export default function DashboardPage() {
                             />
                             <StatCard
                                 title="Success Rate"
-                                value={isLoading ? "..." : `${stats.totalCases > 0 ? Math.round((stats.casesByStatus.completed / stats.totalCases) * 100) : 0}%`}
+                                value={isLoading ? "?" : `${stats.totalCases > 0 ? Math.round((((stats.casesByStatus.resolved ?? 0) + (stats.casesByStatus.closed ?? 0)) / stats.totalCases) * 100) : 0}%`}
                                 icon={FiCheckCircle}
-                                trend={stats.casesByStatus.completed > stats.casesByStatus.failed ? 'up' : 'down'}
-                                trendValue={stats.casesByStatus.completed > stats.casesByStatus.failed ? 'Good' : 'Attn'}
-                                color={stats.casesByStatus.completed > stats.casesByStatus.failed ? 'emerald' : 'rose'}
+                                trend={(stats.casesByStatus.escalated ?? 0) > 0 ? 'down' : 'up'}
+                                trendValue={(stats.casesByStatus.escalated ?? 0) > 0 ? 'Attn' : 'Good'}
+                                color={(stats.casesByStatus.escalated ?? 0) > 0 ? 'rose' : 'emerald'}
                             />
                             <StatCard
                                 title="Avg. Duration"
-                                value={isLoading ? "..." : formatDurationFromMs(stats.avgDurationMs)}
+                                value={isLoading ? "?" : formatDurationFromMs(stats.avgDurationMs)}
                                 icon={FiClock}
                                 trend="neutral"
                                 trendValue="Per Case"
@@ -395,10 +396,10 @@ export default function DashboardPage() {
                             <div>
                                 <div className="flex items-center justify-between mb-4">
                                      <h3 className="text-white font-mono text-sm uppercase tracking-widest flex items-center gap-2">
-                                        <FiActivity className="text-indigo-400" />
+                                        <FiActivity className="text-blue-400" />
                                         Case Status
                                     </h3>
-                                    <span className="text-[10px] font-mono text-slate-500 bg-white/5 px-2 py-1 rounded">
+                                    <span className="text-[10px] font-mono text-zinc-500 bg-white/5 px-2 py-1 rounded">
                                         Last 7 Days
                                     </span>
                                 </div>
@@ -411,7 +412,7 @@ export default function DashboardPage() {
                                     <FiBarChart2 className="text-sky-400" />
                                     Weekly Volume
                                 </h3>
-                                <VolumeChart data={chartData.volumeByDay.map(d => ({ name: d.day, value: d.count }))} />
+                                <VolumeChart data={chartData.volumeByDay.map(d => ({ name: d.day ?? d.date ?? "", value: d.count }))} />
                             </div>
                         </div>
 
@@ -419,7 +420,7 @@ export default function DashboardPage() {
                         <div className="bg-[#050b14] border border-white/5 rounded-xl p-1 flex flex-col h-full min-h-[300px]">
                             <div className="p-4 border-b border-white/5 flex items-center justify-between">
                                 <h3 className="text-white font-mono text-sm uppercase tracking-widest flex items-center gap-2">
-                                    <FiCpu className="text-slate-400" />
+                                    <FiCpu className="text-zinc-400" />
                                     Live Feed
                                 </h3>
                                 <Link to="/cases" className="text-[10px] text-cyan-500 hover:text-cyan-400 font-mono uppercase">View All</Link>
@@ -429,30 +430,30 @@ export default function DashboardPage() {
                                      <div key={activity.id} className="group flex items-center gap-3 p-3 rounded-lg hover:bg-white/5 transition-colors cursor-default">
                                         {/* Status Icon */}
                                         <div className="shrink-0">
-                                            {activity.status === 'completed' ? (
+                                            {activity.status === 'resolved' || activity.status === 'closed' ? (
                                                 <FiCheckCircle className="text-emerald-500 text-lg" />
-                                            ) : activity.status === 'failed' ? (
+                                            ) : activity.status === 'cancelled' || activity.status === 'escalated' ? (
                                                 <FiXCircle className="text-rose-500 text-lg" />
                                             ) : (
-                                                <div className="w-1.5 h-1.5 rounded-full bg-cyan-500 shadow-[0_0_5px_#06b6d4] ml-1" />
+                                                <div className="size-1.5 rounded-full bg-cyan-500 shadow-[0_0_5px_#06b6d4] ml-1" />
                                             )}
                                         </div>
                                         
                                         <div className="flex-1 min-w-0">
-                                            <p className="text-xs text-slate-200 truncate group-hover:text-white transition-colors">
+                                            <p className="text-xs text-zinc-200 truncate group-hover:text-white transition-colors">
                                                 {activity.action}
                                             </p>
-                                            <p className="text-[10px] text-slate-500 font-mono truncate">
+                                            <p className="text-[10px] text-zinc-500 font-mono truncate">
                                                 {activity.target}
                                             </p>
                                         </div>
                                         
                                         <div className="text-right">
-                                            <div className="text-[9px] text-slate-600 font-mono whitespace-nowrap group-hover:text-slate-400">
+                                            <div className="text-[9px] text-zinc-600 font-mono whitespace-nowrap group-hover:text-zinc-400">
                                                 {activity.timestamp.replace(' ago', '')}
                                             </div>
                                             {activity.duration && (
-                                                <div className="text-[9px] text-indigo-400 font-mono whitespace-nowrap mt-0.5">
+                                                <div className="text-[9px] text-blue-400 font-mono whitespace-nowrap mt-0.5">
                                                     {activity.duration}
                                                 </div>
                                             )}
@@ -460,7 +461,7 @@ export default function DashboardPage() {
                                     </div>
                                 ))}
                                 {activities.length === 0 && (
-                                    <div className="text-center py-10 text-slate-600 font-mono text-xs uppercase">No Activity</div>
+                                    <div className="text-center py-10 text-zinc-600 font-mono text-xs uppercase">No Activity</div>
                                 )}
                             </div>
                         </div>
@@ -472,7 +473,7 @@ export default function DashboardPage() {
                     <div className="max-w-7xl mx-auto mt-6 bg-[#050b14] border border-white/5 rounded-xl p-1">
                         <div className="p-4 border-b border-white/5 flex items-center justify-between">
                              <h3 className="text-white font-mono text-sm uppercase tracking-widest flex items-center gap-2">
-                                <FiActivity className="text-slate-400" />
+                                <FiActivity className="text-zinc-400" />
                                 Recent System Events
                             </h3>
                              <Link to="/admin/audit-logs" className="text-[10px] text-cyan-500 hover:text-cyan-400 font-mono uppercase">Full History</Link>
@@ -482,10 +483,10 @@ export default function DashboardPage() {
                                 <div key={activity.id} className="flex items-center gap-3 p-3 rounded- border border-white/5 bg-white/[0.01] hover:bg-white/[0.03] transition-colors">
                                     <span className="text-[10px] font-mono text-purple-400 bg-purple-900/20 px-1.5 py-0.5 rounded">SYS</span>
                                     <div className="flex-1 min-w-0">
-                                        <p className="text-xs text-slate-300 truncate">{activity.action}</p>
-                                        <p className="text-[10px] text-slate-600 font-mono truncate">{activity.target}</p>
+                                        <p className="text-xs text-zinc-300 truncate">{activity.action}</p>
+                                        <p className="text-[10px] text-zinc-600 font-mono truncate">{activity.target}</p>
                                     </div>
-                                    <span className="text-[9px] text-slate-600 font-mono">{activity.timestamp}</span>
+                                    <span className="text-[9px] text-zinc-600 font-mono">{activity.timestamp}</span>
                                 </div>
                             ))}
                         </div>
@@ -496,11 +497,11 @@ export default function DashboardPage() {
                 <div className="max-w-7xl mx-auto mt-8">
                     <div className="flex items-center justify-between mb-6">
                         <div>
-                            <h2 className="text-lg font-bold text-white flex items-center gap-2">
+                            <h2 className="text-lg font-semibold text-white flex items-center gap-2">
                                 <FiFileText className="text-cyan-500" />
                                 Quick Start Templates
                             </h2>
-                            <p className="text-xs text-slate-500 mt-1">
+                            <p className="text-xs text-zinc-500 mt-1">
                                 Start with a banking-oriented starter flow and adapt it to your operating model
                             </p>
                         </div>
@@ -508,76 +509,78 @@ export default function DashboardPage() {
                             to="/flows"
                             className="text-xs text-cyan-500 hover:text-cyan-400 font-mono uppercase flex items-center gap-1"
                         >
-                            All Flows <FiArrowRight className="w-3 h-3" />
+                            All Flows <FiArrowRight className="size-3" />
                         </Link>
                     </div>
 
                     <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
                         {templates.map((template) => (
-                            <div
+                            <button
+                                type="button"
                                 key={template.id}
-                                className="group bg-[#050b14] border border-white/5 rounded-xl p-5 hover:border-cyan-500/30 hover:bg-cyan-950/5 transition-all cursor-pointer"
+                                className="group bg-[#050b14] border border-white/5 rounded-xl p-5 hover:border-cyan-500/30 hover:bg-cyan-950/5 transition-all cursor-pointer text-left"
                                 onClick={() => handlePreviewTemplate(template)}
                             >
                                 <div className="flex items-start justify-between mb-3">
                                     <span
-                                        className={`text-[10px] font-bold uppercase tracking-wider px-2 py-0.5 rounded ${
-                                            'bg-slate-500/10 text-slate-400'
+                                        className={`text-[10px] font-semibold uppercase tracking-wider px-2 py-0.5 rounded ${
+                                            'bg-zinc-500/10 text-zinc-400'
                                         }`}
                                     >
                                         {template.category}
                                     </span>
-                                    <span className="text-[10px] text-slate-600 font-mono">
+                                    <span className="text-[10px] text-zinc-600 font-mono">
                                         {template.nodes.length} steps
                                     </span>
                                 </div>
                                 <h3 className="text-white font-semibold mb-2 group-hover:text-cyan-400 transition-colors">
                                     {template.name}
                                 </h3>
-                                <p className="text-xs text-slate-400 line-clamp-2 mb-4">
+                                <p className="text-xs text-zinc-400 line-clamp-2 mb-4">
                                     {template.description}
                                 </p>
                                 <div className="flex items-center justify-between">
                                     <div className="flex -space-x-1">
                                         {template.nodes.slice(0, 4).map((node) => {
-                                            const nodeConfig = nodeIconMap[node.kind] ?? { icon: LuBox, color: 'text-slate-400' };
+                                            const nodeConfig = nodeIconMap[node.kind] ?? { icon: LuBox, color: 'text-zinc-400' };
                                             const NodeIcon = nodeConfig.icon;
                                             return (
                                                 <div
                                                     key={node.id}
-                                                    className="w-6 h-6 rounded-full bg-navy-900 border border-white/10 flex items-center justify-center"
+                                                    className="size-6 rounded-full bg-navy-900 border border-white/10 flex items-center justify-center"
                                                     title={node.name}
                                                 >
-                                                    <NodeIcon className={`w-3.5 h-3.5 ${nodeConfig.color}`} />
+                                                    <NodeIcon className={`size-3.5 ${nodeConfig.color}`} />
                                                 </div>
                                             );
                                         })}
                                         {template.nodes.length > 4 && (
-                                            <div className="w-6 h-6 rounded-full bg-navy-900 border border-white/10 flex items-center justify-center text-[10px] text-slate-400">
+                                            <div className="size-6 rounded-full bg-navy-900 border border-white/10 flex items-center justify-center text-[10px] text-zinc-400">
                                                 +{template.nodes.length - 4}
                                             </div>
                                         )}
                                     </div>
-                                    <button className="text-xs text-cyan-500 hover:text-cyan-400 font-medium flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
-                                        Preview <FiArrowRight className="w-3 h-3" />
-                                    </button>
+                                    <span className="text-xs text-cyan-500 group-hover:text-cyan-400 font-medium flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
+                                        Preview <FiArrowRight className="size-3" />
+                                    </span>
                                 </div>
-                            </div>
+                            </button>
                         ))}
 
                         {/* Create Blank Flow Card */}
-                        <div
+                        <button
+                            type="button"
                             className="group bg-[#050b14] border border-dashed border-white/10 rounded-xl p-5 hover:border-cyan-500/30 hover:bg-cyan-950/5 transition-all cursor-pointer flex flex-col items-center justify-center min-h-[180px]"
                             onClick={handleCreateFlow}
                         >
-                            <FiPlusCircle className="text-3xl text-slate-600 group-hover:text-cyan-500 transition-colors mb-3" />
+                            <FiPlusCircle className="text-3xl text-zinc-600 group-hover:text-cyan-500 transition-colors mb-3" />
                             <h3 className="text-white font-semibold mb-1 group-hover:text-cyan-400 transition-colors">
                                 Blank Flow
                             </h3>
-                            <p className="text-xs text-slate-500 text-center">
+                            <p className="text-xs text-zinc-500 text-center">
                                 Start from scratch with an empty canvas
                             </p>
-                        </div>
+                        </button>
                     </div>
                 </div>
 

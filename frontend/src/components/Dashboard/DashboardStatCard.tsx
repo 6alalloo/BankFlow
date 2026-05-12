@@ -73,10 +73,10 @@ export default function StatCard({
                     <Icon size={24} />
                 </div>
                 {trend && (
-                    <div className={`flex items-center gap-1 text-xs font-mono font-bold px-2 py-1 rounded-full border ${
+                    <div className={`flex items-center gap-1 text-xs font-mono font-semibold px-2 py-1 rounded-full border ${
                         trend === 'up' ? 'text-emerald-400 border-emerald-500/30 bg-emerald-500/10' :
                         trend === 'down' ? 'text-rose-400 border-rose-500/30 bg-rose-500/10' :
-                        'text-slate-400 border-slate-500/30 bg-slate-500/10'
+                        'text-zinc-400 border-zinc-500/30 bg-zinc-500/10'
                     }`}>
                         {trend === 'up' && <FiTrendingUp />}
                         {trend === 'down' && <FiTrendingDown />}
@@ -87,11 +87,11 @@ export default function StatCard({
             </div>
 
             <div className="relative">
-                <h3 className="text-slate-500 font-mono text-xs uppercase tracking-widest mb-1">{title}</h3>
-                <div className="text-3xl font-bold text-white tracking-tight">{value}</div>
+                <h3 className="text-zinc-500 font-mono text-xs uppercase tracking-widest mb-1">{title}</h3>
+                <div className="text-3xl font-semibold text-white tracking-tight">{value}</div>
                 {trendLabel && (
-                    <p className="text-[10px] text-slate-500 font-mono mt-2 flex items-center gap-1">
-                        <span className="w-1 h-1 rounded-full bg-slate-500" />
+                    <p className="text-[10px] text-zinc-500 font-mono mt-2 flex items-center gap-1">
+                        <span className="size-1 rounded-full bg-zinc-500" />
                         {trendLabel}
                     </p>
                 )}

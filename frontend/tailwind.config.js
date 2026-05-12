@@ -1,34 +1,42 @@
 /** @type {import('tailwindcss').Config} */
 export default {
-    content: [
-      "./index.html",
-      "./src/**/*.{js,ts,jsx,tsx}",
-    ],
-    theme: {
-      extend: {
-        colors: {
-            // "Premium Dark" palette
-            navy: {
-                950: "#05050a", // Deep background
-                900: "#0b1120", // Card background
-                800: "#1e293b", // Lighter elements
-            },
-            "cyan-glow": "#38bdf8", // Primary glow (use as text-cyan-glow, bg-cyan-glow)
-            neon: {
-                green: "#4ade80",
-                red: "#f87171",
-                purple: "#a855f7"
-            }
+  content: [
+    "./index.html",
+    "./src/**/*.{js,ts,jsx,tsx}",
+  ],
+  theme: {
+    extend: {
+      colors: {
+        raycast: {
+          canvas: "#040506",
+          surface: {
+            1: "#07080a",
+            2: "#111214",
+            3: "#1b1c1e",
+          },
+          text: {
+            primary: "#ffffff",
+            secondary: "#9c9c9d",
+            tertiary: "#6a6b6c",
+          },
+          ember: "#ff6363",
+          mint: "#59d499",
+          sky: {
+            start: "#56c2ff",
+            end: "#138af2",
+          },
         },
-        fontFamily: {
-            sans: ['Inter', 'system-ui', 'sans-serif'],
-        },
-        boxShadow: {
-            'glow-sm': '0 0 10px rgba(56, 189, 248, 0.1)',
-            'glow-md': '0 0 20px rgba(56, 189, 248, 0.2)',
-            'glow-lg': '0 0 30px rgba(56, 189, 248, 0.3)',
-        }
+      },
+      fontFamily: {
+        sans: ["Geist", "Inter", "system-ui", "sans-serif"],
+        mono: ["Geist Mono", "JetBrains Mono", "IBM Plex Mono", "ui-monospace", "monospace"],
+      },
+      boxShadow: {
+        "raycast-key": "rgba(0,0,0,0.4) 0px 1.5px 0.5px 2.5px, rgb(0,0,0) 0px 0px 0.5px 1px, rgba(0,0,0,0.25) 0px 2px 1px 1px inset, rgba(255,255,255,0.2) 0px 1px 1px 1px inset",
+        "raycast-ring": "rgb(27,28,30) 0px 0px 0px 1px, rgb(7,8,10) 0px 0px 0px 1px inset",
+        "raycast-highlight": "rgba(255,255,255,0.05) 0px 1px 0px 0px inset, rgba(255,255,255,0.18) 0px 0px 0px 1px, rgba(0,0,0,0.2) 0px -1px 0px 0px inset",
       },
     },
-    plugins: [],
-  }
+  },
+  plugins: [],
+};

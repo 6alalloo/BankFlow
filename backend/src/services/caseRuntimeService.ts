@@ -28,6 +28,7 @@ type RuntimeContext = {
   actorUserId?: number | null;
   data?: Record<string, unknown>;
   decision?: string | null;
+  pendingDueAt?: Date | null;
 };
 
 const blockingTaskKinds = new Set(["review", "data_capture", "document_collection", "decision_followup", "escalation_followup"]);
@@ -87,6 +88,18 @@ const parseDueAt = (config: Record<string, unknown>): Date | undefined => {
     return new Date(Date.now() + dueInHours * 60 * 60 * 1000);
   }
 
+  const duration = Number(config.duration);
+  const unit = String(config.unit ?? "hours");
+  if (Number.isFinite(duration) && duration > 0) {
+    const unitMs: Record<string, number> = {
+      seconds: 1000,
+      minutes: 60 * 1000,
+      hours: 60 * 60 * 1000,
+      days: 24 * 60 * 60 * 1000,
+    };
+    return new Date(Date.now() + duration * (unitMs[unit] ?? unitMs.hours));
+  }
+
   const dueAt = config.dueAt ?? config.due_at;
   if (typeof dueAt === "string") {
     const parsed = new Date(dueAt);
@@ -111,7 +124,7 @@ const parseTaskType = (kind: string, config: Record<string, unknown>) => {
 };
 
 const getValueByPath = (source: Record<string, unknown>, path: string): unknown =>
-  path.split(".").reduce<unknown>((current, segment) => {
+  path.replace(/^\{\{\s*/, "").replace(/\s*\}\}$/, "").replace(/^trigger\./, "").split(".").reduce<unknown>((current, segment) => {
     if (current && typeof current === "object" && !Array.isArray(current)) {
       return (current as Record<string, unknown>)[segment];
     }
@@ -160,6 +173,12 @@ export const evaluateCondition = (config: Record<string, unknown>, data: Record<
     case "exists":
       passed = actual !== undefined && actual !== null && actual !== "";
       break;
+    case "is_empty":
+      passed = actual === undefined || actual === null || actual === "";
+      break;
+    case "is_not_empty":
+      passed = actual !== undefined && actual !== null && actual !== "";
+      break;
     default:
       passed = false;
   }
@@ -192,7 +211,7 @@ async function createBlockingTask(tx: Prisma.TransactionClient, context: Runtime
       assigned_user_id: Number(config.assignedUserId ?? config.assigned_user_id) || null,
       assigned_team_id: Number(config.assignedTeamId ?? config.assigned_team_id) || null,
       claim_policy: config.claimPolicy === "direct_assign" || config.claim_policy === "direct_assign" ? "direct_assign" : "claim_required",
-      due_at: parseDueAt(config),
+      due_at: parseDueAt(config) ?? context.pendingDueAt ?? undefined,
       input_json: toInputJson({ nodeConfig: config, caseData: context.data ?? {} }),
     },
   });
@@ -246,7 +265,7 @@ async function createApproval(tx: Prisma.TransactionClient, context: RuntimeCont
       requested_from_user_id: Number(config.requestedFromUserId ?? config.requested_from_user_id) || null,
       requested_from_role_id: Number(config.requestedFromRoleId ?? config.requested_from_role_id) || null,
       requested_from_team_id: Number(config.requestedFromTeamId ?? config.requested_from_team_id ?? config.assignedTeamId) || null,
-      due_at: parseDueAt(config),
+      due_at: parseDueAt(config) ?? context.pendingDueAt ?? undefined,
       required_comment: Boolean(config.requiredComment ?? config.required_comment),
     },
   });
@@ -433,6 +452,13 @@ async function runFromNode(tx: Prisma.TransactionClient, context: RuntimeContext
 
     if (node.kind === "routing") {
       await applyRouting(tx, context, node);
+      node = chooseNextNode(graph, nodeKey, context.decision);
+      continue;
+    }
+
+    if (node.kind === "timer" || node.kind === "sla") {
+      context.pendingDueAt = parseDueAt(getNodeConfig(node)) ?? context.pendingDueAt ?? null;
+      await recordNonBlockingNode(tx, context, node);
       node = chooseNextNode(graph, nodeKey, context.decision);
       continue;
     }

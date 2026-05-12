@@ -71,8 +71,8 @@ const Sidebar: React.FC = () => {
           className={({ isActive }) =>
             "flex items-center gap-3 px-3 py-3 rounded-lg transition-all duration-300 group !no-underline border-l-2 " +
             (isActive 
-                ? "bg-gradient-to-r from-cyan-950/30 to-transparent border-cyan-400 border-b-2 border-b-cyan-400/60 !text-cyan-400 shadow-[0_0_20px_rgba(34,211,238,0.1)] font-bold" 
-                : "border-transparent !text-slate-400 hover:!text-cyan-200 hover:bg-white/5 font-medium")
+                ? "bg-gradient-to-r from-cyan-950/30 to-transparent border-cyan-400 border-b-2 border-b-cyan-400/60 !text-cyan-400 shadow-[0_0_20px_rgba(34,211,238,0.1)] font-semibold" 
+                : "border-transparent !text-zinc-400 hover:!text-cyan-200 hover:bg-white/5 font-medium")
           }
         >
           <FiHome size={20} className="shrink-0" />
@@ -86,8 +86,8 @@ const Sidebar: React.FC = () => {
           className={({ isActive }) =>
             "flex items-center gap-3 px-3 py-3 rounded-lg transition-all duration-300 group !no-underline border-l-2 " +
             (isActive 
-                ? "bg-gradient-to-r from-cyan-950/30 to-transparent border-cyan-400 border-b-2 border-b-cyan-400/60 !text-cyan-400 shadow-[0_0_20px_rgba(34,211,238,0.1)] font-bold" 
-                : "border-transparent !text-slate-400 hover:!text-cyan-200 hover:bg-white/5 font-medium")
+                ? "bg-gradient-to-r from-cyan-950/30 to-transparent border-cyan-400 border-b-2 border-b-cyan-400/60 !text-cyan-400 shadow-[0_0_20px_rgba(34,211,238,0.1)] font-semibold" 
+                : "border-transparent !text-zinc-400 hover:!text-cyan-200 hover:bg-white/5 font-medium")
           }
         >
           <FiBarChart2 size={20} className="shrink-0" />
@@ -101,8 +101,8 @@ const Sidebar: React.FC = () => {
           className={({ isActive }) =>
             "flex items-center gap-3 px-3 py-3 rounded-lg transition-all duration-300 group !no-underline border-l-2 " +
             (isActive && !isBuilderActive 
-                ? "bg-gradient-to-r from-cyan-950/30 to-transparent border-cyan-400 border-b-2 border-b-cyan-400/60 !text-cyan-400 shadow-[0_0_20px_rgba(34,211,238,0.1)] font-bold" 
-                : "border-transparent !text-slate-400 hover:!text-cyan-200 hover:bg-white/5 font-medium")
+                ? "bg-gradient-to-r from-cyan-950/30 to-transparent border-cyan-400 border-b-2 border-b-cyan-400/60 !text-cyan-400 shadow-[0_0_20px_rgba(34,211,238,0.1)] font-semibold" 
+                : "border-transparent !text-zinc-400 hover:!text-cyan-200 hover:bg-white/5 font-medium")
           }
         >
           <FiGitBranch size={20} className="shrink-0" />
@@ -117,12 +117,12 @@ const Sidebar: React.FC = () => {
           className={
             "flex items-center gap-3 px-3 py-3 rounded-lg transition-all duration-300 cursor-pointer group !no-underline border-l-2 " +
             (isBuilderActive 
-                ? "bg-gradient-to-r from-cyan-950/30 to-transparent border-cyan-400 border-b-2 border-b-cyan-400/60 !text-cyan-400 shadow-[0_0_20px_rgba(34,211,238,0.1)] font-bold" 
-                : "border-transparent !text-slate-400 hover:!text-cyan-200 hover:bg-white/5 font-medium")
+                ? "bg-gradient-to-r from-cyan-950/30 to-transparent border-cyan-400 border-b-2 border-b-cyan-400/60 !text-cyan-400 shadow-[0_0_20px_rgba(34,211,238,0.1)] font-semibold" 
+                : "border-transparent !text-zinc-400 hover:!text-cyan-200 hover:bg-white/5 font-medium")
           }
         >
           <FiZap size={20} className="shrink-0" />
-          <span className="text-base tracking-wide">{isCreating ? "Loading..." : "Builder"}</span>
+          <span className="text-base tracking-wide">{isCreating ? "Loading?" : "Builder"}</span>
         </a>
 
         {/* Cases list */}
@@ -132,8 +132,8 @@ const Sidebar: React.FC = () => {
           className={({ isActive }) =>
             "flex items-center gap-3 px-3 py-3 rounded-lg transition-all duration-300 group !no-underline border-l-2 " +
             (isActive 
-                ? "bg-gradient-to-r from-cyan-950/30 to-transparent border-cyan-400 border-b-2 border-b-cyan-400/60 !text-cyan-400 shadow-[0_0_20px_rgba(34,211,238,0.1)] font-bold" 
-                : "border-transparent !text-slate-400 hover:!text-cyan-200 hover:bg-white/5 font-medium")
+                ? "bg-gradient-to-r from-cyan-950/30 to-transparent border-cyan-400 border-b-2 border-b-cyan-400/60 !text-cyan-400 shadow-[0_0_20px_rgba(34,211,238,0.1)] font-semibold" 
+                : "border-transparent !text-zinc-400 hover:!text-cyan-200 hover:bg-white/5 font-medium")
           }
         >
           <FiBriefcase size={20} className="shrink-0" />
@@ -149,8 +149,8 @@ const Sidebar: React.FC = () => {
               className={({ isActive }) =>
                 "flex items-center gap-3 px-3 py-3 rounded-lg transition-all duration-300 group !no-underline border-l-2 " +
                 (isActive 
-                    ? "bg-gradient-to-r from-cyan-950/30 to-transparent border-cyan-400 border-b-2 border-b-cyan-400/60 !text-cyan-400 shadow-[0_0_20px_rgba(34,211,238,0.1)] font-bold" 
-                    : "border-transparent !text-slate-400 hover:!text-cyan-200 hover:bg-white/5 font-medium")
+                    ? "bg-gradient-to-r from-cyan-950/30 to-transparent border-cyan-400 border-b-2 border-b-cyan-400/60 !text-cyan-400 shadow-[0_0_20px_rgba(34,211,238,0.1)] font-semibold" 
+                    : "border-transparent !text-zinc-400 hover:!text-cyan-200 hover:bg-white/5 font-medium")
               }
             >
               <FiShield size={20} className="shrink-0" />
@@ -162,8 +162,8 @@ const Sidebar: React.FC = () => {
               className={({ isActive }) =>
                 "flex items-center gap-3 px-3 py-3 rounded-lg transition-all duration-300 group !no-underline border-l-2 " +
                 (isActive
-                    ? "bg-gradient-to-r from-green-950/30 to-transparent border-green-400 border-b-2 border-b-green-400/60 !text-green-400 shadow-[0_0_20px_rgba(34,197,94,0.1)] font-bold"
-                    : "border-transparent !text-slate-400 hover:!text-green-200 hover:bg-white/5 font-medium")
+                    ? "bg-gradient-to-r from-green-950/30 to-transparent border-green-400 border-b-2 border-b-green-400/60 !text-green-400 shadow-[0_0_20px_rgba(34,197,94,0.1)] font-semibold"
+                    : "border-transparent !text-zinc-400 hover:!text-green-200 hover:bg-white/5 font-medium")
               }
             >
               <FiShield size={20} className="shrink-0" />
@@ -175,8 +175,8 @@ const Sidebar: React.FC = () => {
               className={({ isActive }) =>
                 "flex items-center gap-3 px-3 py-3 rounded-lg transition-all duration-300 group !no-underline border-l-2 " +
                 (isActive
-                    ? "bg-gradient-to-r from-cyan-950/30 to-transparent border-cyan-400 border-b-2 border-b-cyan-400/60 !text-cyan-400 shadow-[0_0_20px_rgba(34,211,238,0.1)] font-bold"
-                    : "border-transparent !text-slate-400 hover:!text-cyan-200 hover:bg-white/5 font-medium")
+                    ? "bg-gradient-to-r from-cyan-950/30 to-transparent border-cyan-400 border-b-2 border-b-cyan-400/60 !text-cyan-400 shadow-[0_0_20px_rgba(34,211,238,0.1)] font-semibold"
+                    : "border-transparent !text-zinc-400 hover:!text-cyan-200 hover:bg-white/5 font-medium")
               }
             >
               <FiUsers size={20} className="shrink-0" />
@@ -190,21 +190,21 @@ const Sidebar: React.FC = () => {
       <div className="p-4 shrink-0 border-t border-white/5 bg-[#020617]">
         {user && (
           <div className="flex items-center gap-3 p-2 rounded-xl border border-white/5 bg-white/[0.02] hover:bg-white/[0.04] transition-colors group">
-              <div className="w-9 h-9 rounded-full bg-gradient-to-br from-cyan-600 to-blue-700 flex items-center justify-center text-white shadow-lg shadow-cyan-900/20 shrink-0 group-hover:scale-105 transition-transform">
+              <div className="size-9 rounded-full bg-gradient-to-br from-cyan-600 to-blue-700 flex items-center justify-center text-white shadow-lg shadow-cyan-900/20 shrink-0 group-hover:scale-105 transition-transform">
                 <FiUser size={16} />
               </div>
               <div className="flex-1 min-w-0">
-                <div className="text-slate-200 text-sm font-semibold truncate group-hover:text-cyan-200 transition-colors">
+                <div className="text-zinc-200 text-sm font-semibold truncate group-hover:text-cyan-200 transition-colors">
                   {user.full_name}
                 </div>
-                <div className="text-slate-500 text-[10px] font-bold uppercase tracking-wider">
+                <div className="text-zinc-500 text-[10px] font-semibold uppercase tracking-wider">
                     {user.role.name}
                 </div>
               </div>
               
               <button
                 onClick={handleLogout}
-                className="w-8 h-8 flex items-center justify-center text-slate-500 hover:text-red-400 hover:bg-red-500/10 rounded-lg transition-colors shrink-0"
+                className="size-8 flex items-center justify-center text-zinc-500 hover:text-red-400 hover:bg-red-500/10 rounded-lg transition-colors shrink-0"
                 title="Sign out"
               >
                 <FiLogOut size={16} />

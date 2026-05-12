@@ -9,6 +9,7 @@ import DashboardPage from "./pages/Dashboard/DashboardPage";
 import FlowsListPage from "./pages/Flows/flowListPage";
 import FlowBuilderPage from "./pages/Flows/flowBuilderPage";
 import CasesListPage from "./pages/Cases/CasesListPage";
+import CaseDetailPage from "./pages/Cases/CaseDetailPage";
 import AuditLogPage from "./pages/Admin/AuditLogPage";
 import SecurityPage from "./pages/Admin/SecurityPage";
 import UserManagementPage from "./pages/Admin/UserManagementPage";
@@ -27,9 +28,9 @@ const ProtectedRoute: React.FC<{ children: React.ReactNode }> = ({ children }) =
       >
         <div className="text-center">
           <div className="spinner-border text-primary mb-3" role="status">
-            <span className="visually-hidden">Loading...</span>
+            <span className="visually-hidden">Loading?</span>
           </div>
-          <p className="text-muted">Loading...</p>
+          <p className="text-muted">Loading?</p>
         </div>
       </div>
     );
@@ -59,7 +60,7 @@ const App: React.FC = () => {
               style={{ backgroundColor: "#0a0e1a" }}
             >
               <div className="spinner-border text-primary" role="status">
-                <span className="visually-hidden">Loading...</span>
+                <span className="visually-hidden">Loading?</span>
               </div>
             </div>
           ) : isAuthenticated ? (
@@ -86,6 +87,7 @@ const App: React.FC = () => {
 
                 {/* Cases */}
                 <Route path="/cases" element={<CasesListPage />} />
+                <Route path="/cases/:id" element={<CaseDetailPage />} />
 
                 {/* Admin */}
                 <Route path="/admin/audit-logs" element={<AuditLogPage />} />

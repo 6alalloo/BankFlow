@@ -1,5 +1,5 @@
 import React, { useEffect, useState, useMemo, useRef, useCallback } from 'react';
-import { motion } from 'framer-motion';
+import { LazyMotion, domAnimation, m } from 'framer-motion';
 import {
     LuX, LuTrash2, LuPlus, LuMinus,
     LuMail, LuUser, LuCalendar, LuClock, LuDatabase, LuGlobe,
@@ -55,12 +55,12 @@ const FormField: React.FC<{
     icon?: React.ReactNode;
 }> = ({ label, children, hint, icon }) => (
     <div className="space-y-1">
-        <label className="flex items-center gap-1.5 text-[10px] font-semibold text-slate-400 uppercase tracking-wide">
-            {icon && <span className="text-slate-500">{icon}</span>}
+        <label className="flex items-center gap-1.5 text-[10px] font-semibold text-zinc-400 uppercase tracking-wide">
+            {icon && <span className="text-zinc-500">{icon}</span>}
             {label}
         </label>
         {children}
-        {hint && <p className="text-[10px] text-slate-500">{hint}</p>}
+        {hint && <p className="text-[10px] text-zinc-500">{hint}</p>}
     </div>
 );
 
@@ -73,7 +73,7 @@ const TextInput: React.FC<{
 }> = ({ value, onChange, placeholder, type = 'text', icon }) => (
     <div className="relative">
         {icon && (
-            <div className="absolute left-2.5 top-1/2 -translate-y-1/2 text-slate-500 text-sm">
+            <div className="absolute left-2.5 top-1/2 -translate-y-1/2 text-zinc-500 text-sm">
                 {icon}
             </div>
         )}
@@ -110,7 +110,7 @@ const Select: React.FC<{
 }> = ({ value, onChange, options, icon }) => (
     <div className="relative">
         {icon && (
-            <div className="absolute left-2.5 top-1/2 -translate-y-1/2 text-slate-500 pointer-events-none text-sm">
+            <div className="absolute left-2.5 top-1/2 -translate-y-1/2 text-zinc-500 pointer-events-none text-sm">
                 {icon}
             </div>
         )}
@@ -125,8 +125,8 @@ const Select: React.FC<{
                 </option>
             ))}
         </select>
-        <div className="absolute right-2.5 top-1/2 -translate-y-1/2 text-slate-500 pointer-events-none">
-            <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+        <div className="absolute right-2.5 top-1/2 -translate-y-1/2 text-zinc-500 pointer-events-none">
+            <svg className="size-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
             </svg>
         </div>
@@ -171,12 +171,12 @@ const QuickActionButton: React.FC<{
         }`}
     >
         <div className="flex items-center gap-2">
-            <div className={`p-1.5 rounded-md text-sm ${selected ? 'bg-cyan-glow/20 text-cyan-glow' : 'bg-white/10 text-slate-400'}`}>
+            <div className={`p-1.5 rounded-md text-sm ${selected ? 'bg-cyan-glow/20 text-cyan-glow' : 'bg-white/10 text-zinc-400'}`}>
                 {icon}
             </div>
             <div className="flex-1 min-w-0">
                 <div className={`text-sm font-medium ${selected ? 'text-cyan-glow' : 'text-white'}`}>{label}</div>
-                <div className="text-[10px] text-slate-500 truncate">{description}</div>
+                <div className="text-[10px] text-zinc-500 truncate">{description}</div>
             </div>
             {selected && <LuCheck className="text-cyan-glow text-sm flex-shrink-0" />}
         </div>
@@ -228,9 +228,10 @@ const ConfigPanel: React.FC<ConfigPanelProps> = ({ isOpen, node, onClose, onUpda
     // Focus first input when panel opens
     useEffect(() => {
         if (isOpen && firstInputRef.current) {
-            setTimeout(() => {
+            const timer = setTimeout(() => {
                 firstInputRef.current?.focus();
             }, 100);
+            return () => clearTimeout(timer);
         }
     }, [isOpen]);
 
@@ -344,7 +345,7 @@ const ConfigPanel: React.FC<ConfigPanelProps> = ({ isOpen, node, onClose, onUpda
                     <div className="space-y-5">
                         <InfoBox variant="info">
                             <div className="flex items-start gap-2">
-                                <LuInfo className="w-4 h-4 mt-0.5 flex-shrink-0" />
+                                <LuInfo className="size-4 mt-0.5 flex-shrink-0" />
                                 <div>
                                     <strong>Flow Starting Point</strong>
                                     <p className="mt-1 opacity-80">Choose how this flow should be triggered.</p>
@@ -353,26 +354,26 @@ const ConfigPanel: React.FC<ConfigPanelProps> = ({ isOpen, node, onClose, onUpda
                         </InfoBox>
 
                         <div className="space-y-4 border-t border-white/5 pt-4">
-                                <h3 className="text-sm font-bold text-white flex items-center gap-2">
-                                    <LuUser className="w-4 h-4 text-cyan-glow" />
+                                <h3 className="text-sm font-semibold text-white flex items-center gap-2">
+                                    <LuUser className="size-4 text-cyan-glow" />
                                     Case Intake
                                 </h3>
 
-                                <FormField label="Case Name" icon={<LuUser className="w-3 h-3" />}>
+                                <FormField label="Case Name" icon={<LuUser className="size-3" />}>
                                     <TextInput
                                         value={getString(localConfig, 'name')}
                                         onChange={(val) => handleChange('name', val)}
                                         placeholder="e.g. Case-AML-1042"
-                                        icon={<LuUser className="w-4 h-4" />}
+                                        icon={<LuUser className="size-4" />}
                                     />
                                 </FormField>
 
-                                <FormField label="Contact Email" icon={<LuMail className="w-3 h-3" />}>
+                                <FormField label="Contact Email" icon={<LuMail className="size-3" />}>
                                     <TextInput
                                         value={getString(localConfig, 'email')}
                                         onChange={(val) => handleChange('email', val)}
                                         placeholder="e.g. alerts@bankflow.local"
-                                        icon={<LuMail className="w-4 h-4" />}
+                                        icon={<LuMail className="size-4" />}
                                     />
                                 </FormField>
 
@@ -382,7 +383,7 @@ const ConfigPanel: React.FC<ConfigPanelProps> = ({ isOpen, node, onClose, onUpda
                                             value={getString(localConfig, 'department')}
                                             onChange={(val) => handleChange('department', val)}
                                             options={[
-                                                { value: '', label: 'Select queue...' },
+                                                { value: '', label: 'Select queue?' },
                                                 { value: 'Financial Crime Operations', label: 'Financial Crime Operations' },
                                                 { value: 'Payments Operations', label: 'Payments Operations' },
                                                 { value: 'Compliance', label: 'Compliance' },
@@ -411,7 +412,7 @@ const ConfigPanel: React.FC<ConfigPanelProps> = ({ isOpen, node, onClose, onUpda
                                     </FormField>
                                 )}
 
-                                <FormField label="Requested Date" icon={<LuCalendar className="w-3 h-3" />}>
+                                <FormField label="Requested Date" icon={<LuCalendar className="size-3" />}>
                                     <div className="relative">
                                         <DatePicker
                                             selected={getString(localConfig, 'startDate') ? new Date(getString(localConfig, 'startDate')) : null}
@@ -432,7 +433,7 @@ const ConfigPanel: React.FC<ConfigPanelProps> = ({ isOpen, node, onClose, onUpda
                                             wrapperClassName="w-full"
                                             showPopperArrow={false}
                                         />
-                                        <LuCalendar className="absolute left-2.5 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-slate-500" />
+                                        <LuCalendar className="absolute left-2.5 top-1/2 -translate-y-1/2 size-3.5 text-zinc-500" />
                                     </div>
                                 </FormField>
                             </div>
@@ -446,7 +447,7 @@ const ConfigPanel: React.FC<ConfigPanelProps> = ({ isOpen, node, onClose, onUpda
                     <div className="space-y-5">
                         <InfoBox variant="info">
                             <div className="flex items-start gap-2">
-                                <LuMail className="w-4 h-4 mt-0.5 flex-shrink-0" />
+                                <LuMail className="size-4 mt-0.5 flex-shrink-0" />
                                 <div>
                                     <strong>Send Email Notification</strong>
                                     <p className="mt-1 opacity-80">This step will send an email when the flow reaches this point.</p>
@@ -455,13 +456,13 @@ const ConfigPanel: React.FC<ConfigPanelProps> = ({ isOpen, node, onClose, onUpda
                         </InfoBox>
 
                         <div className="space-y-4 border-t border-white/5 pt-4">
-                            <h3 className="text-sm font-bold text-white">Who should receive this email?</h3>
+                            <h3 className="text-sm font-semibold text-white">Who should receive this email?</h3>
 
                             <div className="space-y-2">
                                 <QuickActionButton
                                     label="Case Contact"
                                     description="Send to the contact email from intake"
-                                    icon={<LuUser className="w-4 h-4" />}
+                                    icon={<LuUser className="size-4" />}
                                     onClick={() => {
                                         handleChange('recipientType', 'case_contact');
                                         handleChange('to', '{{trigger.email}}');
@@ -471,7 +472,7 @@ const ConfigPanel: React.FC<ConfigPanelProps> = ({ isOpen, node, onClose, onUpda
                                 <QuickActionButton
                                     label="Custom Recipient"
                                     description="Enter a specific email address"
-                                    icon={<LuMail className="w-4 h-4" />}
+                                    icon={<LuMail className="size-4" />}
                                     onClick={() => {
                                         handleChange('recipientType', 'custom');
                                         handleChange('to', '');
@@ -523,7 +524,7 @@ Operations Team"
                                         key={template}
                                         type="button"
                                         onClick={() => handleChange('subject', template)}
-                                        className="text-xs bg-white/5 hover:bg-white/10 text-slate-400 hover:text-white px-2 py-1 rounded transition-colors"
+                                        className="text-xs bg-white/5 hover:bg-white/10 text-zinc-400 hover:text-white px-2 py-1 rounded transition-colors"
                                     >
                                         {template}
                                     </button>
@@ -544,7 +545,7 @@ Operations Team"
                     <div className="space-y-5">
                         <InfoBox variant="info">
                             <div className="flex items-start gap-2">
-                                <LuGlobe className="w-4 h-4 mt-0.5 flex-shrink-0" />
+                                <LuGlobe className="size-4 mt-0.5 flex-shrink-0" />
                                 <div>
                                     <strong>Connect to External Service</strong>
                                     <p className="mt-1 opacity-80">Send data to another system or service when this step runs.</p>
@@ -553,13 +554,13 @@ Operations Team"
                         </InfoBox>
 
                         <div className="space-y-4 border-t border-white/5 pt-4">
-                            <h3 className="text-sm font-bold text-white">What do you want to do?</h3>
+                            <h3 className="text-sm font-semibold text-white">What do you want to do?</h3>
 
                             <div className="space-y-2">
                                 <QuickActionButton
                                     label="Notify Slack Channel"
                                     description="Send a message to a Slack channel"
-                                    icon={<LuMessageSquare className="w-4 h-4" />}
+                                    icon={<LuMessageSquare className="size-4" />}
                                     onClick={() => {
                                         handleChange('useCase', 'slack');
                                         handleChange('method', 'POST');
@@ -571,7 +572,7 @@ Operations Team"
                                 <QuickActionButton
                                     label="Update Case System"
                                     description="Send case intake data to an external platform"
-                                    icon={<LuDatabase className="w-4 h-4" />}
+                                    icon={<LuDatabase className="size-4" />}
                                     onClick={() => {
                                         handleChange('useCase', 'case_api');
                                         handleChange('method', 'POST');
@@ -581,7 +582,7 @@ Operations Team"
                                 <QuickActionButton
                                     label="Custom API Request"
                                     description="Configure a custom HTTP request"
-                                    icon={<LuZap className="w-4 h-4" />}
+                                    icon={<LuZap className="size-4" />}
                                     onClick={() => handleChange('useCase', 'custom')}
                                     selected={useCase === 'custom'}
                                 />
@@ -593,7 +594,7 @@ Operations Team"
                                         <SmartField
                                             value={getString(localConfig, 'url')}
                                             onChange={(val) => handleChange('url', val)}
-                                            placeholder="https://hooks.slack.com/services/..."
+                                            placeholder="https://hooks.slack.com/services/…"
                                         />
                                     </FormField>
                                     <FormField label="Message">
@@ -674,7 +675,7 @@ Operations Team"
                     <div className="space-y-5">
                         <InfoBox variant="info">
                             <div className="flex items-start gap-2">
-                                <LuDatabase className="w-4 h-4 mt-0.5 flex-shrink-0" />
+                                <LuDatabase className="size-4 mt-0.5 flex-shrink-0" />
                                 <div>
                                     <strong>Database Operation</strong>
                                     <p className="mt-1 opacity-80">Read or write data from your HR database.</p>
@@ -683,45 +684,45 @@ Operations Team"
                         </InfoBox>
 
                         <div className="space-y-4 border-t border-white/5 pt-4">
-                            <h3 className="text-sm font-bold text-white">What do you want to do?</h3>
+                            <h3 className="text-sm font-semibold text-white">What do you want to do?</h3>
 
                             <div className="space-y-2">
                                 <QuickActionButton
                                     label="Look Up Records"
                                     description="Search and retrieve data from a table"
-                                    icon={<LuDatabase className="w-4 h-4" />}
+                                    icon={<LuDatabase className="size-4" />}
                                     onClick={() => handleChange('operation', 'query')}
                                     selected={operation === 'query'}
                                 />
                                 <QuickActionButton
                                     label="Add New Record"
                                     description="Insert a new row into a table"
-                                    icon={<LuPlus className="w-4 h-4" />}
+                                    icon={<LuPlus className="size-4" />}
                                     onClick={() => handleChange('operation', 'create')}
                                     selected={operation === 'create'}
                                 />
                                 <QuickActionButton
                                     label="Update Existing Record"
                                     description="Modify data in an existing row"
-                                    icon={<LuArrowRight className="w-4 h-4" />}
+                                    icon={<LuArrowRight className="size-4" />}
                                     onClick={() => handleChange('operation', 'update')}
                                     selected={operation === 'update'}
                                 />
                             </div>
 
-                            <FormField label="Select Table" icon={<LuDatabase className="w-3 h-3" />}>
+                            <FormField label="Select Table" icon={<LuDatabase className="size-3" />}>
                                 <Select
                                     value={getString(localConfig, 'table')}
                                     onChange={(val) => handleChange('table', val)}
                                     options={[
-                                        { value: '', label: 'Choose a table...' },
+                                        { value: '', label: 'Choose a table?' },
                                         ...databaseTables.map(t => ({
                                             value: t.name,
                                             label: t.label,
                                             description: t.description
                                         }))
                                     ]}
-                                    icon={<LuDatabase className="w-4 h-4" />}
+                                    icon={<LuDatabase className="size-4" />}
                                 />
                             </FormField>
 
@@ -765,7 +766,7 @@ Operations Team"
                     <div className="space-y-5">
                         <InfoBox variant="info">
                             <div className="flex items-start gap-2">
-                                <LuArrowRight className="w-4 h-4 mt-0.5 flex-shrink-0" />
+                                <LuArrowRight className="size-4 mt-0.5 flex-shrink-0" />
                                 <div>
                                     <strong>Decision Point</strong>
                                     <p className="mt-1 opacity-80">Split the flow based on a condition. Different paths will be taken depending on the result.</p>
@@ -774,11 +775,11 @@ Operations Team"
                         </InfoBox>
 
                         <div className="space-y-4 border-t border-white/5 pt-4">
-                            <h3 className="text-sm font-bold text-white">Set Up Your Condition</h3>
+                            <h3 className="text-sm font-semibold text-white">Set Up Your Condition</h3>
 
                             <div className="p-4 rounded-xl bg-white/5 border border-white/10 space-y-4">
-                                <div className="text-sm text-slate-300">
-                                    <span className="text-white font-medium">IF</span> the case data...
+                                <div className="text-sm text-zinc-300">
+                                    <span className="text-white font-medium">IF</span> the case data?
                                 </div>
 
                                 <FormField label="Field to Check">
@@ -810,7 +811,7 @@ Operations Team"
                                         <SmartField
                                             value={getString(localConfig, 'value')}
                                             onChange={(val) => handleChange('value', val)}
-                                            placeholder={checkField === 'department' ? 'e.g. Engineering' : 'Enter value...'}
+                                            placeholder={checkField === 'department' ? 'e.g. Engineering' : 'Enter value?'}
                                         />
                                     </FormField>
                                 )}
@@ -819,17 +820,17 @@ Operations Team"
                             <div className="grid grid-cols-2 gap-3">
                                 <div className="p-3 rounded-lg bg-emerald-500/10 border border-emerald-500/20">
                                     <div className="flex items-center gap-2 text-emerald-400 text-sm font-medium">
-                                        <LuCheck className="w-4 h-4" />
+                                        <LuCheck className="size-4" />
                                         If TRUE
                                     </div>
-                                    <p className="text-xs text-slate-400 mt-1">Continue to the next step</p>
+                                    <p className="text-xs text-zinc-400 mt-1">Continue to the next step</p>
                                 </div>
                                 <div className="p-3 rounded-lg bg-red-500/10 border border-red-500/20">
                                     <div className="flex items-center gap-2 text-red-400 text-sm font-medium">
-                                        <LuX className="w-4 h-4" />
+                                        <LuX className="size-4" />
                                         If FALSE
                                     </div>
-                                    <p className="text-xs text-slate-400 mt-1">Take alternate path</p>
+                                    <p className="text-xs text-zinc-400 mt-1">Take alternate path</p>
                                 </div>
                             </div>
 
@@ -848,7 +849,7 @@ Operations Team"
                     <div className="space-y-5">
                         <InfoBox variant="info">
                             <div className="flex items-start gap-2">
-                                <LuClock className="w-4 h-4 mt-0.5 flex-shrink-0" />
+                                <LuClock className="size-4 mt-0.5 flex-shrink-0" />
                                 <div>
                                     <strong>Pause Flow</strong>
                                     <p className="mt-1 opacity-80">Wait for a specified amount of time before continuing to the next step.</p>
@@ -857,7 +858,7 @@ Operations Team"
                         </InfoBox>
 
                         <div className="space-y-4 border-t border-white/5 pt-4">
-                            <h3 className="text-sm font-bold text-white">How long should we wait?</h3>
+                            <h3 className="text-sm font-semibold text-white">How long should we wait?</h3>
 
                             <div className="grid grid-cols-2 gap-3">
                                 <FormField label="Duration">
@@ -882,7 +883,7 @@ Operations Team"
 
                             <InfoBox variant="warning">
                                 <div className="flex items-center gap-2">
-                                    <LuClock className="w-4 h-4" />
+                                    <LuClock className="size-4" />
                                     <span>
                                         The flow will pause for <strong>{duration} {unit}</strong> before continuing.
                                     </span>
@@ -898,7 +899,7 @@ Operations Team"
                     <div className="space-y-5">
                         <InfoBox variant="info">
                             <div className="flex items-start gap-2">
-                                <LuMessageSquare className="w-4 h-4 mt-0.5 flex-shrink-0" />
+                                <LuMessageSquare className="size-4 mt-0.5 flex-shrink-0" />
                                 <div>
                                     <strong>Add Log Entry</strong>
                                     <p className="mt-1 opacity-80">Record a message in the case event log for tracking and debugging.</p>
@@ -907,7 +908,7 @@ Operations Team"
                         </InfoBox>
 
                         <div className="space-y-4 border-t border-white/5 pt-4">
-                            <h3 className="text-sm font-bold text-white">What should we log?</h3>
+                            <h3 className="text-sm font-semibold text-white">What should we log?</h3>
 
                             <FormField label="Message Type">
                                 <Select
@@ -930,7 +931,7 @@ Operations Team"
                                 />
                             </FormField>
 
-                            <div className="text-xs text-slate-500">
+                            <div className="text-xs text-zinc-500">
                                 <strong>Quick templates:</strong>
                             </div>
                             <div className="flex flex-wrap gap-2">
@@ -944,7 +945,7 @@ Operations Team"
                                         key={template}
                                         type="button"
                                         onClick={() => handleChange('message', template)}
-                                        className="px-2.5 py-1 text-xs rounded-full bg-white/5 hover:bg-white/10 text-slate-400 hover:text-white transition-colors"
+                                        className="px-2.5 py-1 text-xs rounded-full bg-white/5 hover:bg-white/10 text-zinc-400 hover:text-white transition-colors"
                                     >
                                         {template}
                                     </button>
@@ -960,7 +961,7 @@ Operations Team"
                     <div className="space-y-5">
                         <InfoBox variant="info">
                             <div className="flex items-start gap-2">
-                                <LuCalendar className="w-4 h-4 mt-0.5 flex-shrink-0" />
+                                <LuCalendar className="size-4 mt-0.5 flex-shrink-0" />
                                 <div>
                                     <strong>Date & Time Operation</strong>
                                     <p className="mt-1 opacity-80">Work with dates and times in your flow.</p>
@@ -969,34 +970,34 @@ Operations Team"
                         </InfoBox>
 
                         <div className="space-y-4 border-t border-white/5 pt-4">
-                            <h3 className="text-sm font-bold text-white">What do you want to do?</h3>
+                            <h3 className="text-sm font-semibold text-white">What do you want to do?</h3>
 
                             <div className="space-y-2">
                                 <QuickActionButton
                                     label="Get Current Date/Time"
                                     description="Capture the current moment"
-                                    icon={<LuClock className="w-4 h-4" />}
+                                    icon={<LuClock className="size-4" />}
                                     onClick={() => handleChange('operation', 'now')}
                                     selected={dtOperation === 'now'}
                                 />
                                 <QuickActionButton
                                     label="Calculate Future Date"
                                     description="Add days/hours to a date"
-                                    icon={<LuPlus className="w-4 h-4" />}
+                                    icon={<LuPlus className="size-4" />}
                                     onClick={() => handleChange('operation', 'add')}
                                     selected={dtOperation === 'add'}
                                 />
                                 <QuickActionButton
                                     label="Calculate Past Date"
                                     description="Subtract days/hours from a date"
-                                    icon={<LuMinus className="w-4 h-4" />}
+                                    icon={<LuMinus className="size-4" />}
                                     onClick={() => handleChange('operation', 'subtract')}
                                     selected={dtOperation === 'subtract'}
                                 />
                                 <QuickActionButton
                                     label="Format Date"
                                     description="Change how a date is displayed"
-                                    icon={<LuCalendar className="w-4 h-4" />}
+                                    icon={<LuCalendar className="size-4" />}
                                     onClick={() => handleChange('operation', 'format')}
                                     selected={dtOperation === 'format'}
                                 />
@@ -1081,7 +1082,7 @@ Operations Team"
                     <div className="space-y-5">
                         <InfoBox variant="info">
                             <div className="flex items-start gap-2">
-                                <LuZap className="w-4 h-4 mt-0.5 flex-shrink-0" />
+                                <LuZap className="size-4 mt-0.5 flex-shrink-0" />
                                 <div>
                                     <strong>Store Data for Later</strong>
                                     <p className="mt-1 opacity-80">Save information that you want to use in later steps of this flow.</p>
@@ -1090,20 +1091,20 @@ Operations Team"
                         </InfoBox>
 
                         <div className="space-y-4 border-t border-white/5 pt-4">
-                            <h3 className="text-sm font-bold text-white">What do you want to store?</h3>
+                            <h3 className="text-sm font-semibold text-white">What do you want to store?</h3>
 
                             <div className="space-y-2">
                                 <QuickActionButton
                                     label="Custom Value"
                                     description="Enter a specific value to save"
-                                    icon={<LuPlus className="w-4 h-4" />}
+                                    icon={<LuPlus className="size-4" />}
                                     onClick={() => handleChange('variableAction', 'store')}
                                     selected={variableAction === 'store'}
                                 />
                                 <QuickActionButton
                                     label="Copy from Trigger Data"
                                     description="Save case intake values for later use"
-                                    icon={<LuUser className="w-4 h-4" />}
+                                    icon={<LuUser className="size-4" />}
                                     onClick={() => handleChange('variableAction', 'copy')}
                                     selected={variableAction === 'copy'}
                                 />
@@ -1161,6 +1162,170 @@ Operations Team"
                 );
             }
 
+            case 'review':
+            case 'data_capture':
+            case 'document_collection':
+            case 'approval_support':
+            case 'decision_followup':
+            case 'escalation_followup': {
+                return (
+                    <div className="space-y-5">
+                        <InfoBox variant="info">
+                            <strong>Blocking Case Task</strong>
+                            <p className="mt-1 opacity-80">The case runtime pauses here until this task is completed.</p>
+                        </InfoBox>
+                        <div className="space-y-4 border-t border-white/5 pt-4">
+                            <FormField label="Task Title">
+                                <TextInput
+                                    value={getString(localConfig, 'title', node.name)}
+                                    onChange={(val) => handleChange('title', val)}
+                                    placeholder="Review case"
+                                />
+                            </FormField>
+                            <div className="grid grid-cols-2 gap-3">
+                                <FormField label="Assigned User ID">
+                                    <NumberInput
+                                        value={getNumber(localConfig, 'assignedUserId', 0)}
+                                        onChange={(val) => handleChange('assignedUserId', val || null)}
+                                        min={0}
+                                    />
+                                </FormField>
+                                <FormField label="Assigned Team ID">
+                                    <NumberInput
+                                        value={getNumber(localConfig, 'assignedTeamId', 0)}
+                                        onChange={(val) => handleChange('assignedTeamId', val || null)}
+                                        min={0}
+                                    />
+                                </FormField>
+                            </div>
+                            <div className="grid grid-cols-2 gap-3">
+                                <FormField label="Claim Policy">
+                                    <Select
+                                        value={getString(localConfig, 'claimPolicy', 'claim_required')}
+                                        onChange={(val) => handleChange('claimPolicy', val)}
+                                        options={[
+                                            { value: 'claim_required', label: 'Claim Required' },
+                                            { value: 'direct_assign', label: 'Direct Assign' },
+                                        ]}
+                                    />
+                                </FormField>
+                                <FormField label="Due In Hours">
+                                    <NumberInput
+                                        value={getNumber(localConfig, 'dueInHours', 0)}
+                                        onChange={(val) => handleChange('dueInHours', val || undefined)}
+                                        min={0}
+                                    />
+                                </FormField>
+                            </div>
+                        </div>
+                    </div>
+                );
+            }
+
+            case 'approval': {
+                return (
+                    <div className="space-y-5">
+                        <InfoBox variant="info">
+                            <strong>Approval Gate</strong>
+                            <p className="mt-1 opacity-80">The case runtime pauses until the requested approval is approved or rejected.</p>
+                        </InfoBox>
+                        <div className="space-y-4 border-t border-white/5 pt-4">
+                            <FormField label="Approval Label">
+                                <TextInput
+                                    value={getString(localConfig, 'label', node.name)}
+                                    onChange={(val) => handleChange('label', val)}
+                                    placeholder="Approval required"
+                                />
+                            </FormField>
+                            <div className="grid grid-cols-2 gap-3">
+                                <FormField label="Approver User ID">
+                                    <NumberInput value={getNumber(localConfig, 'requestedFromUserId', 0)} onChange={(val) => handleChange('requestedFromUserId', val || null)} min={0} />
+                                </FormField>
+                                <FormField label="Approver Team ID">
+                                    <NumberInput value={getNumber(localConfig, 'requestedFromTeamId', 0)} onChange={(val) => handleChange('requestedFromTeamId', val || null)} min={0} />
+                                </FormField>
+                            </div>
+                            <FormField label="Due In Hours">
+                                <NumberInput value={getNumber(localConfig, 'dueInHours', 0)} onChange={(val) => handleChange('dueInHours', val || undefined)} min={0} />
+                            </FormField>
+                        </div>
+                    </div>
+                );
+            }
+
+            case 'routing': {
+                return (
+                    <div className="space-y-5">
+                        <InfoBox variant="info">Assign the case to a user or queue without creating a blocking task.</InfoBox>
+                        <div className="grid grid-cols-2 gap-3 border-t border-white/5 pt-4">
+                            <FormField label="Assigned User ID">
+                                <NumberInput value={getNumber(localConfig, 'assignedUserId', 0)} onChange={(val) => handleChange('assignedUserId', val || null)} min={0} />
+                            </FormField>
+                            <FormField label="Assigned Team ID">
+                                <NumberInput value={getNumber(localConfig, 'assignedTeamId', 0)} onChange={(val) => handleChange('assignedTeamId', val || null)} min={0} />
+                            </FormField>
+                        </div>
+                    </div>
+                );
+            }
+
+            case 'sla':
+            case 'timer': {
+                return (
+                    <div className="space-y-5">
+                        <InfoBox variant="info">Set the due date used by the next task or approval.</InfoBox>
+                        <FormField label="Due In Hours">
+                            <NumberInput value={getNumber(localConfig, 'dueInHours', 8)} onChange={(val) => handleChange('dueInHours', val)} min={1} />
+                        </FormField>
+                    </div>
+                );
+            }
+
+            case 'escalation': {
+                return (
+                    <div className="space-y-5">
+                        <InfoBox variant="warning">Escalate the case and assign it to a target user or team.</InfoBox>
+                        <div className="space-y-4 border-t border-white/5 pt-4">
+                            <FormField label="Reason">
+                                <TextInput value={getString(localConfig, 'reason', 'Case escalated')} onChange={(val) => handleChange('reason', val)} />
+                            </FormField>
+                            <div className="grid grid-cols-2 gap-3">
+                                <FormField label="Target User ID">
+                                    <NumberInput value={getNumber(localConfig, 'toUserId', 0)} onChange={(val) => handleChange('toUserId', val || null)} min={0} />
+                                </FormField>
+                                <FormField label="Target Team ID">
+                                    <NumberInput value={getNumber(localConfig, 'toTeamId', 0)} onChange={(val) => handleChange('toTeamId', val || null)} min={0} />
+                                </FormField>
+                            </div>
+                        </div>
+                    </div>
+                );
+            }
+
+            case 'status_update': {
+                return (
+                    <div className="space-y-5">
+                        <InfoBox variant="info">Update the case status. Resolved, closed, and cancelled stop the runtime.</InfoBox>
+                        <FormField label="Status">
+                            <Select
+                                value={getString(localConfig, 'status', 'in_review')}
+                                onChange={(val) => handleChange('status', val)}
+                                options={[
+                                    { value: 'intake', label: 'Intake' },
+                                    { value: 'in_review', label: 'In Review' },
+                                    { value: 'pending_approval', label: 'Pending Approval' },
+                                    { value: 'pending_action', label: 'Pending Action' },
+                                    { value: 'escalated', label: 'Escalated' },
+                                    { value: 'resolved', label: 'Resolved' },
+                                    { value: 'closed', label: 'Closed' },
+                                    { value: 'cancelled', label: 'Cancelled' },
+                                ]}
+                            />
+                        </FormField>
+                    </div>
+                );
+            }
+
             default:
                 return (
                     <div className="p-4 rounded-lg bg-amber-500/10 border border-amber-500/20 text-amber-200 text-sm">
@@ -1172,7 +1337,8 @@ Operations Team"
 
     return (
         <>
-            <motion.div
+            <LazyMotion features={domAnimation}>
+            <m.div
                 initial={{ x: '100%' }}
                 animate={{ x: 0 }}
                 exit={{ x: '100%' }}
@@ -1182,14 +1348,14 @@ Operations Team"
                 {/* Header */}
                 <div className="flex items-center justify-between p-5 border-b border-white/10 bg-white/5">
                     <div>
-                        <h2 className="text-lg font-bold text-white">{node.name || 'Configure Step'}</h2>
+                        <h2 className="text-lg font-semibold text-white">{node.name || 'Configure Step'}</h2>
                         <span className="text-xs text-cyan-glow uppercase tracking-wider font-semibold">{node.kind.replace('_', ' ')}</span>
                     </div>
                     <button
                         onClick={onClose}
-                        className="p-2 hover:bg-white/10 rounded-lg text-slate-400 hover:text-white transition-colors"
+                        className="p-2 hover:bg-white/10 rounded-lg text-zinc-400 hover:text-white transition-colors"
                     >
-                        <LuX className="w-5 h-5" />
+                        <LuX className="size-5" />
                     </button>
                 </div>
 
@@ -1202,10 +1368,10 @@ Operations Team"
                 {/* Footer */}
                 <div className="p-4 border-t border-white/10 bg-transparent space-y-2">
                     {/* Keyboard hints */}
-                    <div className="flex justify-center gap-3 text-[9px] text-slate-500 font-mono">
-                        <span><kbd className="px-1 py-0.5 bg-slate-800 rounded text-slate-400">Esc</kbd> Close</span>
-                        <span><kbd className="px-1 py-0.5 bg-slate-800 rounded text-slate-400">Ctrl+S</kbd> Save</span>
-                        <span><kbd className="px-1 py-0.5 bg-slate-800 rounded text-slate-400">Tab</kbd> Navigate</span>
+                    <div className="flex justify-center gap-3 text-[9px] text-zinc-500 font-mono">
+                        <span><kbd className="px-1 py-0.5 bg-zinc-800 rounded text-zinc-400">Esc</kbd> Close</span>
+                        <span><kbd className="px-1 py-0.5 bg-zinc-800 rounded text-zinc-400">Ctrl+S</kbd> Save</span>
+                        <span><kbd className="px-1 py-0.5 bg-zinc-800 rounded text-zinc-400">Tab</kbd> Navigate</span>
                     </div>
 
                     <div className="flex gap-2">
@@ -1214,7 +1380,7 @@ Operations Team"
                             className="flex-1 px-3 py-2 rounded-lg text-xs font-semibold bg-red-500/10 text-red-400 hover:bg-red-500/20 transition-colors flex items-center justify-center gap-1.5"
                             tabIndex={0}
                         >
-                            <LuTrash2 className="w-3.5 h-3.5" />
+                            <LuTrash2 className="size-3.5" />
                             Delete
                         </button>
 
@@ -1223,31 +1389,32 @@ Operations Team"
                             className="flex-[2] px-3 py-2 rounded-lg text-xs font-semibold bg-cyan-glow text-navy-950 hover:bg-white transition-all flex items-center justify-center gap-1.5"
                             tabIndex={0}
                         >
-                            <LuCheck className="w-3.5 h-3.5" />
+                            <LuCheck className="size-3.5" />
                             Done
                         </button>
                     </div>
                 </div>
-            </motion.div>
+            </m.div>
+            </LazyMotion>
 
             {/* Delete Confirmation Modal */}
             {showDeleteConfirm && (
-                <div className="fixed inset-0 z-[60] flex items-center justify-center bg-black/50 backdrop-blur-sm">
+                <div className="fixed inset-0 z-50 flex items-center justify-center bg-zinc-950/50 backdrop-blur-sm">
                     <div className="bg-navy-900 border border-white/10 rounded-2xl p-6 w-[400px] shadow-2xl space-y-4">
-                        <h3 className="text-xl font-bold text-white">Delete Step?</h3>
-                        <p className="text-slate-300 text-sm">
+                        <h3 className="text-xl font-semibold text-white">Delete Step?</h3>
+                        <p className="text-zinc-300 text-sm">
                             Are you sure you want to delete this step? This action cannot be undone and will remove connected edges.
                         </p>
                         <div className="flex gap-3 justify-end pt-2">
                             <button
                                 onClick={() => setShowDeleteConfirm(false)}
-                                className="px-4 py-2 rounded-lg text-sm font-medium text-slate-300 hover:text-white hover:bg-white/5 transition-colors"
+                                className="px-4 py-2 rounded-lg text-sm font-medium text-zinc-300 hover:text-white hover:bg-white/5 transition-colors"
                             >
                                 Cancel
                             </button>
                             <button
                                 onClick={confirmDelete}
-                                className="px-4 py-2 rounded-lg text-sm font-bold bg-red-500 text-white hover:bg-red-600 transition-colors shadow-lg"
+                                className="px-4 py-2 rounded-lg text-sm font-semibold bg-red-500 text-white hover:bg-red-600 transition-colors shadow-lg"
                             >
                                 Delete Step
                             </button>

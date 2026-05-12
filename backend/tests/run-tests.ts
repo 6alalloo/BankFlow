@@ -28,6 +28,28 @@ const validBaseGraph = graph(
   const result = validateDraftFlowGraph(
     graph(
       [
+        { node_key: "start", kind: "trigger", name: "Start", config_json: {} },
+        { node_key: "sla", kind: "sla", name: "Eight hour SLA", config_json: { dueInHours: 8 } },
+        {
+          node_key: "review",
+          kind: "review",
+          name: "Review",
+          config_json: { assignedTeamId: 1, claimPolicy: "claim_required" },
+        },
+      ],
+      [
+        { edge_key: "e1", from_node_key: "start", to_node_key: "sla", label: null, priority: 0 },
+        { edge_key: "e2", from_node_key: "sla", to_node_key: "review", label: null, priority: 0 },
+      ]
+    )
+  );
+  assert.equal(result.valid, true, JSON.stringify(result.issues));
+}
+
+{
+  const result = validateDraftFlowGraph(
+    graph(
+      [
         { node_key: "intake", kind: "intake", name: "Intake", config_json: {} },
         {
           node_key: "review",

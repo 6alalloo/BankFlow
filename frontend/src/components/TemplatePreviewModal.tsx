@@ -1,6 +1,6 @@
 
 import React from 'react';
-import { motion, AnimatePresence } from 'framer-motion';
+import { LazyMotion, domAnimation, m, AnimatePresence } from 'framer-motion';
 import { LuX, LuArrowRight, LuCircleCheck, LuGlobe, LuMail, LuDatabase, LuSplit, LuClock, LuTerminal, LuBox, LuCalendar, LuZap } from 'react-icons/lu';
 import type { FlowTemplate } from '../data/templates';
 
@@ -34,7 +34,7 @@ const nodeColors: Record<string, string> = {
     variable: 'text-teal-400 bg-teal-400/10 border-teal-400/20',
     wait: 'text-amber-400 bg-amber-400/10 border-amber-400/20',
     datetime: 'text-orange-400 bg-orange-400/10 border-orange-400/20',
-    logger: 'text-slate-300 bg-slate-400/10 border-slate-400/20',
+    logger: 'text-zinc-300 bg-zinc-400/10 border-zinc-400/20',
 };
 
 const TemplatePreviewModal: React.FC<TemplatePreviewModalProps> = ({
@@ -46,9 +46,10 @@ const TemplatePreviewModal: React.FC<TemplatePreviewModalProps> = ({
     if (!isOpen || !template) return null;
 
     return (
+        <LazyMotion features={domAnimation}>
         <AnimatePresence>
-            <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm">
-                <motion.div
+            <div className="fixed inset-0 z-50 flex items-center justify-center bg-zinc-950/60 backdrop-blur-sm">
+                <m.div
                     initial={{ opacity: 0, scale: 0.95 }}
                     animate={{ opacity: 1, scale: 1 }}
                     exit={{ opacity: 0, scale: 0.95 }}
@@ -58,18 +59,18 @@ const TemplatePreviewModal: React.FC<TemplatePreviewModalProps> = ({
                     {/* Header */}
                     <div className="flex items-center justify-between p-6 border-b border-white/10 bg-white/5">
                         <div>
-                            <span className={`text-xs font-bold uppercase tracking-wider ${
-                                template.category === 'general' ? 'text-cyan-400' : 'text-slate-400'
+                            <span className={`text-xs font-semibold uppercase tracking-wider ${
+                                template.category === 'general' ? 'text-cyan-400' : 'text-zinc-400'
                             }`}>
                                 Case Flow Template
                             </span>
-                            <h2 className="text-xl font-bold text-white mt-1">{template.name}</h2>
+                            <h2 className="text-xl font-semibold text-white mt-1">{template.name}</h2>
                         </div>
                         <button
                             onClick={onClose}
-                            className="p-2 hover:bg-white/10 rounded-lg text-slate-400 hover:text-white transition-colors"
+                            className="p-2 hover:bg-white/10 rounded-lg text-zinc-400 hover:text-white transition-colors"
                         >
-                            <LuX className="w-5 h-5" />
+                            <LuX className="size-5" />
                         </button>
                     </div>
 
@@ -77,35 +78,35 @@ const TemplatePreviewModal: React.FC<TemplatePreviewModalProps> = ({
                     <div className="flex-1 overflow-y-auto p-6 space-y-6 custom-scrollbar">
                         {/* Description */}
                         <div>
-                            <p className="text-slate-300 text-sm leading-relaxed">{template.description}</p>
+                            <p className="text-zinc-300 text-sm leading-relaxed">{template.description}</p>
                         </div>
 
                         {/* Use Case */}
                         <div className="p-4 rounded-xl bg-cyan-glow/5 border border-cyan-glow/20">
-                            <h3 className="text-sm font-bold text-cyan-glow mb-2">When to Use</h3>
-                            <p className="text-sm text-slate-300 leading-relaxed">{template.useCase}</p>
+                            <h3 className="text-sm font-semibold text-cyan-glow mb-2">When to Use</h3>
+                            <p className="text-sm text-zinc-300 leading-relaxed">{template.useCase}</p>
                         </div>
 
                         {/* Flow Preview */}
                         <div>
-                            <h3 className="text-sm font-bold text-white mb-3">Flow Steps</h3>
+                            <h3 className="text-sm font-semibold text-white mb-3">Flow Steps</h3>
                             <div className="space-y-2">
                                 {template.nodes.map((node, index) => {
                                     const Icon = nodeIcons[node.kind] || LuBox;
-                                    const colors = nodeColors[node.kind] || 'text-slate-400 bg-slate-400/10 border-slate-400/20';
+                                    const colors = nodeColors[node.kind] || 'text-zinc-400 bg-zinc-400/10 border-zinc-400/20';
                                     const isLast = index === template.nodes.length - 1;
 
                                     return (
                                         <div key={node.id} className="flex items-center gap-3">
                                             <div className={`p-2 rounded-lg border ${colors}`}>
-                                                <Icon className="w-4 h-4" />
+                                                <Icon className="size-4" />
                                             </div>
                                             <div className="flex-1">
                                                 <span className="text-sm font-medium text-white">{node.name}</span>
-                                                <span className="text-xs text-slate-500 ml-2">({node.kind})</span>
+                                                <span className="text-xs text-zinc-500 ml-2">({node.kind})</span>
                                             </div>
                                             {!isLast && (
-                                                <LuArrowRight className="w-4 h-4 text-slate-500" />
+                                                <LuArrowRight className="size-4 text-zinc-500" />
                                             )}
                                         </div>
                                     );
@@ -115,11 +116,11 @@ const TemplatePreviewModal: React.FC<TemplatePreviewModalProps> = ({
 
                         {/* Required Configuration */}
                         <div>
-                            <h3 className="text-sm font-bold text-white mb-3">Required Configuration</h3>
+                            <h3 className="text-sm font-semibold text-white mb-3">Required Configuration</h3>
                             <ul className="space-y-2">
-                                {template.requiredConfig.map((item, index) => (
-                                    <li key={index} className="flex items-start gap-2 text-sm text-slate-300">
-                                        <LuCircleCheck className="w-4 h-4 text-amber-400 mt-0.5 flex-shrink-0" />
+                                {template.requiredConfig.map((item) => (
+                                    <li key={item} className="flex items-start gap-2 text-sm text-zinc-300">
+                                        <LuCircleCheck className="size-4 text-amber-400 mt-0.5 flex-shrink-0" />
                                         <span>{item}</span>
                                     </li>
                                 ))}
@@ -127,7 +128,7 @@ const TemplatePreviewModal: React.FC<TemplatePreviewModalProps> = ({
                         </div>
 
                         {/* Node Count Summary */}
-                        <div className="flex gap-4 text-xs text-slate-400">
+                        <div className="flex gap-4 text-xs text-zinc-400">
                             <span>{template.nodes.length} nodes</span>
                             <span>{template.edges.length} connections</span>
                         </div>
@@ -137,21 +138,22 @@ const TemplatePreviewModal: React.FC<TemplatePreviewModalProps> = ({
                     <div className="p-6 border-t border-white/10 bg-transparent flex justify-end gap-3">
                         <button
                             onClick={onClose}
-                            className="px-5 py-2.5 rounded-lg text-sm font-medium text-slate-300 hover:text-white hover:bg-white/5 transition-colors"
+                            className="px-5 py-2.5 rounded-lg text-sm font-medium text-zinc-300 hover:text-white hover:bg-white/5 transition-colors"
                         >
                             Cancel
                         </button>
                         <button
                             onClick={() => onUseTemplate(template)}
-                            className="px-5 py-2.5 rounded-lg text-sm font-bold bg-cyan-glow text-navy-950 hover:bg-white hover:scale-[1.02] transition-all shadow-glow-sm flex items-center gap-2"
+                            className="px-5 py-2.5 rounded-lg text-sm font-semibold bg-cyan-glow text-navy-950 hover:bg-white hover:scale-[1.02] transition-all shadow-glow-sm flex items-center gap-2"
                         >
                             Use This Template
-                            <LuArrowRight className="w-4 h-4" />
+                            <LuArrowRight className="size-4" />
                         </button>
                     </div>
-                </motion.div>
+                </m.div>
             </div>
         </AnimatePresence>
+        </LazyMotion>
     );
 };
 

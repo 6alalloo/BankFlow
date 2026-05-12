@@ -37,10 +37,10 @@ const SmartField: React.FC<SmartFieldProps> = ({ value, onChange, placeholder, r
                     className={`flex-1 flex items-center justify-center gap-1.5 py-1 text-[10px] font-medium rounded-md transition-all ${
                         mode === 'variable'
                             ? 'bg-cyan-glow/20 text-cyan-glow shadow-sm'
-                            : 'text-slate-500 hover:text-slate-300'
+                            : 'text-zinc-500 hover:text-zinc-300'
                     }`}
                 >
-                    <LuZap className="w-3 h-3" />
+                    <LuZap className="size-3" />
                     Pick Variable
                 </button>
                 <button
@@ -49,10 +49,10 @@ const SmartField: React.FC<SmartFieldProps> = ({ value, onChange, placeholder, r
                     className={`flex-1 flex items-center justify-center gap-1.5 py-1 text-[10px] font-medium rounded-md transition-all ${
                         mode === 'custom'
                             ? 'bg-purple-500/20 text-purple-300 shadow-sm'
-                            : 'text-slate-500 hover:text-slate-300'
+                            : 'text-zinc-500 hover:text-zinc-300'
                     }`}
                 >
-                    <LuPenTool className="w-3 h-3" />
+                    <LuPenTool className="size-3" />
                     Custom Value
                 </button>
             </div>
@@ -61,7 +61,7 @@ const SmartField: React.FC<SmartFieldProps> = ({ value, onChange, placeholder, r
             {mode === 'variable' ? (
                 <div className="relative">
                     <div className="absolute left-2.5 top-1/2 -translate-y-1/2 text-cyan-glow pointer-events-none">
-                        <LuZap className="w-4 h-4" />
+                        <LuZap className="size-4" />
                     </div>
                     <select
                         value={value}
@@ -77,8 +77,8 @@ const SmartField: React.FC<SmartFieldProps> = ({ value, onChange, placeholder, r
                             </option>
                         ))}
                     </select>
-                    <div className="absolute right-2.5 top-1/2 -translate-y-1/2 text-slate-400 pointer-events-none">
-                        <LuChevronDown className="w-4 h-4" />
+                    <div className="absolute right-2.5 top-1/2 -translate-y-1/2 text-zinc-400 pointer-events-none">
+                        <LuChevronDown className="size-4" />
                     </div>
                 </div>
             ) : (

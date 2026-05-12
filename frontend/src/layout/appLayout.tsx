@@ -39,9 +39,9 @@ const AppLayout: React.FC<AppLayoutProps> = ({ children }) => {
             <header className="flex items-center justify-between px-8 py-3 border-b border-white/5 bg-white/[0.01] backdrop-blur-xl z-20 shrink-0">
                 {/* Left: Breadcrumbs / Context */}
                 <div className="flex items-center gap-3 text-sm">
-                    <span className="text-slate-500 font-medium">{section}</span>
-                    <span className="text-slate-600">/</span>
-                    <span className="text-slate-200 font-semibold tracking-wide">{page}</span>
+                    <span className="text-zinc-500 font-medium">{section}</span>
+                    <span className="text-zinc-600">/</span>
+                    <span className="text-zinc-200 font-semibold tracking-wide">{page}</span>
                 </div>
 
                 {/* Right: User Indicator (Static) */}
@@ -50,10 +50,10 @@ const AppLayout: React.FC<AppLayoutProps> = ({ children }) => {
                     {user && (
                         <div className="flex items-center gap-3 pl-4 border-l border-white/10">
                              <div className="flex items-center gap-3 px-3 py-1.5 rounded-full bg-white/5 border border-white/5">
-                                <div className="w-6 h-6 rounded-full bg-gradient-to-tr from-indigo-500 to-purple-500 flex items-center justify-center text-[10px] font-bold text-white shadow-inner">
+                                <div className="size-6 rounded-full bg-gradient-to-tr from-blue-500 to-purple-500 flex items-center justify-center text-[10px] font-semibold text-white shadow-inner">
                                     {user.full_name ? user.full_name[0].toUpperCase() : 'U'}
                                 </div>
-                                <span className="text-xs text-slate-300 font-medium">{user.email}</span>
+                                <span className="text-xs text-zinc-300 font-medium">{user.email}</span>
                             </div>
                         </div>
                     )}

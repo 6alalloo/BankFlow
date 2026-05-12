@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useRef, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import {
   fetchFlows,
@@ -23,11 +23,11 @@ const DeleteConfirmationModal: React.FC<DeleteModalProps> = ({ flow, isOpen, onC
 
     return (
         <>
-            <div className="fixed inset-0 bg-black/80 backdrop-blur-sm z-[1060]" onClick={onClose} />
-            <div className="fixed top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 z-[1070] w-full max-w-sm">
-                <div className="bg-[#0f172a] border border-slate-800 rounded-xl shadow-2xl overflow-hidden p-6">
-                    <h3 className="text-lg font-bold text-white mb-2">Delete Flow?</h3>
-                    <p className="text-slate-400 text-sm mb-6 leading-relaxed">
+            <button type="button" aria-label="Close delete confirmation" className="fixed inset-0 bg-zinc-950/80 backdrop-blur-sm z-40" onClick={onClose} />
+            <div className="fixed top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 z-50 w-full max-w-sm">
+                <div className="bg-[#0f172a] border border-zinc-800 rounded-xl shadow-2xl overflow-hidden p-6">
+                    <h3 className="text-lg font-semibold text-white mb-2">Delete Flow?</h3>
+                    <p className="text-zinc-400 text-sm mb-6 leading-relaxed">
                         Are you sure you want to delete <span className="text-white font-medium">{flow.name}</span>? This action cannot be undone.
                     </p>
                         
@@ -35,16 +35,16 @@ const DeleteConfirmationModal: React.FC<DeleteModalProps> = ({ flow, isOpen, onC
                         <button
                             onClick={onClose}
                             disabled={isDeleting}
-                            className="px-4 py-2 text-slate-300 hover:text-white text-sm font-medium transition-colors"
+                            className="px-4 py-2 text-zinc-300 hover:text-white text-sm font-medium transition-colors"
                         >
                             Cancel
                         </button>
                         <button
                             onClick={onConfirm}
                             disabled={isDeleting}
-                            className="px-4 py-2 bg-red-600 hover:bg-red-500 text-white text-sm font-bold rounded-lg shadow-lg shadow-red-900/20 flex items-center gap-2 transition-all"
+                            className="px-4 py-2 bg-red-600 hover:bg-red-500 text-white text-sm font-semibold rounded-lg shadow-lg shadow-red-900/20 flex items-center gap-2 transition-all"
                         >
-                            {isDeleting ? "Deleting..." : "Delete Flow"}
+                            {isDeleting ? "Deleting?" : "Delete Flow"}
                         </button>
                     </div>
                 </div>
@@ -71,8 +71,7 @@ const FlowsListPage: React.FC = () => {
   const [isCreating, setIsCreating] = useState(false);
 
   // Duplicate State
-  // eslint-disable-next-line @typescript-eslint/no-unused-vars
-  const [_isDuplicating, setIsDuplicating] = useState(false);
+  const isDuplicatingRef = useRef(false);
 
   // Load Flows
   useEffect(() => {
@@ -136,7 +135,7 @@ const FlowsListPage: React.FC = () => {
 
   const handleDuplicate = async (wf: FlowApi) => {
       try {
-          setIsDuplicating(true);
+          isDuplicatingRef.current = true;
           const duplicated = await duplicateFlow(wf.id);
           // Add to list and navigate to builder
           setFlows((prev) => [duplicated, ...prev]);
@@ -145,8 +144,12 @@ const FlowsListPage: React.FC = () => {
           console.error("Failed to duplicate flow", err);
           alert("Failed to duplicate flow. See console for details.");
       } finally {
-          setIsDuplicating(false);
+          isDuplicatingRef.current = false;
       }
+  };
+
+  const handleFlowUpdated = (updated: FlowApi) => {
+      setFlows((prev) => prev.map((flow) => flow.id === updated.id ? updated : flow));
   };
 
   return (
@@ -159,6 +162,7 @@ const FlowsListPage: React.FC = () => {
             onCreate={handleCreateFlow}
             onDelete={handleDeleteRequest}
             onDuplicate={handleDuplicate}
+            onFlowUpdated={handleFlowUpdated}
         />
 
         <DeleteConfirmationModal 

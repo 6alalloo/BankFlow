@@ -57,7 +57,7 @@ const FlowListSidebar: React.FC<FlowListSidebarProps> = ({
                             placeholder="SEARCH" 
                             value={searchQuery}
                             onChange={(e) => onSearchChange(e.target.value)}
-                            className="w-full bg-black/40 border border-cyan-900/30 rounded-none pl-9 pr-3 py-2 text-xs font-mono text-cyan-100 placeholder:text-cyan-900/50 focus:outline-none focus:border-cyan-500/50 focus:bg-black/60 focus:ring-1 focus:ring-cyan-500/20 focus:shadow-[0_0_15px_rgba(6,182,212,0.15)] transition-all uppercase tracking-wider"
+                            className="w-full bg-zinc-950/40 border border-cyan-900/30 rounded-none pl-9 pr-3 py-2 text-xs font-mono text-cyan-100 placeholder:text-cyan-900/50 focus:outline-none focus:border-cyan-500/50 focus:bg-zinc-950/60 focus:ring-1 focus:ring-cyan-500/20 focus:shadow-[0_0_15px_rgba(6,182,212,0.15)] transition-all uppercase tracking-wider"
                         />
                     </div>
                     
@@ -111,7 +111,7 @@ const FlowListSidebar: React.FC<FlowListSidebarProps> = ({
                         title="Create New Flow"
                         style={{ clipPath: 'polygon(10px 0, 100% 0, 100% 100%, 0 100%, 0 10px)' }}
                     >
-                         {isCreating ? <div className="animate-spin w-4 h-4 border-2 border-black/30 border-t-black rounded-full" /> : <FiPlus size={20} className="stroke-[3px]" />}
+                         {isCreating ? <div className="animate-spin size-4 border-2 border-black/30 border-t-black rounded-full" /> : <FiPlus size={20} className="stroke-[3px]" />}
                     </button>
                 </div>
             </div>
@@ -128,8 +128,8 @@ const FlowListSidebar: React.FC<FlowListSidebarProps> = ({
                         />
                     ))
                 ) : (
-                    <div className="flex flex-col items-center justify-center py-16 text-slate-600 gap-2">
-                        <div className="w-12 h-12 rounded-full bg-white/5 flex items-center justify-center mb-2">
+                    <div className="flex flex-col items-center justify-center py-16 text-zinc-600 gap-2">
+                        <div className="size-12 rounded-full bg-white/5 flex items-center justify-center mb-2">
                             <FiSearch size={20} opacity={0.5} />
                         </div>
                         <p className="text-sm font-medium">No flows found</p>

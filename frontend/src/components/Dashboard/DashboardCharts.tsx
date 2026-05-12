@@ -108,8 +108,8 @@ export function StatusChart({ data }: StatusChartProps) {
                         dataKey="value"
                         stroke="none"
                     >
-                        {data.map((entry, index) => (
-                            <Cell key={`cell-${index}`} fill={entry.color} />
+                        {data.map((entry) => (
+                            <Cell key={`cell-${entry.name}`} fill={entry.color} />
                         ))}
                     </Pie>
                     <Tooltip 
@@ -132,10 +132,10 @@ export function StatusChart({ data }: StatusChartProps) {
             </ResponsiveContainer>
              {/* Center Text Overlay */}
              <div className="absolute inset-0 flex flex-col items-center justify-center pointer-events-none pr-14">
-                <span className="text-2xl font-bold text-white">
+                <span className="text-2xl font-semibold text-white">
                     {data.reduce((acc, curr) => acc + curr.value, 0)}
                 </span>
-                <span className="text-[9px] text-slate-500 font-mono uppercase tracking-widest">Total</span>
+                <span className="text-[9px] text-zinc-500 font-mono uppercase tracking-widest">Total</span>
             </div>
         </div>
     );

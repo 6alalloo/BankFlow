@@ -42,6 +42,8 @@ const initialFormData: UserFormData = {
   role_id: null,
 };
 
+const formatDisplayDate = (value: string) => new Date(value).toLocaleDateString();
+
 export default function UserManagementPage() {
   const { user: currentUser } = useAuth();
   const [users, setUsers] = useState<User[]>([]);
@@ -281,7 +283,7 @@ export default function UserManagementPage() {
           style={{ clipPath: "polygon(20px 0, 100% 0, 100% calc(100% - 20px), calc(100% - 20px) 100%, 0 100%, 0 20px)" }}
         >
           <FiShield className="mx-auto text-5xl text-rose-500 mb-6 animate-pulse" />
-          <h2 className="text-2xl font-bold font-mono text-white mb-2 uppercase tracking-widest">Access Denied</h2>
+          <h2 className="text-2xl font-semibold font-mono text-white mb-2 uppercase tracking-widest">Access Denied</h2>
           <p className="text-rose-400 font-mono text-sm">Administrator privileges required.</p>
         </div>
       </div>
@@ -298,10 +300,10 @@ export default function UserManagementPage() {
         <div className="flex flex-col md:flex-row md:items-end justify-between gap-6">
           <div>
             <div className="flex items-center gap-3 mb-2">
-              <div className="w-10 h-10 flex items-center justify-center border border-cyan-500/30 bg-cyan-950/20 text-cyan-400">
+              <div className="size-10 flex items-center justify-center border border-cyan-500/30 bg-cyan-950/20 text-cyan-400">
                 <FiUsers size={20} />
               </div>
-              <h1 className="text-2xl font-bold tracking-widest text-white uppercase font-mono">User Management</h1>
+              <h1 className="text-2xl font-semibold tracking-widest text-white uppercase font-mono">User Management</h1>
             </div>
             <p className="text-cyan-900/60 text-xs font-mono tracking-widest uppercase pl-14">
               System Users // Access Control
@@ -311,7 +313,7 @@ export default function UserManagementPage() {
           {/* Add User Button */}
           <button
             onClick={openCreateModal}
-            className="px-4 py-2.5 bg-cyan-500 text-navy-950 font-bold text-xs uppercase tracking-wider flex items-center gap-2 hover:bg-cyan-400 transition-colors shadow-lg shadow-cyan-500/20"
+            className="px-4 py-2.5 bg-cyan-500 text-navy-950 font-semibold text-xs uppercase tracking-wider flex items-center gap-2 hover:bg-cyan-400 transition-colors shadow-lg shadow-cyan-500/20"
           >
             <FiUserPlus size={16} />
             Add User
@@ -330,24 +332,24 @@ export default function UserManagementPage() {
       {/* Stats Cards */}
       <div className="px-8 py-3 z-10 grid grid-cols-2 md:grid-cols-5 gap-3">
         <div className="p-3 bg-[#050b14]/80 border border-white/5 rounded-lg">
-          <div className="text-xl font-bold text-white font-mono">{stats.total}</div>
-          <div className="text-[9px] text-slate-500 uppercase tracking-wider font-mono">Total</div>
+          <div className="text-xl font-semibold text-white font-mono">{stats.total}</div>
+          <div className="text-[9px] text-zinc-500 uppercase tracking-wider font-mono">Total</div>
         </div>
         <div className="p-3 bg-[#050b14]/80 border border-emerald-500/20 rounded-lg">
-          <div className="text-xl font-bold text-emerald-400 font-mono">{stats.active}</div>
-          <div className="text-[9px] text-slate-500 uppercase tracking-wider font-mono">Active</div>
+          <div className="text-xl font-semibold text-emerald-400 font-mono">{stats.active}</div>
+          <div className="text-[9px] text-zinc-500 uppercase tracking-wider font-mono">Active</div>
         </div>
-        <div className="p-3 bg-[#050b14]/80 border border-slate-500/20 rounded-lg">
-          <div className="text-xl font-bold text-slate-400 font-mono">{stats.inactive}</div>
-          <div className="text-[9px] text-slate-500 uppercase tracking-wider font-mono">Inactive</div>
+        <div className="p-3 bg-[#050b14]/80 border border-zinc-500/20 rounded-lg">
+          <div className="text-xl font-semibold text-zinc-400 font-mono">{stats.inactive}</div>
+          <div className="text-[9px] text-zinc-500 uppercase tracking-wider font-mono">Inactive</div>
         </div>
         <div className="p-3 bg-[#050b14]/80 border border-cyan-500/20 rounded-lg">
-          <div className="text-xl font-bold text-cyan-400 font-mono">{stats.admins}</div>
-          <div className="text-[9px] text-slate-500 uppercase tracking-wider font-mono">Admins</div>
+          <div className="text-xl font-semibold text-cyan-400 font-mono">{stats.admins}</div>
+          <div className="text-[9px] text-zinc-500 uppercase tracking-wider font-mono">Admins</div>
         </div>
         <div className="p-3 bg-[#050b14]/80 border border-violet-500/20 rounded-lg">
-          <div className="text-xl font-bold text-violet-400 font-mono">{stats.operators}</div>
-          <div className="text-[9px] text-slate-500 uppercase tracking-wider font-mono">Operators</div>
+          <div className="text-xl font-semibold text-violet-400 font-mono">{stats.operators}</div>
+          <div className="text-[9px] text-zinc-500 uppercase tracking-wider font-mono">Operators</div>
         </div>
       </div>
 
@@ -360,7 +362,7 @@ export default function UserManagementPage() {
             type="text"
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
-            placeholder="Search by name or email..."
+            placeholder="Search by name or email?"
             className="w-full pl-9 pr-4 py-2 bg-[#050b14]/80 border border-cyan-900/30 text-xs font-mono text-cyan-300 placeholder:text-cyan-900/50 focus:outline-none focus:border-cyan-500/50"
           />
         </div>
@@ -404,10 +406,10 @@ export default function UserManagementPage() {
         {loading ? (
           <div className="flex flex-col items-center justify-center py-20 text-cyan-900 gap-4">
             <FiLoader className="animate-spin text-3xl opacity-50" />
-            <p className="font-mono text-xs uppercase tracking-widest animate-pulse">Loading Users...</p>
+            <p className="font-mono text-xs uppercase tracking-widest animate-pulse">Loading Users?</p>
           </div>
         ) : users.length === 0 ? (
-          <div className="flex flex-col items-center justify-center py-24 text-slate-500 opacity-60">
+          <div className="flex flex-col items-center justify-center py-24 text-zinc-500 opacity-60">
             <FiUsers className="text-4xl mb-4 text-cyan-900" />
             <p className="font-mono text-xs uppercase tracking-widest text-cyan-800">No Users Found</p>
           </div>
@@ -418,16 +420,16 @@ export default function UserManagementPage() {
                 key={user.id}
                 style={{ animationDelay: `${idx * 15}ms` }}
                 className={`group relative overflow-hidden border-l-2 transition-all duration-200 animate-in fade-in slide-in-from-bottom-1 fill-mode-backwards bg-[#03060c] border-y border-r border-y-white/5 border-r-white/5 hover:bg-[#050910] ${
-                  user.is_active ? "border-l-emerald-500/50" : "border-l-slate-600"
+                  user.is_active ? "border-l-emerald-500/50" : "border-l-zinc-600"
                 } ${isSelf(user.id) ? "ring-1 ring-cyan-500/20" : ""}`}
               >
                 <div className="flex items-center gap-3 px-3 py-2">
                   {/* Avatar - smaller */}
                   <div
-                    className={`w-8 h-8 rounded-full flex items-center justify-center text-white font-bold text-xs shrink-0 ${
+                    className={`size-8 rounded-full flex items-center justify-center text-white font-semibold text-xs shrink-0 ${
                       user.is_active
                         ? "bg-gradient-to-br from-cyan-600 to-blue-700"
-                        : "bg-gradient-to-br from-slate-600 to-slate-700"
+                        : "bg-gradient-to-br from-zinc-600 to-zinc-700"
                     }`}
                   >
                     {user.full_name.charAt(0).toUpperCase()}
@@ -443,12 +445,12 @@ export default function UserManagementPage() {
                         </span>
                       )}
                     </div>
-                    <div className="text-[11px] text-slate-500 font-mono truncate">{user.email}</div>
+                    <div className="text-[11px] text-zinc-500 font-mono truncate">{user.email}</div>
                   </div>
 
                   {/* Role Badge */}
                   <div
-                    className={`px-2 py-0.5 text-[9px] font-bold font-mono uppercase tracking-wider border shrink-0 ${
+                    className={`px-2 py-0.5 text-[9px] font-semibold font-mono uppercase tracking-wider border shrink-0 ${
                       user.roles.name === "Admin"
                         ? "text-cyan-400 border-cyan-500/30 bg-cyan-950/20"
                         : "text-violet-400 border-violet-500/30 bg-violet-950/20"
@@ -459,13 +461,13 @@ export default function UserManagementPage() {
 
                   {/* Status */}
                   <div className="flex items-center gap-1.5 shrink-0">
-                    <div className={`w-1.5 h-1.5 rounded-full ${user.is_active ? "bg-emerald-500" : "bg-slate-600"}`} />
-                    <span className="text-[9px] text-slate-500 font-mono uppercase w-12">{user.is_active ? "Active" : "Inactive"}</span>
+                    <div className={`size-1.5 rounded-full ${user.is_active ? "bg-emerald-500" : "bg-zinc-600"}`} />
+                    <span className="text-[9px] text-zinc-500 font-mono uppercase w-12">{user.is_active ? "Active" : "Inactive"}</span>
                   </div>
 
                   {/* Created Date */}
                   <div className="hidden lg:block text-[9px] text-cyan-900 font-mono shrink-0 w-20">
-                    {new Date(user.created_at).toLocaleDateString()}
+                    {formatDisplayDate(user.created_at)}
                   </div>
 
                   {/* Actions */}
@@ -476,8 +478,8 @@ export default function UserManagementPage() {
                       title={isSelf(user.id) ? "Cannot modify your own account" : "Edit user"}
                       className={`p-1.5 rounded transition-colors ${
                         isSelf(user.id)
-                          ? "text-slate-700 cursor-not-allowed"
-                          : "text-slate-500 hover:text-cyan-400 hover:bg-cyan-500/10"
+                          ? "text-zinc-700 cursor-not-allowed"
+                          : "text-zinc-500 hover:text-cyan-400 hover:bg-cyan-500/10"
                       }`}
                     >
                       <FiEdit2 size={13} />
@@ -494,10 +496,10 @@ export default function UserManagementPage() {
                       }
                       className={`p-1.5 rounded transition-colors ${
                         isSelf(user.id)
-                          ? "text-slate-700 cursor-not-allowed"
+                          ? "text-zinc-700 cursor-not-allowed"
                           : user.is_active
-                          ? "text-slate-500 hover:text-rose-400 hover:bg-rose-500/10"
-                          : "text-slate-500 hover:text-emerald-400 hover:bg-emerald-500/10"
+                          ? "text-zinc-500 hover:text-rose-400 hover:bg-rose-500/10"
+                          : "text-zinc-500 hover:text-emerald-400 hover:bg-emerald-500/10"
                       }`}
                     >
                       {togglingUserId === user.id ? <FiLoader className="animate-spin" size={13} /> : <FiPower size={13} />}
@@ -519,24 +521,24 @@ export default function UserManagementPage() {
 
       {/* Create/Edit Modal */}
       {showModal && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm">
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-zinc-950/60 backdrop-blur-sm">
           <div className="bg-[#0a0e1a] border border-cyan-500/30 rounded-xl w-[480px] shadow-2xl overflow-hidden animate-in fade-in zoom-in-95">
             {/* Modal Header */}
             <div className="flex items-center justify-between px-6 py-4 border-b border-white/5">
               <div className="flex items-center gap-3">
-                <div className="w-10 h-10 flex items-center justify-center bg-cyan-500/10 border border-cyan-500/30 rounded-lg">
+                <div className="size-10 flex items-center justify-center bg-cyan-500/10 border border-cyan-500/30 rounded-lg">
                   <FiUser className="text-cyan-400" />
                 </div>
                 <div>
-                  <h3 className="text-lg font-bold text-white">
+                  <h3 className="text-lg font-semibold text-white">
                     {modalMode === "create" ? "Create User" : "Edit User"}
                   </h3>
-                  <p className="text-xs text-slate-500">
+                  <p className="text-xs text-zinc-500">
                     {modalMode === "create" ? "Add a new user to the system" : "Update user details"}
                   </p>
                 </div>
               </div>
-              <button onClick={closeModal} className="p-2 text-slate-500 hover:text-white transition-colors">
+              <button onClick={closeModal} className="p-2 text-zinc-500 hover:text-white transition-colors">
                 <FiX size={18} />
               </button>
             </div>
@@ -552,14 +554,15 @@ export default function UserManagementPage() {
 
               {/* Full Name */}
               <div>
-                <label className="block text-[10px] font-bold uppercase text-slate-500 mb-1.5 tracking-wider">
+                <label htmlFor="user-full-name" className="block text-[10px] font-semibold uppercase text-zinc-500 mb-1.5 tracking-wider">
                   Full Name
                 </label>
                 <input
+                  id="user-full-name"
                   type="text"
                   value={formData.full_name}
-                  onChange={(e) => setFormData({ ...formData, full_name: e.target.value })}
-                  className={`w-full px-3 py-2.5 bg-black/30 text-sm text-white border rounded-lg focus:outline-none transition-all placeholder:text-slate-600 ${
+                  onChange={(e) => setFormData((prev) => ({ ...prev, full_name: e.target.value }))}
+                  className={`w-full px-3 py-2.5 bg-zinc-950/30 text-sm text-white border rounded-lg focus:outline-none transition-all placeholder:text-zinc-600 ${
                     formErrors.full_name ? "border-rose-500/50 focus:border-rose-500" : "border-white/10 focus:border-cyan-500/50"
                   }`}
                   placeholder="John Doe"
@@ -571,14 +574,15 @@ export default function UserManagementPage() {
 
               {/* Email */}
               <div>
-                <label className="block text-[10px] font-bold uppercase text-slate-500 mb-1.5 tracking-wider">
+                <label htmlFor="user-email" className="block text-[10px] font-semibold uppercase text-zinc-500 mb-1.5 tracking-wider">
                   Email Address
                 </label>
                 <input
+                  id="user-email"
                   type="email"
                   value={formData.email}
-                  onChange={(e) => setFormData({ ...formData, email: e.target.value })}
-                  className={`w-full px-3 py-2.5 bg-black/30 text-sm text-white border rounded-lg focus:outline-none transition-all placeholder:text-slate-600 ${
+                  onChange={(e) => setFormData((prev) => ({ ...prev, email: e.target.value }))}
+                  className={`w-full px-3 py-2.5 bg-zinc-950/30 text-sm text-white border rounded-lg focus:outline-none transition-all placeholder:text-zinc-600 ${
                     formErrors.email ? "border-rose-500/50 focus:border-rose-500" : "border-white/10 focus:border-cyan-500/50"
                   }`}
                   placeholder="john@example.com"
@@ -588,13 +592,14 @@ export default function UserManagementPage() {
 
               {/* Role */}
               <div>
-                <label className="block text-[10px] font-bold uppercase text-slate-500 mb-1.5 tracking-wider">
+                <label htmlFor="user-role" className="block text-[10px] font-semibold uppercase text-zinc-500 mb-1.5 tracking-wider">
                   Role
                 </label>
                 <select
+                  id="user-role"
                   value={formData.role_id ?? ""}
-                  onChange={(e) => setFormData({ ...formData, role_id: e.target.value ? Number(e.target.value) : null })}
-                  className={`w-full px-3 py-2.5 bg-black/30 text-sm text-white border rounded-lg focus:outline-none transition-all appearance-none cursor-pointer ${
+                  onChange={(e) => setFormData((prev) => ({ ...prev, role_id: e.target.value ? Number(e.target.value) : null }))}
+                  className={`w-full px-3 py-2.5 bg-zinc-950/30 text-sm text-white border rounded-lg focus:outline-none transition-all appearance-none cursor-pointer ${
                     formErrors.role_id ? "border-rose-500/50 focus:border-rose-500" : "border-white/10 focus:border-cyan-500/50"
                   }`}
                 >
@@ -623,9 +628,9 @@ export default function UserManagementPage() {
                   ) : (
                     <div className="space-y-3">
                       <div className="flex items-center justify-between">
-                        <label className="text-[10px] font-bold uppercase text-slate-500 tracking-wider">
-                          Change Password
-                        </label>
+                    <label htmlFor="operator-password-panel" className="text-[10px] font-semibold uppercase text-zinc-500 tracking-wider">
+                      Change Password
+                    </label>
                         <button
                           type="button"
                           onClick={() => {
@@ -634,7 +639,7 @@ export default function UserManagementPage() {
                             setConfirmNewPassword("");
                             setPasswordError(null);
                           }}
-                          className="text-xs text-slate-500 hover:text-white transition-colors"
+                          className="text-xs text-zinc-500 hover:text-white transition-colors"
                         >
                           Cancel
                         </button>
@@ -648,10 +653,11 @@ export default function UserManagementPage() {
                       )}
 
                       <input
+                        id="operator-password-panel"
                         type="password"
                         value={newPassword}
                         onChange={(e) => setNewPassword(e.target.value)}
-                        className="w-full px-3 py-2.5 bg-black/30 text-sm text-white border border-white/10 rounded-lg focus:outline-none focus:border-cyan-500/50 transition-all placeholder:text-slate-600"
+                        className="w-full px-3 py-2.5 bg-zinc-950/30 text-sm text-white border border-white/10 rounded-lg focus:outline-none focus:border-cyan-500/50 transition-all placeholder:text-zinc-600"
                         placeholder="New password (min 8 characters)"
                       />
 
@@ -659,7 +665,7 @@ export default function UserManagementPage() {
                         type="password"
                         value={confirmNewPassword}
                         onChange={(e) => setConfirmNewPassword(e.target.value)}
-                        className="w-full px-3 py-2.5 bg-black/30 text-sm text-white border border-white/10 rounded-lg focus:outline-none focus:border-cyan-500/50 transition-all placeholder:text-slate-600"
+                        className="w-full px-3 py-2.5 bg-zinc-950/30 text-sm text-white border border-white/10 rounded-lg focus:outline-none focus:border-cyan-500/50 transition-all placeholder:text-zinc-600"
                         placeholder="Confirm new password"
                       />
 
@@ -672,7 +678,7 @@ export default function UserManagementPage() {
                         {isChangingPassword ? (
                           <>
                             <FiLoader className="animate-spin" size={14} />
-                            Changing...
+                            Changing?
                           </>
                         ) : (
                           <>
@@ -690,14 +696,15 @@ export default function UserManagementPage() {
               {modalMode === "create" && (
                 <>
                   <div>
-                    <label className="block text-[10px] font-bold uppercase text-slate-500 mb-1.5 tracking-wider">
+                    <label htmlFor="user-password" className="block text-[10px] font-semibold uppercase text-zinc-500 mb-1.5 tracking-wider">
                       Password
                     </label>
                     <input
+                      id="user-password"
                       type="password"
                       value={formData.password}
-                      onChange={(e) => setFormData({ ...formData, password: e.target.value })}
-                      className={`w-full px-3 py-2.5 bg-black/30 text-sm text-white border rounded-lg focus:outline-none transition-all placeholder:text-slate-600 ${
+                      onChange={(e) => setFormData((prev) => ({ ...prev, password: e.target.value }))}
+                      className={`w-full px-3 py-2.5 bg-zinc-950/30 text-sm text-white border rounded-lg focus:outline-none transition-all placeholder:text-zinc-600 ${
                         formErrors.password ? "border-rose-500/50 focus:border-rose-500" : "border-white/10 focus:border-cyan-500/50"
                       }`}
                       placeholder="Minimum 8 characters"
@@ -708,14 +715,15 @@ export default function UserManagementPage() {
                   </div>
 
                   <div>
-                    <label className="block text-[10px] font-bold uppercase text-slate-500 mb-1.5 tracking-wider">
+                    <label htmlFor="user-confirm-password" className="block text-[10px] font-semibold uppercase text-zinc-500 mb-1.5 tracking-wider">
                       Confirm Password
                     </label>
                     <input
+                      id="user-confirm-password"
                       type="password"
                       value={formData.confirmPassword}
-                      onChange={(e) => setFormData({ ...formData, confirmPassword: e.target.value })}
-                      className={`w-full px-3 py-2.5 bg-black/30 text-sm text-white border rounded-lg focus:outline-none transition-all placeholder:text-slate-600 ${
+                      onChange={(e) => setFormData((prev) => ({ ...prev, confirmPassword: e.target.value }))}
+                      className={`w-full px-3 py-2.5 bg-zinc-950/30 text-sm text-white border rounded-lg focus:outline-none transition-all placeholder:text-zinc-600 ${
                         formErrors.confirmPassword
                           ? "border-rose-500/50 focus:border-rose-500"
                           : "border-white/10 focus:border-cyan-500/50"
@@ -735,19 +743,19 @@ export default function UserManagementPage() {
                   type="button"
                   onClick={closeModal}
                   disabled={isSubmitting}
-                  className="px-4 py-2 rounded-lg text-sm font-medium text-slate-300 hover:text-white hover:bg-white/5 transition-colors disabled:opacity-50"
+                  className="px-4 py-2 rounded-lg text-sm font-medium text-zinc-300 hover:text-white hover:bg-white/5 transition-colors disabled:opacity-50"
                 >
                   Cancel
                 </button>
                 <button
                   type="submit"
                   disabled={isSubmitting}
-                  className="px-4 py-2 rounded-lg text-sm font-bold bg-cyan-500 text-navy-950 hover:bg-cyan-400 transition-colors shadow-lg flex items-center gap-2 disabled:opacity-50"
+                  className="px-4 py-2 rounded-lg text-sm font-semibold bg-cyan-500 text-navy-950 hover:bg-cyan-400 transition-colors shadow-lg flex items-center gap-2 disabled:opacity-50"
                 >
                   {isSubmitting ? (
                     <>
                       <FiLoader className="animate-spin" />
-                      {modalMode === "create" ? "Creating..." : "Saving..."}
+                      {modalMode === "create" ? "Creating?" : "Saving?"}
                     </>
                   ) : modalMode === "create" ? (
                     <>

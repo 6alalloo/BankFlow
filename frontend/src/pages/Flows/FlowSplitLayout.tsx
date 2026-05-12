@@ -15,6 +15,7 @@ type FlowSplitLayoutProps = {
     onCreate: () => void;
     onDelete: (wf: FlowApi) => void;
     onDuplicate?: (wf: FlowApi) => void;
+    onFlowUpdated?: (wf: FlowApi) => void;
 };
 
 const FlowSplitLayout: React.FC<FlowSplitLayoutProps> = ({
@@ -24,7 +25,8 @@ const FlowSplitLayout: React.FC<FlowSplitLayoutProps> = ({
     error,
     onCreate,
     onDelete,
-    onDuplicate
+    onDuplicate,
+    onFlowUpdated
 }) => {
     const navigate = useNavigate();
     
@@ -44,10 +46,11 @@ const FlowSplitLayout: React.FC<FlowSplitLayoutProps> = ({
     useEffect(() => {
         if (!initializedRef.current && flows.length > 0) {
             // Use setTimeout to avoid synchronous state update warning during effect
-            setTimeout(() => {
+            const timer = setTimeout(() => {
                  setSelectedId(flows[0].id);
             }, 0);
             initializedRef.current = true;
+            return () => clearTimeout(timer);
         }
     }, [flows]);
 
@@ -69,7 +72,7 @@ const FlowSplitLayout: React.FC<FlowSplitLayoutProps> = ({
             const nodeIdMap: Record<string, number> = {};
 
             // Add nodes from template
-            for (const templateNode of template.nodes) {
+            await Promise.all(template.nodes.map(async (templateNode) => {
                 const nodeResponse = await createFlowNode(flowId, {
                     kind: templateNode.kind,
                     name: templateNode.name,
@@ -78,10 +81,10 @@ const FlowSplitLayout: React.FC<FlowSplitLayoutProps> = ({
                     config: templateNode.config,
                 });
                 nodeIdMap[templateNode.id] = nodeResponse.id;
-            }
+            }));
 
             // Add edges from template
-            for (const templateEdge of template.edges) {
+            await Promise.all(template.edges.map(async (templateEdge) => {
                 const fromNodeId = nodeIdMap[templateEdge.from];
                 const toNodeId = nodeIdMap[templateEdge.to];
 
@@ -93,7 +96,7 @@ const FlowSplitLayout: React.FC<FlowSplitLayoutProps> = ({
                         condition: templateEdge.condition || undefined,
                     });
                 }
-            }
+            }));
 
             setIsTemplateModalOpen(false);
             navigate(`/flows/${flowId}/builder`);
@@ -108,9 +111,9 @@ const FlowSplitLayout: React.FC<FlowSplitLayoutProps> = ({
 
     if (isLoading) {
         return (
-            <div className="flex items-center justify-center h-full text-slate-500">
-                <div className="animate-spin w-6 h-6 border-2 border-cyan-500 border-t-transparent rounded-full mr-3"/>
-                Loading flows...
+            <div className="flex items-center justify-center h-full text-zinc-500">
+                <div className="animate-spin size-6 border-2 border-cyan-500 border-t-transparent rounded-full mr-3"/>
+                Loading flows?
             </div>
         );
     }
@@ -125,9 +128,9 @@ const FlowSplitLayout: React.FC<FlowSplitLayoutProps> = ({
 
     return (
         <>
-            <div className="flex h-[calc(100vh-64px)] overflow-hidden bg-navy-950 text-slate-200">
+            <div className="flex flex-col 2xl:flex-row h-[calc(100vh-64px)] overflow-auto 2xl:overflow-hidden bg-navy-950 text-zinc-200">
                 {/* Left Pane: Sidebar List */}
-                <div className="w-[600px] flex-shrink-0 h-full">
+                <div className="w-full 2xl:w-[520px] flex-shrink-0 h-[360px] 2xl:h-full">
                     <FlowListSidebar 
                         flows={flows}
                         activeFlowId={selectedId}
@@ -143,11 +146,12 @@ const FlowSplitLayout: React.FC<FlowSplitLayoutProps> = ({
                 </div>
 
                 {/* Right Pane: Details */}
-                <div className="flex-1 h-full min-w-0">
+                <div className="flex-1 h-[calc(100vh-424px)] min-h-[640px] 2xl:h-full min-w-0">
                     <FlowDetailPanel
                         flow={selectedFlow}
                         onDelete={onDelete}
                         onDuplicate={onDuplicate}
+                        onFlowUpdated={onFlowUpdated}
                     />
                 </div>
             </div>

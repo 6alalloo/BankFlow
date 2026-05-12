@@ -42,6 +42,25 @@ export type FlowApi = {
   } | null;
 };
 
+export type PublishIssue = {
+  code: string;
+  message: string;
+  nodeKey?: string;
+  edgeKey?: string;
+  node_key?: string;
+  edge_key?: string;
+};
+
+export class FlowPublishError extends Error {
+  issues: PublishIssue[];
+
+  constructor(message: string, issues: PublishIssue[]) {
+    super(message);
+    this.name = "FlowPublishError";
+    this.issues = issues;
+  }
+}
+
 type RawFlowApi = Omit<FlowApi, "case_type" | "status" | "is_active" | "version" | "default_trigger" | "users"> & {
   case_type?: string;
   status?: "draft" | "published" | "archived";
@@ -715,6 +734,32 @@ export async function duplicateFlow(id: number): Promise<FlowApi> {
   const json = await res.json();
   const data = "data" in json ? json.data : json;
   return normalizeFlow(data as RawFlowApi);
+}
+
+// POST /api/flows/:id/publish
+export async function publishFlow(id: number, changeSummary?: string): Promise<FlowApi> {
+  const res = await fetch(`${API_BASE_URL}/flows/${id}/publish`, {
+    method: "POST",
+    headers: getAuthHeaders(),
+    body: JSON.stringify({ changeSummary }),
+  });
+
+  if (!res.ok) {
+    let message = `Failed to publish flow ${id} (status ${res.status})`;
+    let issues: PublishIssue[] = [];
+
+    try {
+      const json = (await res.json()) as { error?: string; issues?: PublishIssue[] };
+      message = json.error || message;
+      issues = Array.isArray(json.issues) ? json.issues : [];
+    } catch {
+      // Keep the generic message when the server does not return JSON.
+    }
+
+    throw new FlowPublishError(message, issues);
+  }
+
+  return fetchFlowById(id);
 }
 
 /* ---------- Settings API ---------- */

@@ -459,7 +459,7 @@ router.put("/:id/nodes/:nodeId", async (req: Request, res: Response) => {
     data: {
       ...(kind && { kind }),
       ...(name !== undefined && { name }),
-      ...(config && { config_json: toInputJson(config) }),
+      ...(config !== undefined && { config_json: toInputJson(config) }),
       ...(typeof posX === "number" && { pos_x: posX }),
       ...(typeof posY === "number" && { pos_y: posY }),
     },

@@ -7,6 +7,9 @@
     "dev": "vite",
     "build": "tsc -b && vite build",
     "lint": "eslint .",
+    "test": "node tests/frontend-regression.mjs",
+    "test:e2e": "node tests/e2e-smoke.mjs",
+    "test:e2e:ui": "playwright test",
     "preview": "vite preview"
   },
   "dependencies": {
@@ -44,6 +47,7 @@
   },
   "devDependencies": {
     "@eslint/js": "^9.39.1",
+    "@playwright/test": "^1.59.1",
     "@tailwindcss/postcss": "^4.1.18",
     "@types/node": "^24.10.1",
     "@types/react": "^19.2.5",

@@ -74,7 +74,7 @@ function getNodeIcon(kind: string) {
         case "email": return <FiMail className="text-purple-400" />;
         case "datetime": return <FiClock className="text-cyan-400" />;
         case "variable": return <FiBox className="text-orange-400" />;
-        default: return <FiCode className="text-slate-400" />;
+        default: return <FiCode className="text-zinc-400" />;
     }
 }
 
@@ -126,10 +126,10 @@ export default function VariablePicker({ upstreamNodes, onInsert, disabled = fal
                                 <span className="text-sm text-white font-medium truncate flex-1">
                                     {node.name || node.kind}
                                 </span>
-                                <span className="text-[10px] text-slate-500 uppercase">{node.kind}</span>
+                                <span className="text-[10px] text-zinc-500 uppercase">{node.kind}</span>
                                 <FiChevronDown
                                     size={14}
-                                    className={`text-slate-500 transition-transform ${expandedNode === node.id ? 'rotate-180' : ''}`}
+                                    className={`text-zinc-500 transition-transform ${expandedNode === node.id ? 'rotate-180' : ''}`}
                                 />
                             </button>
 
@@ -150,7 +150,7 @@ export default function VariablePicker({ upstreamNodes, onInsert, disabled = fal
                                                 {variable.label}
                                             </span>
                                             {variable.description && (
-                                                <span className="text-[10px] text-slate-500 ml-auto">
+                                                <span className="text-[10px] text-zinc-500 ml-auto">
                                                     {variable.description}
                                                 </span>
                                             )}
@@ -162,7 +162,7 @@ export default function VariablePicker({ upstreamNodes, onInsert, disabled = fal
                     ))}
 
                     {/* Help Text */}
-                    <div className="px-3 py-2 text-[10px] text-slate-500 bg-slate-900/50">
+                    <div className="px-3 py-2 text-[10px] text-zinc-500 bg-zinc-900/50">
                         Select a variable to insert into the field
                     </div>
                 </div>

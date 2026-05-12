@@ -16,13 +16,13 @@ import { getFriendlyLabel, replaceExpressionsWithLabels } from '../../utils/expr
 // Map node kinds to icons
 const getIcon = (kind: string) => {
     switch (kind.toLowerCase()) {
-        case 'trigger': return <LuZap className="w-5 h-5 text-amber-400" />;
-        case 'email': return <LuMail className="w-5 h-5 text-blue-400" />;
-        case 'http': return <LuGlobe className="w-5 h-5 text-green-400" />;
-        case 'condition': return <LuSplit className="w-5 h-5 text-purple-400" />;
-        case 'database': return <LuDatabase className="w-5 h-5 text-rose-400" />;
-        case 'wait': return <LuClock className="w-5 h-5 text-gray-400" />;
-        default: return <LuFileJson className="w-5 h-5 text-cyan-400" />;
+        case 'trigger': return <LuZap className="size-5 text-amber-400" />;
+        case 'email': return <LuMail className="size-5 text-blue-400" />;
+        case 'http': return <LuGlobe className="size-5 text-green-400" />;
+        case 'condition': return <LuSplit className="size-5 text-purple-400" />;
+        case 'database': return <LuDatabase className="size-5 text-rose-400" />;
+        case 'wait': return <LuClock className="size-5 text-neutral-400" />;
+        default: return <LuFileJson className="size-5 text-cyan-400" />;
     }
 }
 
@@ -41,7 +41,7 @@ const PremiumNode = ({ data, selected }: NodeProps) => {
             const method = config.method || 'GET';
             const url = config.url ? String(config.url) : '';
             if (!url) return `${method} (configure URL)`;
-            return `${method} ${url.length > 25 ? url.slice(0, 25) + '...' : url}`;
+            return `${method} ${url.length > 25 ? url.slice(0, 25) + '?' : url}`;
         }
         if (kind === 'condition') {
             if (!config.field) return "Click to configure";
@@ -52,7 +52,7 @@ const PremiumNode = ({ data, selected }: NodeProps) => {
             if (!config.message || config.message === '') return "Click to configure";
             // Replace expressions with friendly labels and truncate
             const msg = replaceExpressionsWithLabels(String(config.message));
-            return msg.length > 35 ? msg.slice(0, 35) + '...' : msg;
+            return msg.length > 35 ? msg.slice(0, 35) + '?' : msg;
         }
         if (kind === 'database') {
             const table = config.table || '';
@@ -104,17 +104,17 @@ const PremiumNode = ({ data, selected }: NodeProps) => {
                         {getIcon(kind)}
                     </div>
                     <div className="flex flex-col">
-                        <span className="text-xs uppercase tracking-wider text-slate-400 font-semibold">
+                        <span className="text-xs uppercase tracking-wider text-zinc-400 font-semibold">
                             {kind}
                         </span>
-                        <span className="text-sm font-bold text-white leading-tight">
+                        <span className="text-sm font-semibold text-white leading-tight">
                             {name || kind.charAt(0).toUpperCase() + kind.slice(1)}
                         </span>
                     </div>
                 </div>
 
                 {/* Body */}
-                <div className="text-xs text-slate-400 font-mono bg-navy-950/50 rounded p-2 border border-white/5 truncate">
+                <div className="text-xs text-zinc-400 font-mono bg-navy-950/50 rounded p-2 border border-white/5 truncate">
                     {summary}
                 </div>
             </div>
@@ -123,7 +123,7 @@ const PremiumNode = ({ data, selected }: NodeProps) => {
             <Handle 
                 type="target" 
                 position={Position.Left} 
-                className="!w-3 !h-3 !bg-slate-600 !border-2 !border-slate-400 opacity-0 group-hover:opacity-100 transition-opacity !-left-1.5"
+                className="!w-3 !h-3 !bg-zinc-600 !border-2 !border-zinc-400 opacity-0 group-hover:opacity-100 transition-opacity !-left-1.5"
                 style={{ top: '50%' }}
             />
             <Handle 

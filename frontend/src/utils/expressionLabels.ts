@@ -117,7 +117,7 @@ export function getConfigPreview(
       }
       if (config.url) {
         const url = String(config.url);
-        parts.push(url.length > 30 ? url.slice(0, 30) + '...' : url);
+        parts.push(url.length > 30 ? url.slice(0, 30) + '?' : url);
       }
       break;
 

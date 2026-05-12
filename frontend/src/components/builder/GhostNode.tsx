@@ -11,21 +11,21 @@ const GhostNode = ({ data }: NodeProps) => {
     };
 
     return (
-        <div className="group relative flex items-center justify-center w-12 h-12">
+        <div className="group relative flex items-center justify-center size-12">
             {/* Pulsating Ring */}
             <div className="absolute inset-0 rounded-full bg-cyan-glow/20 animate-ping opacity-20 group-hover:opacity-40" />
 
             <button
                 onClick={handleAdd}
                 className={clsx(
-                    "relative z-10 w-8 h-8 rounded-full flex items-center justify-center",
+                    "relative z-10 size-8 rounded-full flex items-center justify-center",
                     "bg-navy-900 border border-cyan-glow/30 text-cyan-glow",
                     "transition-all duration-200 transform",
                     "hover:scale-110 hover:bg-cyan-glow hover:text-navy-950 hover:shadow-glow-sm"
                 )}
                 title="Add Step"
             >
-                <LuPlus className="w-5 h-5" />
+                <LuPlus className="size-5" />
             </button>
 
             {/* Invisible Handles */}

@@ -1,5 +1,5 @@
 /* eslint-disable react-refresh/only-export-components */
-import { createContext, useContext, useState, useEffect, type ReactNode } from 'react';
+import { createContext, use, useState, useEffect, type ReactNode } from 'react';
 import { config } from '../config/appConfig';
 
 const API_BASE_URL = config.apiBaseUrl;
@@ -55,6 +55,16 @@ const AuthContext = createContext<AuthContextType>({
   logout: () => {},
 });
 
+async function verifyAuthToken(currentToken: string): Promise<boolean> {
+  const res = await fetch(`${API_BASE_URL}/auth/me`, {
+    headers: {
+      Authorization: `Bearer ${currentToken}`,
+    },
+  });
+
+  return res.ok;
+}
+
 // Provider component
 export const AuthProvider = ({ children }: { children: ReactNode }) => {
   // Use lazy initialization to avoid setState in useEffect
@@ -80,13 +90,9 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
       }
 
       try {
-        const res = await fetch(`${API_BASE_URL}/auth/me`, {
-          headers: {
-            Authorization: `Bearer ${currentToken}`,
-          },
-        });
+        const isValid = await verifyAuthToken(currentToken);
 
-        if (!res.ok) {
+        if (!isValid) {
           // Token expired, clear state
           clearAuth();
         }
@@ -149,7 +155,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
 
 // Custom hook to use auth context
 export const useAuth = (): AuthContextType => {
-  const context = useContext(AuthContext);
+  const context = use(AuthContext);
   if (!context) {
     throw new Error('useAuth must be used within an AuthProvider');
   }

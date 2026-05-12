@@ -6,13 +6,11 @@ export interface DashboardStats {
   activeFlows: number;
   openCases: number;
   totalCases: number;
+  overdueTasks?: number;
+  pendingApprovals?: number;
+  activeEscalations?: number;
   avgDurationMs: number;
-  casesByStatus: {
-    completed: number;
-    failed: number;
-    running: number;
-    engine_error: number;
-  };
+  casesByStatus: Record<string, number | undefined>;
 }
 
 export interface ActivityByHour {
@@ -21,6 +19,7 @@ export interface ActivityByHour {
 }
 
 export interface VolumeByDay {
+  date?: string;
   day: string;
   count: number;
 }

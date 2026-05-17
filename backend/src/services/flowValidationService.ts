@@ -45,6 +45,11 @@ const supportedNodeKinds = new Set([
   "notification",
   "logger",
   "status_update",
+  "wait",
+  "variable",
+  "database",
+  "datetime",
+  "approval_support",
   "timer",
   "sla",
   "escalation",
@@ -53,7 +58,7 @@ const supportedNodeKinds = new Set([
   "http",
 ]);
 
-const assignmentKinds = new Set(["review", "data_capture", "document_collection", "routing"]);
+const assignmentKinds = new Set(["review", "data_capture", "document_collection", "routing", "approval_support"]);
 const branchKinds = new Set(["condition", "decision"]);
 const caseStatuses = new Set(["intake", "in_review", "pending_approval", "pending_action", "escalated", "resolved", "closed", "cancelled"]);
 

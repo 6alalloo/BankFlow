@@ -5,6 +5,9 @@ import { addCaseNote, cancelCase, closeCase, fetchCaseById, resolveEscalation, t
 import { approveApproval, rejectApproval } from "../../api/approvals";
 import { claimTask, completeTask } from "../../api/tasks";
 import { downloadCaseDocument, uploadCaseDocument } from "../../api/files";
+import { Button, Badge, type BadgeVariant } from "../../components/ui";
+import { buildObjectFromFields, getTaskOutputFields } from "../../utils/caseForms";
+import { useAuth } from "../../contexts/AuthContext";
 
 const formatDate = (value?: string | null) => {
   if (!value) return "Not set";
@@ -19,31 +22,16 @@ const formatJson = (value: unknown) => {
   return JSON.stringify(value, null, 2);
 };
 
-const StatusPill: React.FC<{ label: string; tone?: "cyan" | "emerald" | "amber" | "rose" | "slate" }> = ({ label, tone = "slate" }) => {
-  const styles = {
-    cyan: "border-cyan-500/30 bg-cyan-950/30 text-cyan-200",
-    emerald: "border-emerald-500/30 bg-emerald-950/30 text-emerald-200",
-    amber: "border-amber-500/30 bg-amber-950/30 text-amber-200",
-    rose: "border-rose-500/30 bg-rose-950/30 text-rose-200",
-    slate: "border-zinc-500/30 bg-zinc-950/30 text-zinc-200",
-  };
-
-  return (
-    <span className={`inline-flex items-center rounded border px-2 py-1 text-[11px] font-mono uppercase tracking-widest ${styles[tone]}`}>
-      {label.replace(/_/g, " ")}
-    </span>
-  );
-};
-
-const statusTone = (status: string): React.ComponentProps<typeof StatusPill>["tone"] => {
-  if (["resolved", "closed", "completed", "approved"].includes(status)) return "emerald";
-  if (["critical", "rejected", "cancelled", "overdue", "escalated"].includes(status)) return "rose";
-  if (["pending_action", "pending_approval", "requested", "claimed", "assigned"].includes(status)) return "amber";
-  return "cyan";
+const statusBadgeVariant = (status: string): BadgeVariant => {
+  if (["resolved", "closed", "completed", "approved"].includes(status)) return "mint";
+  if (["critical", "rejected", "cancelled", "overdue", "escalated"].includes(status)) return "ember";
+  if (["pending_action", "pending_approval", "requested", "claimed", "assigned"].includes(status)) return "sky";
+  return "secondary";
 };
 
 const CaseDetailPage: React.FC = () => {
   const { id } = useParams();
+  const { user } = useAuth();
   const caseId = Number(id);
   const [caseDetail, setCaseDetail] = useState<CaseDetail | null>(null);
   const [loading, setLoading] = useState(true);
@@ -53,6 +41,7 @@ const CaseDetailPage: React.FC = () => {
   const [busyAction, setBusyAction] = useState<string | null>(null);
   const [taskDecisionById, setTaskDecisionById] = useState<Record<number, string>>({});
   const [taskOutputById, setTaskOutputById] = useState<Record<number, string>>({});
+  const [taskFieldValuesById, setTaskFieldValuesById] = useState<Record<number, Record<string, string>>>({});
   const [approvalReasonById, setApprovalReasonById] = useState<Record<number, string>>({});
   const [noteText, setNoteText] = useState("");
   const [documentType, setDocumentType] = useState("");
@@ -65,7 +54,6 @@ const CaseDetailPage: React.FC = () => {
       setLoading(false);
       return;
     }
-
     try {
       setLoading(true);
       setError(null);
@@ -79,39 +67,16 @@ const CaseDetailPage: React.FC = () => {
   }, [caseId]);
 
   useEffect(() => {
-    let active = true;
-
-    const load = async () => {
-      if (!Number.isInteger(caseId)) {
-        if (active) {
-          setError("Invalid case id");
-          setLoading(false);
-        }
-        return;
-      }
-
-      try {
-        setLoading(true);
-        setError(null);
-        const data = await fetchCaseById(caseId);
-        if (active) setCaseDetail(data);
-      } catch (err) {
-        if (active) setError(err instanceof Error ? err.message : "Failed to load case");
-      } finally {
-        if (active) setLoading(false);
-      }
-    };
-
-    void load();
-    return () => {
-      active = false;
-    };
-  }, [caseId]);
+    loadCase();
+  }, [loadCase]);
 
   const currentOwner = useMemo(() => {
     if (!caseDetail) return "Unassigned";
     return caseDetail.assignee_user?.full_name || caseDetail.assignee_team?.name || "Unassigned";
   }, [caseDetail]);
+  const roleName = user?.role?.name;
+  const isAuditor = roleName === "Auditor";
+  const canManageCase = roleName === "Admin" || roleName === "Supervisor";
 
   const refreshAfterAction = async (message: string) => {
     setActionSuccess(message);
@@ -135,13 +100,15 @@ const CaseDetailPage: React.FC = () => {
   const handleCompleteTask = (taskId: number) => {
     void runAction(`task-${taskId}`, async () => {
       const rawOutput = taskOutputById[taskId]?.trim();
-      let output: Record<string, unknown> = {};
+      const task = caseDetail?.tasks.find((item) => item.id === taskId);
+      const outputFields = getTaskOutputFields(task?.task_type);
+      let output: Record<string, unknown> = buildObjectFromFields(outputFields, taskFieldValuesById[taskId] ?? {});
       if (rawOutput) {
         const parsed = JSON.parse(rawOutput) as unknown;
         if (!parsed || typeof parsed !== "object" || Array.isArray(parsed)) {
           throw new Error("Task output must be a JSON object.");
         }
-        output = parsed as Record<string, unknown>;
+        output = { ...output, ...(parsed as Record<string, unknown>) };
       }
       await completeTask(taskId, {
         decision: taskDecisionById[taskId]?.trim() || undefined,
@@ -169,134 +136,141 @@ const CaseDetailPage: React.FC = () => {
 
   if (loading) {
     return (
-      <div className="p-4 p-md-5 text-zinc-400">
-        <div className="animate-spin size-6 border-2 border-cyan-500 border-t-transparent rounded-full d-inline-block me-2" />
-        Loading case?
+      <div className="p-6 text-[#9c9c9d]">
+        <div className="animate-spin size-5 border-2 border-white/20 border-t-white rounded-full inline-block mr-2" />
+        Loading case...
       </div>
     );
   }
 
   if (error || !caseDetail) {
     return (
-      <div className="p-4 p-md-5">
-        <Link to="/cases" className="text-cyan-300 text-decoration-none d-inline-flex align-items-center gap-2 mb-4">
+      <div className="p-6">
+        <Link to="/cases" className="text-[#9c9c9d] hover:text-white flex items-center gap-2 mb-4 transition-colors">
           <FiArrowLeft /> Cases
         </Link>
-        <div className="alert alert-danger">{error || "Case not found"}</div>
+        <div className="p-4 rounded-lg bg-[#452324]/40 border border-[#ff6363]/20 text-[#ff6363]">{error || "Case not found"}</div>
       </div>
     );
   }
 
   return (
-    <div className="p-4 p-md-5 text-zinc-200">
-      <Link to="/cases" className="text-cyan-300 text-decoration-none d-inline-flex align-items-center gap-2 mb-4">
+    <div className="p-6 h-full overflow-y-auto custom-scrollbar text-[#9c9c9d]">
+      <Link to="/cases" className="text-[#9c9c9d] hover:text-white flex items-center gap-2 mb-4 transition-colors">
         <FiArrowLeft /> Cases
       </Link>
 
-      <div className="d-flex flex-wrap align-items-start justify-content-between gap-4 mb-4">
+      <div className="flex flex-wrap items-start justify-between gap-4 mb-6">
         <div>
-          <div className="d-flex flex-wrap gap-2 mb-3">
-            <StatusPill label={caseDetail.status} tone={statusTone(caseDetail.status)} />
-            <StatusPill label={caseDetail.priority} tone={statusTone(caseDetail.priority)} />
-            {caseDetail.flow && <StatusPill label={caseDetail.flow.name} tone="slate" />}
+          <div className="flex flex-wrap gap-2 mb-3">
+            <Badge variant={statusBadgeVariant(caseDetail.status)}>{caseDetail.status.replace(/_/g, " ")}</Badge>
+            <Badge variant={statusBadgeVariant(caseDetail.priority)}>{caseDetail.priority}</Badge>
+            {caseDetail.flow && <Badge variant="secondary">{caseDetail.flow.name}</Badge>}
           </div>
-          <h1 className="h2 text-white mb-2">{caseDetail.case_reference}</h1>
-          <p className="text-zinc-400 mb-0">{caseDetail.title || caseDetail.case_type}</p>
+          <h1 className="text-xl font-semibold text-white mb-1 font-mono">{caseDetail.case_reference}</h1>
+          <p className="text-[#9c9c9d] mb-0">{caseDetail.title || caseDetail.case_type}</p>
         </div>
       </div>
 
       {(actionError || actionSuccess) && (
-        <div className={`alert ${actionError ? "alert-danger" : "alert-success"}`}>
+        <div className={`mb-4 p-4 rounded-lg text-sm ${actionError ? "bg-[#452324]/40 border border-[#ff6363]/20 text-[#ff6363]" : "bg-[#0d2b1a]/40 border border-[#59d499]/20 text-[#59d499]"}`}>
           {actionError || actionSuccess}
         </div>
       )}
 
-      <div className="row g-3 mb-4">
-        <div className="col-md-3">
-          <div className="border border-white/10 rounded p-3 bg-white/[0.02] h-100">
-            <div className="text-zinc-500 text-xs text-uppercase font-mono mb-2">Owner</div>
-            <div className="d-flex align-items-center gap-2 text-white"><FiUser /> {currentOwner}</div>
-          </div>
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-3 mb-6">
+        <div className="border border-white/[0.08] rounded-xl p-3 bg-[#07080a]">
+          <div className="text-[#6a6b6c] text-[10px] uppercase font-mono mb-2 tracking-wider">Owner</div>
+          <div className="flex items-center gap-2 text-white text-sm"><FiUser className="text-[#6a6b6c]" /> {currentOwner}</div>
         </div>
-        <div className="col-md-3">
-          <div className="border border-white/10 rounded p-3 bg-white/[0.02] h-100">
-            <div className="text-zinc-500 text-xs text-uppercase font-mono mb-2">Opened</div>
-            <div className="d-flex align-items-center gap-2 text-white"><FiClock /> {formatDate(caseDetail.opened_at)}</div>
-          </div>
+        <div className="border border-white/[0.08] rounded-xl p-3 bg-[#07080a]">
+          <div className="text-[#6a6b6c] text-[10px] uppercase font-mono mb-2 tracking-wider">Opened</div>
+          <div className="flex items-center gap-2 text-white text-sm"><FiClock className="text-[#6a6b6c]" /> {formatDate(caseDetail.opened_at)}</div>
         </div>
-        <div className="col-md-3">
-          <div className="border border-white/10 rounded p-3 bg-white/[0.02] h-100">
-            <div className="text-zinc-500 text-xs text-uppercase font-mono mb-2">Current Node</div>
-            <div className="d-flex align-items-center gap-2 text-white"><FiGitBranch /> {caseDetail.current_node_key || "None"}</div>
-          </div>
+        <div className="border border-white/[0.08] rounded-xl p-3 bg-[#07080a]">
+          <div className="text-[#6a6b6c] text-[10px] uppercase font-mono mb-2 tracking-wider">Current Node</div>
+          <div className="flex items-center gap-2 text-white text-sm"><FiGitBranch className="text-[#6a6b6c]" /> {caseDetail.current_node_key || "None"}</div>
         </div>
-        <div className="col-md-3">
-          <div className="border border-white/10 rounded p-3 bg-white/[0.02] h-100">
-            <div className="text-zinc-500 text-xs text-uppercase font-mono mb-2">Intake</div>
-            <div className="d-flex align-items-center gap-2 text-white"><FiShield /> {caseDetail.intake_source || "manual"}</div>
-          </div>
+        <div className="border border-white/[0.08] rounded-xl p-3 bg-[#07080a]">
+          <div className="text-[#6a6b6c] text-[10px] uppercase font-mono mb-2 tracking-wider">Intake</div>
+          <div className="flex items-center gap-2 text-white text-sm"><FiShield className="text-[#6a6b6c]" /> {caseDetail.intake_source || "manual"}</div>
         </div>
       </div>
 
-      <div className="row g-4">
-        <div className="col-xl-7">
-          <section className="mb-4">
-            <h2 className="h5 text-white mb-3">Tasks</h2>
-            <div className="d-grid gap-3">
+      <div className="grid grid-cols-1 xl:grid-cols-7 gap-6">
+        <div className="xl:col-span-4 space-y-6">
+          <section>
+            <h2 className="text-sm font-semibold text-white uppercase tracking-wider mb-3">Tasks</h2>
+            <div className="space-y-3">
               {caseDetail.tasks.length === 0 ? (
-                <div className="border border-white/10 rounded p-3 text-zinc-500 bg-white/[0.02]">No tasks for this case yet.</div>
+                <div className="border border-white/[0.08] rounded-xl p-4 text-[#6a6b6c] bg-[#07080a]">No tasks for this case yet.</div>
               ) : caseDetail.tasks.map((task) => (
-                <div key={task.id} className="border border-white/10 rounded p-3 bg-white/[0.02]">
-                  <div className="d-flex justify-content-between gap-3">
-                    <div>
-                      <div className="text-white fw-semibold">{task.title}</div>
-                      <div className="text-zinc-500 text-sm">{task.task_type} {task.flow_node_key ? `// ${task.flow_node_key}` : ""}</div>
+                <div key={task.id} className="border border-white/[0.08] rounded-xl p-4 bg-[#07080a]">
+                  <div className="flex justify-between gap-3">
+                    <div className="min-w-0">
+                      <div className="text-white font-medium text-sm">{task.title}</div>
+                      <div className="text-[#6a6b6c] text-xs">{task.task_type} {task.flow_node_key ? `// ${task.flow_node_key}` : ""}</div>
                     </div>
-                    <StatusPill label={task.status} tone={statusTone(task.status)} />
+                    <Badge variant={statusBadgeVariant(task.status)}>{task.status.replace(/_/g, " ")}</Badge>
                   </div>
-                  <div className="text-zinc-400 text-sm mt-2">Due: {formatDate(task.due_at)}</div>
-                  {["pending", "assigned"].includes(task.status) && task.claim_policy === "claim_required" && (
-                    <button
-                      type="button"
+                  <div className="text-[#9c9c9d] text-xs mt-2">Due: {formatDate(task.due_at)}</div>
+                  {!isAuditor && ["pending", "assigned"].includes(task.status) && task.claim_policy === "claim_required" && (
+                    <Button
+                      variant="secondary"
+                      size="sm"
+                      className="mt-3"
                       disabled={busyAction === `claim-${task.id}`}
                       onClick={() => void runAction(`claim-${task.id}`, async () => {
                         await claimTask(task.id);
                         await refreshAfterAction("Task claimed.");
                       })}
-                      className="btn btn-sm btn-outline-info mt-3"
                     >
-                      {busyAction === `claim-${task.id}` ? "Claiming?" : "Claim"}
-                    </button>
+                      {busyAction === `claim-${task.id}` ? "Claiming..." : "Claim"}
+                    </Button>
                   )}
-                  {["pending", "assigned", "claimed", "overdue"].includes(task.status) && (
-                    <div className="mt-3 border-top border-white/10 pt-3">
-                      <div className="row g-2">
-                        <div className="col-md-5">
+                  {!isAuditor && ["pending", "assigned", "claimed", "overdue"].includes(task.status) && (
+                    <div className="mt-3 border-t border-white/[0.08] pt-3">
+                      <div className="grid grid-cols-1 md:grid-cols-2 gap-2">
+                        <input
+                          value={taskDecisionById[task.id] ?? ""}
+                          onChange={(event) => setTaskDecisionById((prev) => ({ ...prev, [task.id]: event.target.value }))}
+                          className="bg-white/[0.05] border border-white/[0.08] rounded-lg px-3 py-2 text-sm text-white placeholder:text-[#6a6b6c] focus:outline-none focus:border-white/[0.18] focus:ring-1 focus:ring-white/[0.18] transition-all"
+                          placeholder="Decision label, e.g. approved"
+                        />
+                        {getTaskOutputFields(task.task_type).map((field) => (
                           <input
-                            value={taskDecisionById[task.id] ?? ""}
-                            onChange={(event) => setTaskDecisionById((prev) => ({ ...prev, [task.id]: event.target.value }))}
-                            className="form-control form-control-sm bg-zinc-950 text-white border-secondary"
-                            placeholder="Decision label, e.g. approved"
+                            key={field.key}
+                            value={taskFieldValuesById[task.id]?.[field.key] ?? ""}
+                            onChange={(event) => setTaskFieldValuesById((prev) => ({
+                              ...prev,
+                              [task.id]: {
+                                ...(prev[task.id] ?? {}),
+                                [field.key]: event.target.value,
+                              },
+                            }))}
+                            type={field.type === "number" ? "number" : "text"}
+                            className="bg-white/[0.05] border border-white/[0.08] rounded-lg px-3 py-2 text-sm text-white placeholder:text-[#6a6b6c] focus:outline-none focus:border-white/[0.18] focus:ring-1 focus:ring-white/[0.18] transition-all"
+                            placeholder={field.placeholder || field.label}
+                            aria-label={field.label}
                           />
-                        </div>
-                        <div className="col-md-7">
-                          <textarea
-                            value={taskOutputById[task.id] ?? ""}
-                            onChange={(event) => setTaskOutputById((prev) => ({ ...prev, [task.id]: event.target.value }))}
-                            className="form-control form-control-sm bg-zinc-950 text-white border-secondary"
-                            rows={2}
-                            placeholder='Output JSON, e.g. {"finding":"clear"}'
-                          />
-                        </div>
+                        ))}
+                        <textarea
+                          value={taskOutputById[task.id] ?? ""}
+                          onChange={(event) => setTaskOutputById((prev) => ({ ...prev, [task.id]: event.target.value }))}
+                          className="md:col-span-2 bg-white/[0.05] border border-white/[0.08] rounded-lg px-3 py-2 text-sm text-white placeholder:text-[#6a6b6c] focus:outline-none focus:border-white/[0.18] focus:ring-1 focus:ring-white/[0.18] transition-all resize-none"
+                          rows={2}
+                          placeholder='Additional output JSON, e.g. {"finding":"clear"}'
+                        />
                       </div>
-                      <button
-                        type="button"
+                      <Button
+                        variant="primary"
+                        size="sm"
+                        className="mt-2"
                         disabled={busyAction === `task-${task.id}`}
                         onClick={() => handleCompleteTask(task.id)}
-                        className="btn btn-sm btn-success mt-2"
                       >
-                        {busyAction === `task-${task.id}` ? "Completing?" : "Complete Task"}
-                      </button>
+                        {busyAction === `task-${task.id}` ? "Completing..." : "Complete Task"}
+                      </Button>
                     </div>
                   )}
                 </div>
@@ -304,54 +278,54 @@ const CaseDetailPage: React.FC = () => {
             </div>
           </section>
 
-          <section className="mb-4">
-            <h2 className="h5 text-white mb-3">Approvals</h2>
-            <div className="d-grid gap-3">
+          <section>
+            <h2 className="text-sm font-semibold text-white uppercase tracking-wider mb-3">Approvals</h2>
+            <div className="space-y-3">
               {caseDetail.approvals.length === 0 ? (
-                <div className="border border-white/10 rounded p-3 text-zinc-500 bg-white/[0.02]">No approvals requested.</div>
+                <div className="border border-white/[0.08] rounded-xl p-4 text-[#6a6b6c] bg-[#07080a]">No approvals requested.</div>
               ) : caseDetail.approvals.map((approval) => (
-                <div key={approval.id} className="border border-white/10 rounded p-3 bg-white/[0.02]">
-                  <div className="d-flex justify-content-between gap-3">
-                    <div>
-                      <div className="text-white fw-semibold">Approval #{approval.id}</div>
-                      <div className="text-zinc-500 text-sm">{approval.flow_node_key || "approval node"}</div>
+                <div key={approval.id} className="border border-white/[0.08] rounded-xl p-4 bg-[#07080a]">
+                  <div className="flex justify-between gap-3">
+                    <div className="min-w-0">
+                      <div className="text-white font-medium text-sm">Approval #{approval.id}</div>
+                      <div className="text-[#6a6b6c] text-xs">{approval.flow_node_key || "approval node"}</div>
                     </div>
-                    <StatusPill label={approval.status} tone={statusTone(approval.status)} />
+                    <Badge variant={statusBadgeVariant(approval.status)}>{approval.status.replace(/_/g, " ")}</Badge>
                   </div>
-                  <div className="text-zinc-400 text-sm mt-2">Requested: {formatDate(approval.requested_at)}</div>
-                  {approval.decision_reason && <div className="text-zinc-500 text-sm mt-1">Reason: {approval.decision_reason}</div>}
-                  {approval.status === "requested" && (
-                    <div className="mt-3 border-top border-white/10 pt-3">
+                  <div className="text-[#9c9c9d] text-xs mt-2">Requested: {formatDate(approval.requested_at)}</div>
+                  {approval.decision_reason && <div className="text-[#6a6b6c] text-xs mt-1">Reason: {approval.decision_reason}</div>}
+                  {!isAuditor && approval.status === "requested" && (
+                    <div className="mt-3 border-t border-white/[0.08] pt-3">
                       <textarea
                         value={approvalReasonById[approval.id] ?? ""}
                         onChange={(event) => setApprovalReasonById((prev) => ({ ...prev, [approval.id]: event.target.value }))}
-                        className="form-control form-control-sm bg-zinc-950 text-white border-secondary"
+                        className="w-full bg-white/[0.05] border border-white/[0.08] rounded-lg px-3 py-2 text-sm text-white placeholder:text-[#6a6b6c] focus:outline-none focus:border-white/[0.18] focus:ring-1 focus:ring-white/[0.18] transition-all resize-none"
                         rows={2}
                         placeholder="Decision reason"
                       />
-                      <div className="d-flex gap-2 mt-2">
-                        <button
-                          type="button"
+                      <div className="flex gap-2 mt-2">
+                        <Button
+                          variant="primary"
+                          size="sm"
                           disabled={busyAction === `approval-approve-${approval.id}`}
                           onClick={() => void runAction(`approval-approve-${approval.id}`, async () => {
                             await approveApproval(approval.id, approvalReasonById[approval.id]);
                             await refreshAfterAction("Approval approved.");
                           })}
-                          className="btn btn-sm btn-success"
                         >
                           Approve
-                        </button>
-                        <button
-                          type="button"
+                        </Button>
+                        <Button
+                          variant="danger"
+                          size="sm"
                           disabled={busyAction === `approval-reject-${approval.id}`}
                           onClick={() => void runAction(`approval-reject-${approval.id}`, async () => {
                             await rejectApproval(approval.id, approvalReasonById[approval.id]);
                             await refreshAfterAction("Approval rejected.");
                           })}
-                          className="btn btn-sm btn-outline-danger"
                         >
                           Reject
-                        </button>
+                        </Button>
                       </div>
                     </div>
                   )}
@@ -361,22 +335,22 @@ const CaseDetailPage: React.FC = () => {
           </section>
 
           <section>
-            <h2 className="h5 text-white mb-3">Timeline</h2>
-            <div className="d-grid gap-3">
+            <h2 className="text-sm font-semibold text-white uppercase tracking-wider mb-3">Timeline</h2>
+            <div className="space-y-3">
               {caseDetail.events.length === 0 ? (
-                <div className="border border-white/10 rounded p-3 text-zinc-500 bg-white/[0.02]">No events recorded.</div>
+                <div className="border border-white/[0.08] rounded-xl p-4 text-[#6a6b6c] bg-[#07080a]">No events recorded.</div>
               ) : caseDetail.events.map((event) => (
-                <div key={event.id} className="border border-white/10 rounded p-3 bg-white/[0.02]">
-                  <div className="d-flex align-items-start gap-3">
-                    <div className="text-cyan-300 mt-1">
+                <div key={event.id} className="border border-white/[0.08] rounded-xl p-4 bg-[#07080a]">
+                  <div className="flex items-start gap-3">
+                    <div className="text-[#9c9c9d] mt-0.5 shrink-0">
                       {event.event_type.includes("resolved") || event.event_type.includes("completed") ? <FiCheckCircle /> : <FiClock />}
                     </div>
-                    <div className="flex-grow-1">
-                      <div className="d-flex justify-content-between gap-3">
-                        <div className="text-white fw-semibold">{event.summary}</div>
-                        <div className="text-zinc-500 text-sm">{formatDate(event.created_at)}</div>
+                    <div className="flex-1 min-w-0">
+                      <div className="flex justify-between gap-3">
+                        <div className="text-white font-medium text-sm">{event.summary}</div>
+                        <div className="text-[#6a6b6c] text-xs font-mono whitespace-nowrap">{formatDate(event.created_at)}</div>
                       </div>
-                      <div className="text-zinc-500 text-sm">{event.event_type} {event.flow_node_key ? `// ${event.flow_node_key}` : ""}</div>
+                      <div className="text-[#6a6b6c] text-xs">{event.event_type} {event.flow_node_key ? `// ${event.flow_node_key}` : ""}</div>
                     </div>
                   </div>
                 </div>
@@ -385,81 +359,85 @@ const CaseDetailPage: React.FC = () => {
           </section>
         </div>
 
-        <div className="col-xl-5">
-          <section className="mb-4">
-            <h2 className="h5 text-white mb-3">Case Data</h2>
-            <pre className="border border-white/10 rounded p-3 bg-zinc-950/30 text-zinc-300 text-sm overflow-auto" style={{ maxHeight: 360 }}>
+        <div className="xl:col-span-3 space-y-6">
+          <section>
+            <h2 className="text-sm font-semibold text-white uppercase tracking-wider mb-3">Case Data</h2>
+            <pre className="border border-white/[0.08] rounded-xl p-4 bg-[#07080a] text-[#9c9c9d] text-xs overflow-auto custom-scrollbar" style={{ maxHeight: 360 }}>
               {formatJson(caseDetail.case_data_json)}
             </pre>
           </section>
 
-          <section className="mb-4">
-            <h2 className="h5 text-white mb-3">Documents</h2>
-            <div className="border border-white/10 rounded p-3 bg-white/[0.02] mb-3">
-              <div className="row g-2 align-items-end">
-                <div className="col-md-4">
-                  <label htmlFor="document-task" className="text-zinc-500 text-xs text-uppercase font-mono mb-1">Task</label>
-                  <select
-                    id="document-task"
-                    value={selectedTaskId}
-                    onChange={(event) => setSelectedTaskId(event.target.value)}
-                    className="form-select form-select-sm bg-zinc-950 text-white border-secondary"
-                  >
-                    <option value="">Case document</option>
-                    {caseDetail.tasks.map((task) => (
-                      <option key={task.id} value={task.id}>{task.title}</option>
-                    ))}
-                  </select>
-                </div>
-                <div className="col-md-4">
-                  <label htmlFor="document-type" className="text-zinc-500 text-xs text-uppercase font-mono mb-1">Document Type</label>
-                  <input
-                    id="document-type"
-                    value={documentType}
-                    onChange={(event) => setDocumentType(event.target.value)}
-                    className="form-control form-control-sm bg-zinc-950 text-white border-secondary"
-                    placeholder="payment_instruction"
-                  />
-                </div>
-                <div className="col-md-4">
-                  <label htmlFor="document-file" className="text-zinc-500 text-xs text-uppercase font-mono mb-1">File</label>
-                  <input
-                    id="document-file"
-                    type="file"
-                    onChange={(event) => setSelectedFile(event.target.files?.[0] ?? null)}
-                    className="form-control form-control-sm bg-zinc-950 text-white border-secondary"
-                  />
-                </div>
-              </div>
-              <button
-                type="button"
-                disabled={busyAction === "document-upload"}
-                onClick={handleUploadDocument}
-                className="btn btn-sm btn-outline-info mt-3 d-inline-flex align-items-center gap-2"
-              >
-                <FiUpload /> {busyAction === "document-upload" ? "Uploading?" : "Upload Document"}
-              </button>
-            </div>
-            <div className="d-grid gap-3">
-              {caseDetail.documents.length === 0 ? (
-                <div className="border border-white/10 rounded p-3 text-zinc-500 bg-white/[0.02]">No documents attached.</div>
-              ) : caseDetail.documents.map((document) => (
-                <div key={document.id} className="border border-white/10 rounded p-3 bg-white/[0.02] d-flex align-items-center gap-3 justify-content-between">
-                  <div className="d-flex align-items-center gap-3">
-                  <FiFileText className="text-cyan-300" />
+          <section>
+            <h2 className="text-sm font-semibold text-white uppercase tracking-wider mb-3">Documents</h2>
+            {!isAuditor && (
+              <div className="border border-white/[0.08] rounded-xl p-4 bg-[#07080a] mb-3">
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-2 items-end">
                   <div>
-                    <div className="text-white">{document.filename}</div>
-                    <div className="text-zinc-500 text-sm">{document.document_type || document.mime_type} // {formatDate(document.uploaded_at)}</div>
+                    <label htmlFor="document-task" className="text-[#6a6b6c] text-[10px] uppercase font-mono mb-1 block tracking-wider">Task</label>
+                    <select
+                      id="document-task"
+                      value={selectedTaskId}
+                      onChange={(event) => setSelectedTaskId(event.target.value)}
+                      className="w-full bg-white/[0.05] border border-white/[0.08] rounded-lg px-3 py-2 text-sm text-white focus:outline-none focus:border-white/[0.18] focus:ring-1 focus:ring-white/[0.18] transition-all"
+                    >
+                      <option value="" className="bg-[#111214]">Case document</option>
+                      {caseDetail.tasks.map((task) => (
+                        <option key={task.id} value={task.id} className="bg-[#111214]">{task.title}</option>
+                      ))}
+                    </select>
                   </div>
+                  <div>
+                    <label htmlFor="document-type" className="text-[#6a6b6c] text-[10px] uppercase font-mono mb-1 block tracking-wider">Document Type</label>
+                    <input
+                      id="document-type"
+                      value={documentType}
+                      onChange={(event) => setDocumentType(event.target.value)}
+                      className="w-full bg-white/[0.05] border border-white/[0.08] rounded-lg px-3 py-2 text-sm text-white placeholder:text-[#6a6b6c] focus:outline-none focus:border-white/[0.18] focus:ring-1 focus:ring-white/[0.18] transition-all"
+                      placeholder="payment_instruction"
+                    />
+                  </div>
+                  <div>
+                    <label htmlFor="document-file" className="text-[#6a6b6c] text-[10px] uppercase font-mono mb-1 block tracking-wider">File</label>
+                    <input
+                      id="document-file"
+                      type="file"
+                      accept=".pdf,.doc,.docx,application/pdf,application/msword,application/vnd.openxmlformats-officedocument.wordprocessingml.document"
+                      onChange={(event) => setSelectedFile(event.target.files?.[0] ?? null)}
+                      className="w-full bg-white/[0.05] border border-white/[0.08] rounded-lg px-3 py-2 text-sm text-white file:bg-transparent file:border-0 file:text-sm file:font-medium file:text-[#9c9c9d] focus:outline-none focus:border-white/[0.18] focus:ring-1 focus:ring-white/[0.18] transition-all"
+                    />
+                  </div>
+                </div>
+                <Button
+                  variant="secondary"
+                  size="sm"
+                  className="mt-3"
+                  disabled={busyAction === "document-upload"}
+                  onClick={handleUploadDocument}
+                >
+                  <FiUpload className="size-3.5" /> {busyAction === "document-upload" ? "Uploading..." : "Upload Document"}
+                </Button>
+              </div>
+            )}
+            <div className="space-y-3">
+              {caseDetail.documents.length === 0 ? (
+                <div className="border border-white/[0.08] rounded-xl p-4 text-[#6a6b6c] bg-[#07080a]">No documents attached.</div>
+              ) : caseDetail.documents.map((document) => (
+                <div key={document.id} className="border border-white/[0.08] rounded-xl p-4 bg-[#07080a] flex items-center gap-3 justify-between">
+                  <div className="flex items-center gap-3 min-w-0">
+                    <FiFileText className="text-[#9c9c9d] shrink-0" />
+                    <div className="min-w-0">
+                      <div className="text-white text-sm truncate">{document.filename}</div>
+                      <div className="text-[#6a6b6c] text-xs">{document.document_type || document.mime_type} // {formatDate(document.uploaded_at)}</div>
+                    </div>
                   </div>
                   <button
                     type="button"
-                    className="btn btn-sm btn-outline-light"
+                    className="p-2 text-[#6a6b6c] hover:text-white hover:bg-white/[0.05] rounded-lg transition-colors shrink-0"
                     onClick={() => void runAction(`download-${document.id}`, async () => {
                       await downloadCaseDocument(document.id, document.filename);
                     })}
                   >
-                    <FiDownload />
+                    <FiDownload size={16} />
                   </button>
                 </div>
               ))}
@@ -467,81 +445,92 @@ const CaseDetailPage: React.FC = () => {
           </section>
 
           <section>
-            <h2 className="h5 text-white mb-3">Escalations</h2>
-            <div className="d-grid gap-3">
+            <h2 className="text-sm font-semibold text-white uppercase tracking-wider mb-3">Escalations</h2>
+            <div className="space-y-3">
               {caseDetail.escalations.length === 0 ? (
-                <div className="border border-white/10 rounded p-3 text-zinc-500 bg-white/[0.02]">No escalations active.</div>
+                <div className="border border-white/[0.08] rounded-xl p-4 text-[#6a6b6c] bg-[#07080a]">No escalations active.</div>
               ) : caseDetail.escalations.map((escalation) => (
-                <div key={escalation.id} className="border border-white/10 rounded p-3 bg-white/[0.02]">
-                  <div className="d-flex justify-content-between gap-3">
-                    <div className="text-white fw-semibold d-flex align-items-center gap-2"><FiAlertTriangle /> {escalation.reason}</div>
-                    <StatusPill label={escalation.status} tone={statusTone(escalation.status)} />
+                <div key={escalation.id} className="border border-white/[0.08] rounded-xl p-4 bg-[#07080a]">
+                  <div className="flex justify-between gap-3">
+                    <div className="text-white font-medium text-sm flex items-center gap-2"><FiAlertTriangle className="text-[#ff6363]" /> {escalation.reason}</div>
+                    <Badge variant={statusBadgeVariant(escalation.status)}>{escalation.status.replace(/_/g, " ")}</Badge>
                   </div>
-                  <div className="text-zinc-500 text-sm mt-2">{escalation.escalation_type} // {formatDate(escalation.triggered_at)}</div>
-                  {escalation.status === "triggered" && (
-                    <button
-                      type="button"
+                  <div className="text-[#6a6b6c] text-xs mt-2">{escalation.escalation_type} // {formatDate(escalation.triggered_at)}</div>
+              {canManageCase && escalation.status === "triggered" && (
+                    <Button
+                      variant="secondary"
+                      size="sm"
+                      className="mt-3"
                       disabled={busyAction === `resolve-escalation-${escalation.id}`}
                       onClick={() => void runAction(`resolve-escalation-${escalation.id}`, async () => {
                         await resolveEscalation(caseDetail.id, escalation.id, "Resolved from case detail");
                         await refreshAfterAction("Escalation resolved.");
                       })}
-                      className="btn btn-sm btn-outline-warning mt-3"
                     >
                       Resolve Escalation
-                    </button>
+                    </Button>
                   )}
                 </div>
               ))}
             </div>
           </section>
 
-          <section className="mt-4">
-            <h2 className="h5 text-white mb-3">Case Controls</h2>
-            <div className="border border-white/10 rounded p-3 bg-white/[0.02]">
-              <textarea
-                value={noteText}
-                onChange={(event) => setNoteText(event.target.value)}
-                className="form-control form-control-sm bg-zinc-950 text-white border-secondary mb-2"
-                rows={3}
-                placeholder="Add a case note"
-              />
-              <div className="d-flex flex-wrap gap-2">
-                <button
-                  type="button"
-                  disabled={busyAction === "note" || !noteText.trim()}
-                  onClick={() => void runAction("note", async () => {
-                    await addCaseNote(caseDetail.id, noteText);
-                    setNoteText("");
-                    await refreshAfterAction("Note added.");
-                  })}
-                  className="btn btn-sm btn-outline-info"
-                >
-                  Add Note
-                </button>
-                <button
-                  type="button"
-                  disabled={busyAction === "close-case" || ["closed", "cancelled"].includes(caseDetail.status)}
-                  onClick={() => void runAction("close-case", async () => {
-                    await closeCase(caseDetail.id, "Closed from case detail");
-                    await refreshAfterAction("Case closed.");
-                  })}
-                  className="btn btn-sm btn-success"
-                >
-                  Close Case
-                </button>
-                <button
-                  type="button"
-                  disabled={busyAction === "cancel-case" || ["closed", "cancelled"].includes(caseDetail.status)}
-                  onClick={() => void runAction("cancel-case", async () => {
-                    await cancelCase(caseDetail.id, "Cancelled from case detail");
-                    await refreshAfterAction("Case cancelled.");
-                  })}
-                  className="btn btn-sm btn-outline-danger"
-                >
-                  Cancel Case
-                </button>
-              </div>
+          <section>
+            <h2 className="text-sm font-semibold text-white uppercase tracking-wider mb-3">Case Controls</h2>
+            <div className="border border-white/[0.08] rounded-xl p-4 bg-[#07080a]">
+              {isAuditor ? (
+                <div className="text-[#6a6b6c] text-sm">Auditor access is read-only for case controls.</div>
+              ) : (
+                <>
+                  <textarea
+                    value={noteText}
+                    onChange={(event) => setNoteText(event.target.value)}
+                    className="w-full bg-white/[0.05] border border-white/[0.08] rounded-lg px-3 py-2.5 text-sm text-white placeholder:text-[#6a6b6c] focus:outline-none focus:border-white/[0.18] focus:ring-1 focus:ring-white/[0.18] transition-all resize-none mb-3"
+                    rows={3}
+                    placeholder="Add a case note"
+                  />
+                  <div className="flex flex-wrap gap-2">
+                    <Button
+                      variant="secondary"
+                      size="sm"
+                      disabled={busyAction === "note" || !noteText.trim()}
+                      onClick={() => void runAction("note", async () => {
+                        await addCaseNote(caseDetail.id, noteText);
+                        setNoteText("");
+                        await refreshAfterAction("Note added.");
+                      })}
+                    >
+                      Add Note
+                    </Button>
+                    {canManageCase && (
+                      <>
+                        <Button
+                          variant="primary"
+                          size="sm"
+                          disabled={busyAction === "close-case" || ["closed", "cancelled"].includes(caseDetail.status)}
+                          onClick={() => void runAction("close-case", async () => {
+                            await closeCase(caseDetail.id, "Closed from case detail");
+                            await refreshAfterAction("Case closed.");
+                          })}
+                        >
+                          Close Case
+                        </Button>
+                        <Button
+                          variant="danger"
+                          size="sm"
+                          disabled={busyAction === "cancel-case" || ["closed", "cancelled"].includes(caseDetail.status)}
+                          onClick={() => void runAction("cancel-case", async () => {
+                            await cancelCase(caseDetail.id, "Cancelled from case detail");
+                            await refreshAfterAction("Case cancelled.");
+                          })}
+                        >
+                          Cancel Case
+                        </Button>
+                      </>
+                    )}
+                  </div>
+                </>
+              )}
             </div>
           </section>
         </div>

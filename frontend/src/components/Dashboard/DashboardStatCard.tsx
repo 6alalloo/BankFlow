@@ -8,47 +8,29 @@ interface StatCardProps {
     trend?: 'up' | 'down' | 'neutral';
     trendValue?: string;
     trendLabel?: string;
-    color?: 'blue' | 'cyan' | 'emerald' | 'purple' | 'rose' | 'amber';
+    color?: 'neutral' | 'mint' | 'ember';
     className?: string;
 }
 
 const colorMap = {
-    blue: {
-        bg: 'bg-blue-950/20',
-        border: 'border-blue-500/20',
-        text: 'text-blue-400',
-        hover: 'group-hover:border-blue-500/50 group-hover:shadow-[0_0_20px_-5px_rgba(59,130,246,0.3)]'
+    neutral: {
+        border: 'border-white/[0.08]',
+        hover: 'hover:border-white/[0.18]',
+        iconBg: 'bg-[#111214]',
+        iconText: 'text-[#9c9c9d]',
     },
-    cyan: {
-        bg: 'bg-cyan-950/20',
-        border: 'border-cyan-500/20',
-        text: 'text-cyan-400',
-        hover: 'group-hover:border-cyan-500/50 group-hover:shadow-[0_0_20px_-5px_rgba(6,182,212,0.3)]'
+    mint: {
+        border: 'border-[#59d499]/20',
+        hover: 'hover:border-[#59d499]/40',
+        iconBg: 'bg-[#0d2b1a]',
+        iconText: 'text-[#59d499]',
     },
-    emerald: {
-        bg: 'bg-emerald-950/20',
-        border: 'border-emerald-500/20',
-        text: 'text-emerald-400',
-        hover: 'group-hover:border-emerald-500/50 group-hover:shadow-[0_0_20px_-5px_rgba(16,185,129,0.3)]'
+    ember: {
+        border: 'border-[#ff6363]/20',
+        hover: 'hover:border-[#ff6363]/40',
+        iconBg: 'bg-[#452324]',
+        iconText: 'text-[#ff6363]',
     },
-    purple: {
-        bg: 'bg-purple-950/20',
-        border: 'border-purple-500/20',
-        text: 'text-purple-400',
-        hover: 'group-hover:border-purple-500/50 group-hover:shadow-[0_0_20px_-5px_rgba(168,85,247,0.3)]'
-    },
-    rose: {
-        bg: 'bg-rose-950/20',
-        border: 'border-rose-500/20',
-        text: 'text-rose-400',
-        hover: 'group-hover:border-rose-500/50 group-hover:shadow-[0_0_20px_-5px_rgba(244,63,94,0.3)]'
-    },
-    amber: {
-        bg: 'bg-amber-950/20',
-        border: 'border-amber-500/20',
-        text: 'text-amber-400',
-        hover: 'group-hover:border-amber-500/50 group-hover:shadow-[0_0_20px_-5px_rgba(245,158,11,0.3)]'
-    }
 };
 
 export default function StatCard({ 
@@ -58,25 +40,22 @@ export default function StatCard({
     trend, 
     trendValue, 
     trendLabel,
-    color = 'cyan',
+    color = 'neutral',
     className = ''
 }: StatCardProps) {
     const styles = colorMap[color];
 
     return (
-        <div className={`group relative p-6 rounded-xl border bg-[#050b14] backdrop-blur-sm transition-all duration-300 ${styles.border} ${styles.hover} ${className}`}>
-            {/* Background Gradient */}
-            <div className={`absolute inset-0 bg-gradient-to-br from-transparent to-${color}-500/5 opacity-0 group-hover:opacity-100 transition-opacity duration-500 rounded-xl`} />
-            
+        <div className={`group relative p-5 rounded-2xl border bg-[#07080a] transition-all duration-300 ${styles.border} ${styles.hover} ${className}`}>
             <div className="relative flex justify-between items-start mb-4">
-                <div className={`p-3 rounded-lg ${styles.bg} ${styles.text} border border-white/5`}>
-                    <Icon size={24} />
+                <div className={`p-2.5 rounded-lg ${styles.iconBg} ${styles.iconText} border border-white/[0.08]`}>
+                    <Icon size={20} />
                 </div>
                 {trend && (
-                    <div className={`flex items-center gap-1 text-xs font-mono font-semibold px-2 py-1 rounded-full border ${
-                        trend === 'up' ? 'text-emerald-400 border-emerald-500/30 bg-emerald-500/10' :
-                        trend === 'down' ? 'text-rose-400 border-rose-500/30 bg-rose-500/10' :
-                        'text-zinc-400 border-zinc-500/30 bg-zinc-500/10'
+                    <div className={`flex items-center gap-1 text-xs font-mono font-semibold px-2 py-0.5 rounded-md border ${
+                        trend === 'up' ? 'text-[#59d499] border-[#59d499]/20 bg-[#0d2b1a]' :
+                        trend === 'down' ? 'text-[#ff6363] border-[#ff6363]/20 bg-[#452324]' :
+                        'text-[#9c9c9d] border-white/[0.08] bg-[#111214]'
                     }`}>
                         {trend === 'up' && <FiTrendingUp />}
                         {trend === 'down' && <FiTrendingDown />}
@@ -87,11 +66,11 @@ export default function StatCard({
             </div>
 
             <div className="relative">
-                <h3 className="text-zinc-500 font-mono text-xs uppercase tracking-widest mb-1">{title}</h3>
-                <div className="text-3xl font-semibold text-white tracking-tight">{value}</div>
+                <h3 className="text-[#6a6b6c] font-mono text-[10px] uppercase tracking-widest mb-1">{title}</h3>
+                <div className="text-2xl font-semibold text-white tracking-tight font-mono">{value}</div>
                 {trendLabel && (
-                    <p className="text-[10px] text-zinc-500 font-mono mt-2 flex items-center gap-1">
-                        <span className="size-1 rounded-full bg-zinc-500" />
+                    <p className="text-[10px] text-[#6a6b6c] font-mono mt-2 flex items-center gap-1">
+                        <span className="size-1 rounded-full bg-[#6a6b6c]" />
                         {trendLabel}
                     </p>
                 )}

@@ -30,22 +30,15 @@ const FlowSplitLayout: React.FC<FlowSplitLayoutProps> = ({
 }) => {
     const navigate = useNavigate();
     
-    // UI State
     const [selectedId, setSelectedId] = useState<number | null>(null);
     const [searchQuery, setSearchQuery] = useState('');
     const [filterStatus, setFilterStatus] = useState<'all' | 'active' | 'inactive'>('all');
-    
-    // Template Modal State
     const [isTemplateModalOpen, setIsTemplateModalOpen] = useState(false);
     const [isCreatingFromTemplate, setIsCreatingFromTemplate] = useState(false);
-    
-    // Track initialization
     const initializedRef = React.useRef(false);
 
-    // Auto-select first flow if none selected and flows exist
     useEffect(() => {
         if (!initializedRef.current && flows.length > 0) {
-            // Use setTimeout to avoid synchronous state update warning during effect
             const timer = setTimeout(() => {
                  setSelectedId(flows[0].id);
             }, 0);
@@ -54,24 +47,17 @@ const FlowSplitLayout: React.FC<FlowSplitLayoutProps> = ({
         }
     }, [flows]);
 
-    // Derived State: Selected Flow
     const selectedFlow = useMemo(() => 
         flows.find(w => w.id === selectedId) || null
     , [flows, selectedId]);
 
-    // Handler for creating flow from template
     const handleUseTemplate = async (template: FlowTemplate) => {
         try {
             setIsCreatingFromTemplate(true);
-
-            // Create new flow with template name
             const newFlow = await createFlow({ name: template.name });
             const flowId = newFlow.id;
-
-            // Create a mapping of template node IDs to actual node IDs
             const nodeIdMap: Record<string, number> = {};
 
-            // Add nodes from template
             await Promise.all(template.nodes.map(async (templateNode) => {
                 const nodeResponse = await createFlowNode(flowId, {
                     kind: templateNode.kind,
@@ -83,11 +69,9 @@ const FlowSplitLayout: React.FC<FlowSplitLayoutProps> = ({
                 nodeIdMap[templateNode.id] = nodeResponse.id;
             }));
 
-            // Add edges from template
             await Promise.all(template.edges.map(async (templateEdge) => {
                 const fromNodeId = nodeIdMap[templateEdge.from];
                 const toNodeId = nodeIdMap[templateEdge.to];
-
                 if (fromNodeId && toNodeId) {
                     await createFlowEdge(flowId, {
                         fromNodeId: fromNodeId,
@@ -102,8 +86,6 @@ const FlowSplitLayout: React.FC<FlowSplitLayoutProps> = ({
             navigate(`/flows/${flowId}/builder`);
         } catch (error) {
             console.error("Failed to create flow from template", error);
-            const message = error instanceof Error ? error.message : "Failed to create flow from template";
-            alert(message);
         } finally {
             setIsCreatingFromTemplate(false);
         }
@@ -111,16 +93,16 @@ const FlowSplitLayout: React.FC<FlowSplitLayoutProps> = ({
 
     if (isLoading) {
         return (
-            <div className="flex items-center justify-center h-full text-zinc-500">
-                <div className="animate-spin size-6 border-2 border-cyan-500 border-t-transparent rounded-full mr-3"/>
-                Loading flows?
+            <div className="flex items-center justify-center h-full text-[#9c9c9d]">
+                <div className="animate-spin size-5 border-2 border-white/20 border-t-white rounded-full mr-3"/>
+                Loading flows...
             </div>
         );
     }
 
     if (error) {
         return (
-            <div className="flex items-center justify-center h-full text-rose-500">
+            <div className="flex items-center justify-center h-full text-[#ff6363]">
                 Error: {error}
             </div>
         );
@@ -128,8 +110,7 @@ const FlowSplitLayout: React.FC<FlowSplitLayoutProps> = ({
 
     return (
         <>
-            <div className="flex flex-col 2xl:flex-row h-[calc(100vh-64px)] overflow-auto 2xl:overflow-hidden bg-navy-950 text-zinc-200">
-                {/* Left Pane: Sidebar List */}
+            <div className="flex flex-col 2xl:flex-row h-[calc(100vh-56px)] overflow-auto 2xl:overflow-hidden bg-[#040506] text-white">
                 <div className="w-full 2xl:w-[520px] flex-shrink-0 h-[360px] 2xl:h-full">
                     <FlowListSidebar 
                         flows={flows}
@@ -145,7 +126,6 @@ const FlowSplitLayout: React.FC<FlowSplitLayoutProps> = ({
                     />
                 </div>
 
-                {/* Right Pane: Details */}
                 <div className="flex-1 h-[calc(100vh-424px)] min-h-[640px] 2xl:h-full min-w-0">
                     <FlowDetailPanel
                         flow={selectedFlow}
@@ -156,7 +136,6 @@ const FlowSplitLayout: React.FC<FlowSplitLayoutProps> = ({
                 </div>
             </div>
 
-            {/* Template Selection Modal */}
             <TemplateSelectionModal
                 isOpen={isTemplateModalOpen}
                 onClose={() => setIsTemplateModalOpen(false)}
@@ -168,4 +147,3 @@ const FlowSplitLayout: React.FC<FlowSplitLayoutProps> = ({
 };
 
 export default FlowSplitLayout;
-

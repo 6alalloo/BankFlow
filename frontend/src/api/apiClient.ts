@@ -7,6 +7,25 @@ export interface ApiRequestOptions extends RequestInit {
   skipAuth?: boolean;
 }
 
+function getApiErrorMessage(errorData: unknown, fallback: string): string {
+  if (!errorData || typeof errorData !== "object") return fallback;
+
+  const error = (errorData as { error?: unknown; message?: unknown }).error;
+  const message = (errorData as { message?: unknown }).message;
+
+  if (typeof error === "string") return error;
+  if (error && typeof error === "object") {
+    const nestedMessage = (error as { message?: unknown; code?: unknown; requestId?: unknown }).message;
+    const requestId = (error as { requestId?: unknown }).requestId;
+    if (typeof nestedMessage === "string") {
+      return typeof requestId === "string" ? `${nestedMessage} (${requestId})` : nestedMessage;
+    }
+  }
+  if (typeof message === "string") return message;
+
+  return fallback;
+}
+
 /**
  * Make an authenticated API request
  * Automatically adds Authorization header with Bearer token
@@ -48,7 +67,7 @@ export async function apiRequest<T>(
 
   if (!response.ok) {
     const errorData = await response.json().catch(() => ({}));
-    throw new Error(errorData.error || `Request failed with status ${response.status}`);
+    throw new Error(getApiErrorMessage(errorData, `Request failed with status ${response.status}`));
   }
 
   // Handle 204 No Content

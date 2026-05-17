@@ -10,7 +10,7 @@ import logger from "../lib/logger";
  * These limits are intentionally hardcoded as business rules, not environment variables.
  */
 export const FILE_UPLOAD_CONFIG = {
-  /** Maximum file size: 10MB - intentional limit for CV/resume files */
+  /** Maximum file size: 10MB - intentional limit for case evidence files */
   MAX_SIZE_MB: 10,
   /** File expiry time: 24 hours - temporary file cleanup policy */
   EXPIRY_HOURS: 24

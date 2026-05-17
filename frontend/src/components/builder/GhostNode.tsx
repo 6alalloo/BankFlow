@@ -1,10 +1,8 @@
 import { memo } from 'react';
 import { Handle, Position, type NodeProps } from 'reactflow';
 import { LuPlus } from 'react-icons/lu';
-import clsx from 'clsx';
 
 const GhostNode = ({ data }: NodeProps) => {
-    // data.onAdd is passed from the builder page to handle the click
     const handleAdd = (e: React.MouseEvent) => {
         e.stopPropagation();
         if (data.onAdd) data.onAdd();
@@ -12,23 +10,14 @@ const GhostNode = ({ data }: NodeProps) => {
 
     return (
         <div className="group relative flex items-center justify-center size-12">
-            {/* Pulsating Ring */}
-            <div className="absolute inset-0 rounded-full bg-cyan-glow/20 animate-ping opacity-20 group-hover:opacity-40" />
-
             <button
                 onClick={handleAdd}
-                className={clsx(
-                    "relative z-10 size-8 rounded-full flex items-center justify-center",
-                    "bg-navy-900 border border-cyan-glow/30 text-cyan-glow",
-                    "transition-all duration-200 transform",
-                    "hover:scale-110 hover:bg-cyan-glow hover:text-navy-950 hover:shadow-glow-sm"
-                )}
+                className="relative z-10 size-8 rounded-full flex items-center justify-center bg-[#07080a] border border-dashed border-white/[0.12] text-[#6a6b6c] transition-all duration-200 hover:scale-110 hover:bg-[#111214] hover:text-white hover:border-white/[0.18]"
                 title="Add Step"
             >
-                <LuPlus className="size-5" />
+                <LuPlus className="size-4" />
             </button>
 
-            {/* Invisible Handles */}
             <Handle type="target" position={Position.Left} className="opacity-0" />
         </div>
     );

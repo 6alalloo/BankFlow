@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useMemo, useState } from "react";
 import { FiAlertTriangle, FiBriefcase, FiCheckSquare, FiClock, FiRefreshCw, FiShield, FiUser } from "react-icons/fi";
 import { useNavigate } from "react-router-dom";
 import { createCase, fetchCases, type CaseSummary } from "../../api/cases";
@@ -6,6 +6,8 @@ import { fetchTasks, processOverdueWork, type TasksQuery } from "../../api/tasks
 import { fetchApprovals } from "../../api/approvals";
 import type { CaseApproval, CaseTask } from "../../api/cases";
 import { fetchFlows, type FlowApi } from "../../api/flows";
+import { Button, Badge, Card, CardHeader, CardTitle, CardContent, type BadgeVariant } from "../../components/ui";
+import { buildObjectFromFields, getCaseFields } from "../../utils/caseForms";
 
 const queueFilters: Array<{ key: string; label: string; query: { status?: string } }> = [
   { key: "all", label: "All Cases", query: {} },
@@ -14,6 +16,31 @@ const queueFilters: Array<{ key: string; label: string; query: { status?: string
   { key: "escalated", label: "Escalated", query: { status: "escalated" } },
   { key: "resolved", label: "Resolved", query: { status: "resolved" } },
 ];
+
+const statusBadgeVariant = (status: string): BadgeVariant => {
+  switch (status) {
+    case 'resolved':
+    case 'closed':
+      return 'mint';
+    case 'escalated':
+      return 'ember';
+    case 'pending_approval':
+      return 'sky';
+    default:
+      return 'secondary';
+  }
+};
+
+const priorityBadgeVariant = (priority: string): BadgeVariant => {
+  switch (priority) {
+    case 'critical':
+      return 'ember';
+    case 'high':
+      return 'outline';
+    default:
+      return 'secondary';
+  }
+};
 
 const formatCaseDateTime = (value: string) => new Date(value).toLocaleString();
 
@@ -32,7 +59,14 @@ const CasesListPage: React.FC = () => {
   const [createTitle, setCreateTitle] = useState("");
   const [createPriority, setCreatePriority] = useState<"low" | "normal" | "high" | "critical">("normal");
   const [createData, setCreateData] = useState("{\n  \n}");
+  const [createFieldValues, setCreateFieldValues] = useState<Record<string, string>>({});
   const [creatingCase, setCreatingCase] = useState(false);
+
+  const selectedFlow = useMemo(
+    () => flows.find((flow) => flow.id === Number(createFlowId)),
+    [flows, createFlowId]
+  );
+  const caseFields = useMemo(() => getCaseFields(selectedFlow?.case_type), [selectedFlow?.case_type]);
 
   useEffect(() => {
     const load = async () => {
@@ -87,12 +121,15 @@ const CasesListPage: React.FC = () => {
 
       const trimmed = createData.trim();
       let caseData: Record<string, unknown> | undefined;
+      const guidedData = buildObjectFromFields(caseFields, createFieldValues);
       if (trimmed && trimmed !== "{}") {
         const parsed = JSON.parse(trimmed) as unknown;
         if (!parsed || typeof parsed !== "object" || Array.isArray(parsed)) {
           throw new Error("Case data must be a JSON object.");
         }
-        caseData = parsed as Record<string, unknown>;
+        caseData = { ...guidedData, ...(parsed as Record<string, unknown>) };
+      } else {
+        caseData = Object.keys(guidedData).length > 0 ? guidedData : undefined;
       }
 
       const created = await createCase({
@@ -107,6 +144,7 @@ const CasesListPage: React.FC = () => {
       setCreateTitle("");
       setCreatePriority("normal");
       setCreateData("{\n  \n}");
+      setCreateFieldValues({});
       navigate(`/cases/${created.id}`);
     } catch (err) {
       setError(err instanceof Error ? err.message : "Failed to create case");
@@ -116,97 +154,128 @@ const CasesListPage: React.FC = () => {
   };
 
   return (
-    <div className="p-4 p-md-5">
-      <div className="d-flex align-items-center justify-content-between mb-4">
+    <div className="p-6 h-full overflow-y-auto custom-scrollbar">
+      <div className="flex items-center justify-between mb-6">
         <div>
-          <h1 className="h3 text-white mb-1">Cases</h1>
-          <p className="text-zinc-400 mb-0">Live BankFlow case records and operational status.</p>
+          <h1 className="text-xl font-semibold text-white mb-1">Cases</h1>
+          <p className="text-[#9c9c9d] text-sm">Live BankFlow case records and operational status.</p>
         </div>
-        <button
-          type="button"
-          onClick={handleProcessOverdue}
-          disabled={refreshingSla}
-          className="btn btn-outline-warning btn-sm d-flex align-items-center gap-2"
-        >
-          <FiRefreshCw /> {refreshingSla ? "Checking?" : "Process SLA"}
-        </button>
-        <button
-          type="button"
-          onClick={() => setIsCreateOpen(true)}
-          className="btn btn-info btn-sm d-flex align-items-center gap-2"
-        >
-          <FiBriefcase /> New Case
-        </button>
+        <div className="flex items-center gap-3">
+          <Button
+            variant="secondary"
+            size="sm"
+            onClick={handleProcessOverdue}
+            disabled={refreshingSla}
+          >
+            <FiRefreshCw className={`size-3.5 ${refreshingSla ? 'animate-spin' : ''}`} />
+            {refreshingSla ? "Checking..." : "Process SLA"}
+          </Button>
+          <Button
+            variant="primary"
+            size="sm"
+            onClick={() => setIsCreateOpen(true)}
+          >
+            <FiBriefcase className="size-3.5" />
+            New Case
+          </Button>
+        </div>
       </div>
 
-      {loading && <div className="text-zinc-400">Loading cases?</div>}
-      {error && <div className="alert alert-danger">{error}</div>}
+      {loading && <div className="text-[#9c9c9d] text-sm">Loading cases...</div>}
+      {error && (
+        <div className="mb-4 p-4 rounded-lg bg-[#452324]/40 border border-[#ff6363]/20 text-[#ff6363] text-sm">
+          {error}
+        </div>
+      )}
 
       {!loading && !error && (
         <>
-        <div className="row g-3 mb-4">
-          <div className="col-lg-6">
-            <div className="border border-white/10 rounded-xl p-3 bg-white/[0.02] h-100">
-              <div className="d-flex align-items-center justify-content-between mb-3">
-                <h2 className="h6 text-white mb-0 d-flex align-items-center gap-2"><FiAlertTriangle /> Overdue Work</h2>
-                <span className="badge bg-warning text-dark">{tasks.length}</span>
-              </div>
-              <div className="d-grid gap-2">
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 mb-6">
+          <Card>
+            <CardHeader className="pb-3">
+              <CardTitle className="text-sm flex items-center gap-2">
+                <FiAlertTriangle className="text-[#ff6363]" />
+                Overdue Work
+              </CardTitle>
+            </CardHeader>
+            <CardContent>
+              <div className="space-y-2">
+                <button
+                  type="button"
+                  onClick={() => navigate("/tasks")}
+                  className="mb-2 text-left text-xs font-medium text-[#9c9c9d] hover:text-white"
+                >
+                  Open My Tasks
+                </button>
                 {tasks.slice(0, 4).map((task) => (
                   <button
                     key={task.id}
                     type="button"
                     onClick={() => navigate(`/cases/${task.case_id}`)}
-                    className="border border-white/10 rounded p-2 bg-zinc-950/20 text-start text-zinc-300 hover:border-warning/50"
+                    className="w-full border border-white/[0.08] rounded-lg p-3 bg-white/[0.02] text-left text-[#9c9c9d] hover:border-white/[0.18] hover:bg-white/[0.04] transition-all"
                   >
-                    <div className="fw-semibold text-white">{task.title}</div>
-                    <div className="text-zinc-500 text-sm">{task.status} // due {task.due_at ? formatCaseDateTime(task.due_at) : "not set"}</div>
+                    <div className="font-medium text-white text-sm">{task.title}</div>
+                    <div className="text-[#6a6b6c] text-xs font-mono mt-0.5">{task.status} // due {task.due_at ? formatCaseDateTime(task.due_at) : "not set"}</div>
                   </button>
                 ))}
-                {tasks.length === 0 && <div className="text-zinc-500 text-sm">No overdue tasks.</div>}
+                {tasks.length === 0 && <div className="text-[#6a6b6c] text-sm">No overdue tasks.</div>}
               </div>
-            </div>
-          </div>
-          <div className="col-lg-6">
-            <div className="border border-white/10 rounded-xl p-3 bg-white/[0.02] h-100">
-              <div className="d-flex align-items-center justify-content-between mb-3">
-                <h2 className="h6 text-white mb-0 d-flex align-items-center gap-2"><FiShield /> Pending Approvals</h2>
-                <span className="badge bg-info text-dark">{approvals.length}</span>
-              </div>
-              <div className="d-grid gap-2">
+            </CardContent>
+          </Card>
+
+          <Card>
+            <CardHeader className="pb-3">
+              <CardTitle className="text-sm flex items-center gap-2">
+                <FiShield className="text-[#9c9c9d]" />
+                Pending Approvals
+              </CardTitle>
+            </CardHeader>
+            <CardContent>
+              <div className="space-y-2">
+                <button
+                  type="button"
+                  onClick={() => navigate("/approvals")}
+                  className="mb-2 text-left text-xs font-medium text-[#9c9c9d] hover:text-white"
+                >
+                  Open Approvals Inbox
+                </button>
                 {approvals.slice(0, 4).map((approval) => (
                   <button
                     key={approval.id}
                     type="button"
                     onClick={() => navigate(`/cases/${approval.case_id}`)}
-                    className="border border-white/10 rounded p-2 bg-zinc-950/20 text-start text-zinc-300 hover:border-info/50"
+                    className="w-full border border-white/[0.08] rounded-lg p-3 bg-white/[0.02] text-left text-[#9c9c9d] hover:border-white/[0.18] hover:bg-white/[0.04] transition-all"
                   >
-                    <div className="fw-semibold text-white">Approval #{approval.id}</div>
-                    <div className="text-zinc-500 text-sm">{approval.flow_node_key || "approval"} // requested {formatCaseDateTime(approval.requested_at)}</div>
+                    <div className="font-medium text-white text-sm">Approval #{approval.id}</div>
+                    <div className="text-[#6a6b6c] text-xs font-mono mt-0.5">{approval.flow_node_key || "approval"} // requested {formatCaseDateTime(approval.requested_at)}</div>
                   </button>
                 ))}
-                {approvals.length === 0 && <div className="text-zinc-500 text-sm">No pending approvals.</div>}
+                {approvals.length === 0 && <div className="text-[#6a6b6c] text-sm">No pending approvals.</div>}
               </div>
-            </div>
-          </div>
+            </CardContent>
+          </Card>
         </div>
 
-        <div className="d-flex flex-wrap gap-2 mb-3">
+        <div className="flex flex-wrap gap-2 mb-4">
           {queueFilters.map((filter) => (
             <button
               key={filter.key}
               type="button"
               onClick={() => setActiveFilter(filter.key)}
-              className={`btn btn-sm ${activeFilter === filter.key ? "btn-info" : "btn-outline-secondary"}`}
+              className={`px-3 py-1.5 rounded-lg text-xs font-medium transition-all ${
+                activeFilter === filter.key
+                  ? "bg-white text-[#040506]"
+                  : "bg-[#111214] text-[#9c9c9d] border border-white/[0.08] hover:border-white/[0.18] hover:text-white"
+              }`}
             >
               {filter.label}
             </button>
           ))}
         </div>
 
-        <div className="d-grid gap-3">
+        <div className="space-y-3">
           {cases.length === 0 ? (
-            <div className="border border-white/10 rounded-xl p-4 text-zinc-400 bg-white/[0.02]">
+            <div className="border border-white/[0.08] rounded-2xl p-6 text-[#9c9c9d] bg-[#07080a]">
               No cases have been created yet.
             </div>
           ) : (
@@ -215,33 +284,37 @@ const CasesListPage: React.FC = () => {
                 key={caseItem.id}
                 type="button"
                 onClick={() => navigate(`/cases/${caseItem.id}`)}
-                className="border border-white/10 rounded-xl p-4 bg-white/[0.02] text-start hover:border-cyan-500/40 hover:bg-white/[0.04] transition-colors"
+                className="w-full border border-white/[0.08] rounded-2xl p-5 bg-[#07080a] text-left hover:border-white/[0.18] hover:bg-[#111214] transition-all"
               >
-                <div className="d-flex align-items-start justify-content-between gap-3">
-                  <div>
-                    <div className="d-flex align-items-center gap-2 text-cyan-300 fw-semibold">
-                    <FiBriefcase />
-                    {caseItem.case_reference}
+                <div className="flex items-start justify-between gap-3">
+                  <div className="min-w-0">
+                    <div className="flex items-center gap-2 text-white font-medium mb-1">
+                      <FiBriefcase className="shrink-0" />
+                      <span className="font-mono text-sm">{caseItem.case_reference}</span>
+                    </div>
+                    <div className="text-white text-sm">{caseItem.title || caseItem.case_type}</div>
+                    <div className="text-[#6a6b6c] text-xs mt-0.5">{caseItem.case_type}</div>
                   </div>
-                    <div className="text-white mt-1">{caseItem.title || caseItem.case_type}</div>
-                    <div className="text-zinc-500 text-sm mt-1">{caseItem.case_type}</div>
-                  </div>
-                  <div className="text-end">
-                    <div className="badge bg-info text-dark text-uppercase">{caseItem.status}</div>
-                    <div className="text-zinc-500 text-sm mt-2 text-uppercase">{caseItem.priority}</div>
+                  <div className="text-right shrink-0 flex flex-col items-end gap-1.5">
+                    <Badge variant={statusBadgeVariant(caseItem.status)}>
+                      {caseItem.status}
+                    </Badge>
+                    <Badge variant={priorityBadgeVariant(caseItem.priority)}>
+                      {caseItem.priority}
+                    </Badge>
                   </div>
                 </div>
-                <div className="d-flex flex-wrap gap-3 mt-3 text-zinc-400 text-sm">
-                  <span className="d-flex align-items-center gap-1">
-                    <FiUser />
+                <div className="flex flex-wrap gap-4 mt-4 text-[#9c9c9d] text-xs">
+                  <span className="flex items-center gap-1.5">
+                    <FiUser className="text-[#6a6b6c]" />
                     {caseItem.assignee_user?.full_name || caseItem.assignee_team?.name || "Unassigned"}
                   </span>
-                  <span className="d-flex align-items-center gap-1">
-                    <FiClock />
+                  <span className="flex items-center gap-1.5">
+                    <FiClock className="text-[#6a6b6c]" />
                     {formatCaseDateTime(caseItem.opened_at)}
                   </span>
-                  <span className="d-flex align-items-center gap-1">
-                    <FiCheckSquare />
+                  <span className="flex items-center gap-1.5">
+                    <FiCheckSquare className="text-[#6a6b6c]" />
                     {caseItem.flow?.name || caseItem.case_type}
                   </span>
                 </div>
@@ -251,70 +324,91 @@ const CasesListPage: React.FC = () => {
         </div>
         </>
       )}
+
       {isCreateOpen && (
-        <>
-          <button type="button" aria-label="Close case dialog" className="position-fixed top-0 start-0 w-100 h-100 bg-zinc-950 opacity-75 border-0 z-40" onClick={() => setIsCreateOpen(false)} />
-          <div className="position-fixed top-50 start-50 translate-middle w-100 z-50" style={{ maxWidth: 620 }}>
-            <div className="bg-[#0f172a] border border-zinc-800 rounded p-4 shadow-lg">
-              <h2 className="h5 text-white mb-1">New Case</h2>
-              <p className="text-zinc-400 text-sm mb-4">Start a live case from a published flow.</p>
-              <div className="d-grid gap-3">
+        <div className="fixed inset-0 z-50 flex items-center justify-center">
+          <button type="button" aria-label="Close case dialog" className="absolute inset-0 bg-[#040506]/80 backdrop-blur-sm" onClick={() => setIsCreateOpen(false)} />
+          <div className="relative z-10 w-full max-w-lg">
+            <div className="bg-[#111214] border border-white/[0.08] rounded-2xl p-6 shadow-xl">
+              <h2 className="text-lg font-semibold text-white mb-1">New Case</h2>
+              <p className="text-[#9c9c9d] text-sm mb-6">Start a live case from a published flow.</p>
+              <div className="space-y-4">
                 <label>
-                  <span className="text-zinc-500 text-xs text-uppercase font-mono">Published Flow</span>
+                  <span className="text-[#6a6b6c] text-[10px] uppercase font-mono tracking-wider">Published Flow</span>
                   <select
                     value={createFlowId}
-                    onChange={(event) => setCreateFlowId(event.target.value)}
-                    className="form-select bg-zinc-950 text-white border-secondary mt-1"
+                    onChange={(event) => {
+                      setCreateFlowId(event.target.value);
+                      setCreateFieldValues({});
+                    }}
+                    className="mt-1.5 w-full bg-white/[0.05] border border-white/[0.08] rounded-lg px-3 py-2.5 text-sm text-white focus:outline-none focus:border-white/[0.18] focus:ring-1 focus:ring-white/[0.18] transition-all"
                   >
-                    <option value="">Choose flow</option>
+                    <option value="" className="bg-[#111214]">Choose flow</option>
                     {flows.map((flow) => (
-                      <option key={flow.id} value={flow.id}>{flow.name}</option>
+                      <option key={flow.id} value={flow.id} className="bg-[#111214]">{flow.name}</option>
                     ))}
                   </select>
                 </label>
                 <label>
-                  <span className="text-zinc-500 text-xs text-uppercase font-mono">Title</span>
+                  <span className="text-[#6a6b6c] text-[10px] uppercase font-mono tracking-wider">Title</span>
                   <input
                     value={createTitle}
                     onChange={(event) => setCreateTitle(event.target.value)}
-                    className="form-control bg-zinc-950 text-white border-secondary mt-1"
+                    className="mt-1.5 w-full bg-white/[0.05] border border-white/[0.08] rounded-lg px-3 py-2.5 text-sm text-white placeholder:text-[#6a6b6c] focus:outline-none focus:border-white/[0.18] focus:ring-1 focus:ring-white/[0.18] transition-all"
                     placeholder="Optional case title"
                   />
                 </label>
                 <label>
-                  <span className="text-zinc-500 text-xs text-uppercase font-mono">Priority</span>
+                  <span className="text-[#6a6b6c] text-[10px] uppercase font-mono tracking-wider">Priority</span>
                   <select
                     value={createPriority}
                     onChange={(event) => setCreatePriority(event.target.value as typeof createPriority)}
-                    className="form-select bg-zinc-950 text-white border-secondary mt-1"
+                    className="mt-1.5 w-full bg-white/[0.05] border border-white/[0.08] rounded-lg px-3 py-2.5 text-sm text-white focus:outline-none focus:border-white/[0.18] focus:ring-1 focus:ring-white/[0.18] transition-all"
                   >
-                    <option value="low">Low</option>
-                    <option value="normal">Normal</option>
-                    <option value="high">High</option>
-                    <option value="critical">Critical</option>
+                    <option value="low" className="bg-[#111214]">Low</option>
+                    <option value="normal" className="bg-[#111214]">Normal</option>
+                    <option value="high" className="bg-[#111214]">High</option>
+                    <option value="critical" className="bg-[#111214]">Critical</option>
                   </select>
                 </label>
+                <div>
+                  <span className="text-[#6a6b6c] text-[10px] uppercase font-mono tracking-wider">Case Fields</span>
+                  <div className="mt-1.5 grid grid-cols-1 gap-3 md:grid-cols-2">
+                    {caseFields.map((field) => (
+                      <label key={field.key}>
+                        <span className="mb-1 block text-xs text-[#9c9c9d]">{field.label}</span>
+                        <input
+                          value={createFieldValues[field.key] ?? ""}
+                          onChange={(event) => setCreateFieldValues((current) => ({ ...current, [field.key]: event.target.value }))}
+                          type={field.type === "number" ? "number" : "text"}
+                          className="w-full bg-white/[0.05] border border-white/[0.08] rounded-lg px-3 py-2 text-sm text-white placeholder:text-[#6a6b6c] focus:outline-none focus:border-white/[0.18] focus:ring-1 focus:ring-white/[0.18] transition-all"
+                          placeholder={field.placeholder}
+                        />
+                      </label>
+                    ))}
+                  </div>
+                </div>
                 <label>
-                  <span className="text-zinc-500 text-xs text-uppercase font-mono">Case Data JSON</span>
+                  <span className="text-[#6a6b6c] text-[10px] uppercase font-mono tracking-wider">Additional Case Data JSON</span>
                   <textarea
                     value={createData}
                     onChange={(event) => setCreateData(event.target.value)}
                     rows={6}
-                    className="form-control bg-zinc-950 text-white border-secondary mt-1 font-mono"
+                    className="mt-1.5 w-full bg-white/[0.05] border border-white/[0.08] rounded-lg px-3 py-2.5 text-sm text-white font-mono focus:outline-none focus:border-white/[0.18] focus:ring-1 focus:ring-white/[0.18] transition-all resize-none"
                   />
                 </label>
               </div>
-              <div className="d-flex justify-content-end gap-2 mt-4">
-                <button type="button" className="btn btn-outline-secondary" onClick={() => setIsCreateOpen(false)} disabled={creatingCase}>
+              <div className="flex justify-end gap-3 mt-6">
+                <Button variant="ghost" onClick={() => setIsCreateOpen(false)} disabled={creatingCase}>
                   Cancel
-                </button>
-                <button type="button" className="btn btn-info" onClick={handleCreateCase} disabled={creatingCase}>
-                  {creatingCase ? "Creating?" : "Create Case"}
-                </button>
+                </Button>
+                <Button variant="primary" onClick={handleCreateCase} disabled={creatingCase}>
+                  {creatingCase ? "Creating..." : "Create Case"}
+                </Button>
               </div>
             </div>
           </div>
-        </>
+        </div>
       )}
     </div>
   );

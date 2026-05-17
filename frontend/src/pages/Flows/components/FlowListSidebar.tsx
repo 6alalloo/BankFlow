@@ -29,13 +29,9 @@ const FlowListSidebar: React.FC<FlowListSidebarProps> = ({
     filterStatus,
     onFilterChange
 }) => {
-    // 1. Filter Logic
     const filtered = flows.filter(wf => {
-        // Status Filter
         if (filterStatus === 'active' && !wf.is_active) return false;
         if (filterStatus === 'inactive' && wf.is_active) return false;
-
-        // Search Filter
         const q = searchQuery.toLowerCase();
         return (
             wf.name.toLowerCase().includes(q) ||
@@ -44,80 +40,58 @@ const FlowListSidebar: React.FC<FlowListSidebarProps> = ({
     });
 
     return (
-        <div className="flex flex-col h-full bg-navy-950/80 backdrop-blur-xl border-r border-white/5 relative z-30">
-            {/* Header / Toolbar */}
-            <div className="p-4 border-b border-white/5 space-y-4">
-                {/* Search & Filters Row */}
-                <div className="flex items-center gap-3">
-                    {/* Search Bar - Wide */}
+        <div className="flex flex-col h-full bg-[#07080a] border-r border-white/[0.08] relative z-30">
+            {/* Header */}
+            <div className="p-4 border-b border-white/[0.08] space-y-3">
+                <div className="flex items-center gap-2">
                     <div className="relative flex-1 group">
-                        <FiSearch className="absolute left-3 top-1/2 -translate-y-1/2 text-cyan-700 group-focus-within:text-cyan-400 transition-colors" />
+                        <FiSearch className="absolute left-3 top-1/2 -translate-y-1/2 text-[#6a6b6c] group-focus-within:text-white transition-colors" />
                         <input 
                             type="text" 
-                            placeholder="SEARCH" 
+                            placeholder="Search flows..." 
                             value={searchQuery}
                             onChange={(e) => onSearchChange(e.target.value)}
-                            className="w-full bg-zinc-950/40 border border-cyan-900/30 rounded-none pl-9 pr-3 py-2 text-xs font-mono text-cyan-100 placeholder:text-cyan-900/50 focus:outline-none focus:border-cyan-500/50 focus:bg-zinc-950/60 focus:ring-1 focus:ring-cyan-500/20 focus:shadow-[0_0_15px_rgba(6,182,212,0.15)] transition-all uppercase tracking-wider"
+                            className="w-full bg-white/[0.05] border border-white/[0.08] rounded-lg pl-9 pr-3 py-2 text-xs text-white placeholder:text-[#6a6b6c] focus:outline-none focus:border-white/[0.18] focus:ring-1 focus:ring-white/[0.18] transition-all"
                         />
                     </div>
                     
-                    {/* Status Dropdown */}
                     <div className="relative">
                         <select 
                             value={filterStatus}
                             onChange={(e) => onFilterChange(e.target.value as 'all' | 'active' | 'inactive')}
-                            className="appearance-none bg-[#020617] border border-cyan-900/30 rounded-none px-4 py-2 text-xs font-mono text-cyan-400 focus:outline-none focus:border-cyan-500/50 cursor-pointer pr-8 hover:bg-cyan-950/20 transition-colors uppercase tracking-widest"
+                            className="appearance-none bg-[#111214] border border-white/[0.08] rounded-lg px-3 py-2 text-xs text-[#9c9c9d] focus:outline-none focus:border-white/[0.18] cursor-pointer pr-7 hover:bg-[#1b1c1e] transition-colors"
                             style={{ colorScheme: 'dark' }} 
                         >
-                            <option value="all" className="bg-[#020617] text-cyan-400">ALL STATUS</option>
-                            <option value="active" className="bg-[#020617] text-cyan-400">ONLINE</option>
-                            <option value="inactive" className="bg-[#020617] text-cyan-400">OFFLINE</option>
+                            <option value="all" className="bg-[#111214]">All</option>
+                            <option value="active" className="bg-[#111214]">Active</option>
+                            <option value="inactive" className="bg-[#111214]">Inactive</option>
                         </select>
-                        <div className="absolute right-3 top-1/2 -translate-y-1/2 pointer-events-none text-cyan-700">
+                        <div className="absolute right-2.5 top-1/2 -translate-y-1/2 pointer-events-none text-[#6a6b6c]">
                            <svg width="10" height="6" viewBox="0 0 10 6" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"><path d="M1 1L5 5L9 1"/></svg>
                         </div>
                     </div>
 
-                     {/* Time Range (Functional Select) */}
-                     <div className="relative hidden xl:block">
-                        <select 
-                            className="appearance-none bg-[#020617] border border-cyan-900/30 rounded-none px-4 py-2 text-xs font-mono text-cyan-400 focus:outline-none focus:border-cyan-500/50 cursor-pointer pr-8 hover:bg-cyan-950/20 transition-colors uppercase tracking-widest"
-                            style={{ colorScheme: 'dark' }}
-                        >
-                            <option value="24h" className="bg-[#020617] text-cyan-400">24H RANGE</option>
-                            <option value="7d" className="bg-[#020617] text-cyan-400">7 DAYS</option>
-                            <option value="30d" className="bg-[#020617] text-cyan-400">30 DAYS</option>
-                        </select>
-                         <div className="absolute right-3 top-1/2 -translate-y-1/2 pointer-events-none text-cyan-700">
-                             <svg width="10" height="6" viewBox="0 0 10 6" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"><path d="M1 1L5 5L9 1"/></svg>
-                        </div>
-                    </div>
-                    
-                    {/* Template Button */}
                     <button 
                         onClick={onOpenTemplates}
-                        className="w-10 h-full min-h-[34px] bg-purple-600 hover:bg-purple-400 text-white flex items-center justify-center transition-all hover:shadow-[0_0_15px_rgba(168,85,247,0.6)]"
+                        className="size-9 bg-[#111214] hover:bg-[#1b1c1e] text-[#9c9c9d] hover:text-white flex items-center justify-center transition-all rounded-lg border border-white/[0.08]"
                         title="Use Template"
-                        style={{ clipPath: 'polygon(10px 0, 100% 0, 100% 100%, 0 100%, 0 10px)' }}
                     >
-                        <LuLayoutTemplate size={18} />
+                        <LuLayoutTemplate size={16} />
                     </button>
                     
-                    {/* Create Button (Futuristic) */}
                     <button 
                         onClick={onCreate}
                         disabled={isCreating}
-                        className="w-10 h-full min-h-[34px] bg-cyan-600 hover:bg-cyan-400 text-black flex items-center justify-center transition-all disabled:opacity-50 hover:shadow-[0_0_15px_rgba(34,211,238,0.6)]"
+                        className="size-9 bg-[#e6e6e6] hover:bg-white text-[#040506] flex items-center justify-center transition-all rounded-lg disabled:opacity-50"
                         title="Create New Flow"
-                        style={{ clipPath: 'polygon(10px 0, 100% 0, 100% 100%, 0 100%, 0 10px)' }}
                     >
-                         {isCreating ? <div className="animate-spin size-4 border-2 border-black/30 border-t-black rounded-full" /> : <FiPlus size={20} className="stroke-[3px]" />}
+                         {isCreating ? <div className="animate-spin size-4 border-2 border-[#040506]/30 border-t-[#040506] rounded-full" /> : <FiPlus size={18} />}
                     </button>
                 </div>
             </div>
 
             {/* List */}
-            <div className="flex-1 overflow-y-auto p-4 space-y-3 custom-scrollbar">
+            <div className="flex-1 overflow-y-auto p-3 space-y-1 custom-scrollbar">
                 {filtered.length > 0 ? (
                     filtered.map(wf => (
                         <FlowCard 
@@ -128,9 +102,9 @@ const FlowListSidebar: React.FC<FlowListSidebarProps> = ({
                         />
                     ))
                 ) : (
-                    <div className="flex flex-col items-center justify-center py-16 text-zinc-600 gap-2">
-                        <div className="size-12 rounded-full bg-white/5 flex items-center justify-center mb-2">
-                            <FiSearch size={20} opacity={0.5} />
+                    <div className="flex flex-col items-center justify-center py-16 text-[#6a6b6c] gap-2">
+                        <div className="size-10 rounded-full bg-white/[0.03] flex items-center justify-center mb-2">
+                            <FiSearch size={18} className="opacity-50" />
                         </div>
                         <p className="text-sm font-medium">No flows found</p>
                     </div>

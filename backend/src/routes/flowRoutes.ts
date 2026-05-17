@@ -1,12 +1,28 @@
 import { Router, Request, Response } from "express";
-import { Prisma } from "@prisma/client";
-import prisma from "../lib/prisma";
 import { authenticate } from "../middleware/authMiddleware";
-import { validateDraftFlowGraph } from "../services/flowValidationService";
-import { toInputJson } from "../lib/json";
 import { canPublishFlow } from "../services/authorizationService";
 import { logAuditEvent } from "../services/auditService";
-import { pageMeta, parseNumber, parsePageQuery } from "../lib/query";
+import { parseNumber, parsePageQuery } from "../lib/query";
+import {
+  FlowPublishValidationError,
+  createCaseFlow,
+  createDraftEdge,
+  createDraftNode,
+  deleteCaseFlow,
+  deleteDraftEdge,
+  deleteDraftNode,
+  duplicateCaseFlow,
+  getCaseFlowDetail,
+  getCaseFlowGraph,
+  listCaseFlows,
+  publishCaseFlow,
+  toCaseFlowGraphResponse,
+  toCaseFlowResponse,
+  toDraftNodeResponse,
+  updateCaseFlow,
+  updateDraftNode,
+  updateDraftNodePosition,
+} from "../services/flowService";
 
 const router = Router();
 
@@ -21,81 +37,17 @@ const requireFlowDesigner = (req: Request, res: Response): boolean => {
   return true;
 };
 
-const toNodeResponse = (node: {
-  id: number;
-  case_flow_id: number;
-  kind: string;
-  name: string | null;
-  config_json: Prisma.JsonValue;
-  pos_x: number;
-  pos_y: number;
-}) => ({
-  id: node.id,
-  flowId: node.case_flow_id,
-  kind: node.kind,
-  name: node.name,
-  config: node.config_json,
-  posX: node.pos_x,
-  posY: node.pos_y,
-});
-
-const toFlowResponse = (flow: any) => ({
-  id: flow.id,
-  key: flow.key,
-  name: flow.name,
-  description: flow.description,
-  case_type: flow.case_type,
-  status: flow.status,
-  owner_user_id: flow.owner_user_id,
-  current_published_version_id: flow.current_published_version_id,
-  draft_data_schema_json: flow.draft_data_schema_json,
-  created_at: flow.created_at,
-  updated_at: flow.updated_at,
-  archived_at: flow.archived_at,
-  current_published_version: flow.current_published_version ?? null,
-  owners: flow.owners ?? null,
-  users: flow.owners ?? null,
-  version: flow.current_published_version?.version_number ?? 0,
-  is_active: flow.status === "published",
-});
-
 router.get("/", async (req: Request, res: Response) => {
   const pageQuery = parsePageQuery(req);
   const ownerUserId = parseNumber(req.query.ownerUserId ?? req.query.owner_user_id);
   const search = typeof req.query.search === "string" ? req.query.search.trim() : "";
-  const where: Prisma.case_flowsWhereInput = {};
+  const caseType =
+    typeof req.query.caseType === "string" || typeof req.query.case_type === "string"
+      ? String(req.query.caseType ?? req.query.case_type)
+      : undefined;
+  const status = typeof req.query.status === "string" && req.query.status ? req.query.status : undefined;
 
-  if (typeof req.query.status === "string" && req.query.status) where.status = req.query.status as never;
-  if (ownerUserId) where.owner_user_id = ownerUserId;
-  if (typeof req.query.caseType === "string" || typeof req.query.case_type === "string") {
-    where.case_type = String(req.query.caseType ?? req.query.case_type);
-  }
-  if (search) {
-    where.OR = [
-      { key: { contains: search, mode: "insensitive" } },
-      { name: { contains: search, mode: "insensitive" } },
-      { description: { contains: search, mode: "insensitive" } },
-      { case_type: { contains: search, mode: "insensitive" } },
-    ];
-  }
-
-  const [flows, total] = await Promise.all([
-    prisma.case_flows.findMany({
-      where,
-      skip: pageQuery.skip,
-      take: pageQuery.take,
-      orderBy: { updated_at: "desc" },
-      include: {
-        current_published_version: true,
-        owners: {
-          select: { id: true, email: true, full_name: true },
-        },
-      },
-    }),
-    prisma.case_flows.count({ where }),
-  ]);
-
-  res.json({ data: flows.map(toFlowResponse), page: pageMeta(pageQuery, total) });
+  res.json(await listCaseFlows({ pageQuery, ownerUserId, caseType, status, search }));
 });
 
 router.post("/", async (req: Request, res: Response) => {
@@ -114,20 +66,12 @@ router.post("/", async (req: Request, res: Response) => {
     return;
   }
 
-  const flow = await prisma.case_flows.create({
-    data: {
-      key:
-        key ||
-        `${name
-          .toLowerCase()
-          .replace(/[^a-z0-9]+/g, "-")
-          .replace(/(^-|-$)/g, "")}-${Date.now()}`,
-      name,
-      description: description || null,
-      case_type: caseType || case_type || "general_case",
-      owner_user_id: req.user?.userId ?? null,
-      draft_data_schema_json: toInputJson({}),
-    },
+  const flow = await createCaseFlow({
+    key,
+    name,
+    description,
+    caseType: caseType || case_type,
+    ownerUserId: req.user?.userId ?? null,
   });
 
   if (req.user?.userId) {
@@ -140,7 +84,7 @@ router.post("/", async (req: Request, res: Response) => {
     });
   }
 
-  res.status(201).json({ data: toFlowResponse(flow) });
+  res.status(201).json({ data: toCaseFlowResponse(flow) });
 });
 
 router.patch("/:id", async (req: Request, res: Response) => {
@@ -160,7 +104,12 @@ router.patch("/:id", async (req: Request, res: Response) => {
     status?: "draft" | "published" | "archived";
   };
 
-  const data: Prisma.case_flowsUpdateInput = {};
+  const data: {
+    name?: string;
+    description?: string | null;
+    caseType?: string;
+    status?: "draft" | "published" | "archived";
+  } = {};
   if (name !== undefined) {
     const trimmedName = name.trim();
     if (!trimmedName) {
@@ -170,7 +119,7 @@ router.patch("/:id", async (req: Request, res: Response) => {
     data.name = trimmedName;
   }
   if (description !== undefined) data.description = description;
-  if (caseType !== undefined || case_type !== undefined) data.case_type = caseType ?? case_type;
+  if (caseType !== undefined || case_type !== undefined) data.caseType = caseType ?? case_type;
   if (status !== undefined) data.status = status;
 
   if (Object.keys(data).length === 0) {
@@ -178,15 +127,8 @@ router.patch("/:id", async (req: Request, res: Response) => {
     return;
   }
 
-  const flow = await prisma.case_flows.update({
-    where: { id },
-    data,
-    include: {
-      current_published_version: true,
-      owners: {
-        select: { id: true, email: true, full_name: true },
-      },
-    },
+  const flow = await updateCaseFlow(id, {
+    ...data,
   });
 
   if (req.user?.userId) {
@@ -199,7 +141,7 @@ router.patch("/:id", async (req: Request, res: Response) => {
     });
   }
 
-  res.json({ data: toFlowResponse(flow) });
+  res.json({ data: toCaseFlowResponse(flow) });
 });
 
 router.get("/:id", async (req: Request, res: Response) => {
@@ -209,21 +151,14 @@ router.get("/:id", async (req: Request, res: Response) => {
     return;
   }
 
-  const flow = await prisma.case_flows.findUnique({
-    where: { id },
-    include: {
-      case_flow_draft_nodes: { orderBy: { id: "asc" } },
-      case_flow_draft_edges: { orderBy: [{ priority: "asc" }, { id: "asc" }] },
-      case_flow_versions: { orderBy: { version_number: "desc" } },
-    },
-  });
+  const flow = await getCaseFlowDetail(id);
 
   if (!flow) {
     res.status(404).json({ error: "Flow not found" });
     return;
   }
 
-  res.json({ data: toFlowResponse(flow) });
+  res.json({ data: flow });
 });
 
 router.delete("/:id", async (req: Request, res: Response) => {
@@ -235,19 +170,11 @@ router.delete("/:id", async (req: Request, res: Response) => {
     return;
   }
 
-  const flow = await prisma.case_flows.findUnique({ where: { id } });
+  const flow = await deleteCaseFlow(id);
   if (!flow) {
     res.status(404).json({ error: "Flow not found" });
     return;
   }
-
-  await prisma.$transaction(async (tx) => {
-    await tx.case_flows.update({
-      where: { id },
-      data: { current_published_version_id: null },
-    });
-    await tx.case_flows.delete({ where: { id } });
-  });
 
   if (req.user?.userId) {
     await logAuditEvent({
@@ -271,49 +198,11 @@ router.post("/:id/duplicate", async (req: Request, res: Response) => {
     return;
   }
 
-  const source = await prisma.case_flows.findUnique({
-    where: { id },
-    include: {
-      case_flow_draft_nodes: true,
-      case_flow_draft_edges: true,
-    },
-  });
-
-  if (!source) {
+  const copy = await duplicateCaseFlow({ flowId: id, ownerUserId: req.user?.userId ?? null });
+  if (!copy) {
     res.status(404).json({ error: "Flow not found" });
     return;
   }
-
-  const copy = await prisma.case_flows.create({
-    data: {
-      key: `${source.key}-copy-${Date.now()}`,
-      name: `${source.name} Copy`,
-      description: source.description,
-      case_type: source.case_type,
-      owner_user_id: req.user?.userId ?? source.owner_user_id,
-      draft_data_schema_json: toInputJson(source.draft_data_schema_json),
-      case_flow_draft_nodes: {
-        create: source.case_flow_draft_nodes.map((node) => ({
-          node_key: node.node_key,
-          kind: node.kind,
-          name: node.name,
-          config_json: toInputJson(node.config_json),
-          pos_x: node.pos_x,
-          pos_y: node.pos_y,
-        })),
-      },
-      case_flow_draft_edges: {
-        create: source.case_flow_draft_edges.map((edge) => ({
-          edge_key: edge.edge_key,
-          from_node_key: edge.from_node_key,
-          to_node_key: edge.to_node_key,
-          condition_json: edge.condition_json === null ? Prisma.JsonNull : toInputJson(edge.condition_json),
-          label: edge.label,
-          priority: edge.priority,
-        })),
-      },
-    },
-  });
 
   if (req.user?.userId) {
     await logAuditEvent({
@@ -321,11 +210,11 @@ router.post("/:id/duplicate", async (req: Request, res: Response) => {
       userId: req.user.userId,
       targetType: "flow",
       targetId: copy.id,
-      details: { sourceFlowId: source.id },
+      details: { sourceFlowId: id },
     });
   }
 
-  res.status(201).json({ data: toFlowResponse(copy) });
+  res.status(201).json({ data: toCaseFlowResponse(copy) });
 });
 
 router.get("/:id/graph", async (req: Request, res: Response) => {
@@ -335,50 +224,14 @@ router.get("/:id/graph", async (req: Request, res: Response) => {
     return;
   }
 
-  const flow = await prisma.case_flows.findUnique({
-    where: { id },
-    include: {
-      case_flow_draft_nodes: { orderBy: { id: "asc" } },
-      case_flow_draft_edges: { orderBy: [{ priority: "asc" }, { id: "asc" }] },
-    },
-  });
+  const flow = await getCaseFlowGraph(id);
 
   if (!flow) {
     res.status(404).json({ error: "Flow not found" });
     return;
   }
 
-  const nodeIdByKey = new Map(
-    flow.case_flow_draft_nodes.map((node) => [node.node_key, node.id])
-  );
-
-  res.json({
-    data: {
-      flow: toFlowResponse(flow),
-      nodes: flow.case_flow_draft_nodes.map((node) => ({
-        id: node.id,
-        flow_id: node.case_flow_id,
-        node_key: node.node_key,
-        kind: node.kind,
-        name: node.name,
-        pos_x: node.pos_x,
-        pos_y: node.pos_y,
-        config: node.config_json,
-      })),
-      edges: flow.case_flow_draft_edges.map((edge) => ({
-        id: edge.id,
-        flow_id: edge.case_flow_id,
-        edge_key: edge.edge_key,
-        from_node_id: nodeIdByKey.get(edge.from_node_key) ?? 0,
-        to_node_id: nodeIdByKey.get(edge.to_node_key) ?? 0,
-        from_node_key: edge.from_node_key,
-        to_node_key: edge.to_node_key,
-        label: edge.label,
-        priority: edge.priority,
-        condition: edge.condition_json || {},
-      })),
-    },
-  });
+  res.json({ data: toCaseFlowGraphResponse(flow) });
 });
 
 router.post("/:id/nodes", async (req: Request, res: Response) => {
@@ -403,17 +256,7 @@ router.post("/:id/nodes", async (req: Request, res: Response) => {
     return;
   }
 
-  const node = await prisma.case_flow_draft_nodes.create({
-    data: {
-      case_flow_id: caseFlowId,
-      node_key: `node-${Date.now()}-${Math.floor(Math.random() * 10000)}`,
-      kind,
-      name: name || kind,
-      config_json: toInputJson(config),
-      pos_x: posX || 0,
-      pos_y: posY || 0,
-    },
-  });
+  const node = await createDraftNode(caseFlowId, { kind, name, config, posX, posY });
 
   if (req.user?.userId) {
     await logAuditEvent({
@@ -425,7 +268,7 @@ router.post("/:id/nodes", async (req: Request, res: Response) => {
     });
   }
 
-  res.status(201).json({ data: toNodeResponse(node) });
+  res.status(201).json({ data: toDraftNodeResponse(node) });
 });
 
 router.put("/:id/nodes/:nodeId", async (req: Request, res: Response) => {
@@ -446,24 +289,11 @@ router.put("/:id/nodes/:nodeId", async (req: Request, res: Response) => {
     posY?: number;
   };
 
-  const existing = await prisma.case_flow_draft_nodes.findFirst({
-    where: { id: nodeId, case_flow_id: caseFlowId },
-  });
-  if (!existing) {
+  const node = await updateDraftNode(caseFlowId, nodeId, { kind, name, config, posX, posY });
+  if (!node) {
     res.status(404).json({ error: "Node not found" });
     return;
   }
-
-  const node = await prisma.case_flow_draft_nodes.update({
-    where: { id: nodeId },
-    data: {
-      ...(kind && { kind }),
-      ...(name !== undefined && { name }),
-      ...(config !== undefined && { config_json: toInputJson(config) }),
-      ...(typeof posX === "number" && { pos_x: posX }),
-      ...(typeof posY === "number" && { pos_y: posY }),
-    },
-  });
 
   if (req.user?.userId) {
     await logAuditEvent({
@@ -475,7 +305,7 @@ router.put("/:id/nodes/:nodeId", async (req: Request, res: Response) => {
     });
   }
 
-  res.json({ data: toNodeResponse(node) });
+  res.json({ data: toDraftNodeResponse(node) });
 });
 
 router.patch("/:id/nodes/:nodeId/position", async (req: Request, res: Response) => {
@@ -494,18 +324,11 @@ router.patch("/:id/nodes/:nodeId/position", async (req: Request, res: Response) 
     return;
   }
 
-  const existing = await prisma.case_flow_draft_nodes.findFirst({
-    where: { id: nodeId, case_flow_id: caseFlowId },
-  });
-  if (!existing) {
+  const node = await updateDraftNodePosition(caseFlowId, nodeId, posX, posY);
+  if (!node) {
     res.status(404).json({ error: "Node not found" });
     return;
   }
-
-  const node = await prisma.case_flow_draft_nodes.update({
-    where: { id: nodeId },
-    data: { pos_x: posX, pos_y: posY },
-  });
 
   if (req.user?.userId) {
     await logAuditEvent({
@@ -517,7 +340,7 @@ router.patch("/:id/nodes/:nodeId/position", async (req: Request, res: Response) 
     });
   }
 
-  res.json({ data: toNodeResponse(node) });
+  res.json({ data: toDraftNodeResponse(node) });
 });
 
 router.delete("/:id/nodes/:nodeId", async (req: Request, res: Response) => {
@@ -530,21 +353,11 @@ router.delete("/:id/nodes/:nodeId", async (req: Request, res: Response) => {
     return;
   }
 
-  const node = await prisma.case_flow_draft_nodes.findFirst({
-    where: { id: nodeId, case_flow_id: caseFlowId },
-  });
+  const node = await deleteDraftNode(caseFlowId, nodeId);
   if (!node) {
     res.status(404).json({ error: "Node not found" });
     return;
   }
-
-  await prisma.case_flow_draft_edges.deleteMany({
-    where: {
-      case_flow_id: node.case_flow_id,
-      OR: [{ from_node_key: node.node_key }, { to_node_key: node.node_key }],
-    },
-  });
-  await prisma.case_flow_draft_nodes.delete({ where: { id: nodeId } });
 
   if (req.user?.userId) {
     await logAuditEvent({
@@ -576,31 +389,18 @@ router.post("/:id/edges", async (req: Request, res: Response) => {
     return;
   }
 
-  const [fromNode, toNode] = await Promise.all([
-    prisma.case_flow_draft_nodes.findFirst({
-      where: { id: fromNodeId, case_flow_id: caseFlowId },
-    }),
-    prisma.case_flow_draft_nodes.findFirst({
-      where: { id: toNodeId, case_flow_id: caseFlowId },
-    }),
-  ]);
-
-  if (!fromNode || !toNode) {
+  const created = await createDraftEdge(caseFlowId, {
+    fromNodeId,
+    toNodeId,
+    label,
+    priority,
+    condition,
+  });
+  if (!created) {
     res.status(404).json({ error: "Source or target node not found" });
     return;
   }
-
-  const edge = await prisma.case_flow_draft_edges.create({
-    data: {
-      case_flow_id: caseFlowId,
-      edge_key: `edge-${Date.now()}-${Math.floor(Math.random() * 10000)}`,
-      from_node_key: fromNode.node_key,
-      to_node_key: toNode.node_key,
-      label: label || null,
-      priority: priority || 0,
-      condition_json: toInputJson(condition),
-    },
-  });
+  const { edge, fromNode, toNode } = created;
 
   if (req.user?.userId) {
     await logAuditEvent({
@@ -635,15 +435,11 @@ router.delete("/:id/edges/:edgeId", async (req: Request, res: Response) => {
     return;
   }
 
-  const edge = await prisma.case_flow_draft_edges.findFirst({
-    where: { id: edgeId, case_flow_id: caseFlowId },
-  });
+  const edge = await deleteDraftEdge(caseFlowId, edgeId);
   if (!edge) {
     res.status(404).json({ error: "Edge not found" });
     return;
   }
-
-  await prisma.case_flow_draft_edges.delete({ where: { id: edgeId } });
 
   if (req.user?.userId) {
     await logAuditEvent({
@@ -666,76 +462,40 @@ router.post("/:id/publish", async (req: Request, res: Response) => {
     return;
   }
 
-  const flow = await prisma.case_flows.findUnique({
-    where: { id },
-    include: {
-      case_flow_draft_nodes: { orderBy: { id: "asc" } },
-      case_flow_draft_edges: { orderBy: [{ priority: "asc" }, { id: "asc" }] },
-      case_flow_versions: { orderBy: { version_number: "desc" }, take: 1 },
-    },
-  });
-
-  if (!flow) {
-    res.status(404).json({ error: "Flow not found" });
-    return;
-  }
-
-  const nextVersion = (flow.case_flow_versions[0]?.version_number ?? 0) + 1;
-  const graph = {
-    nodes: flow.case_flow_draft_nodes,
-    edges: flow.case_flow_draft_edges,
-  };
-
-  const validation = validateDraftFlowGraph(graph);
-  if (!validation.valid) {
-    res.status(400).json({
-      error: "Flow cannot be published until validation issues are fixed",
-      issues: validation.issues,
+  try {
+    const version = await publishCaseFlow({
+      flowId: id,
+      publishedByUserId: req.user?.userId ?? null,
+      changeSummary: typeof req.body?.changeSummary === "string" ? req.body.changeSummary : null,
     });
-    return;
-  }
 
-  const version = await prisma.$transaction(async (tx) => {
-    if (flow.current_published_version_id) {
-      await tx.case_flow_versions.update({
-        where: { id: flow.current_published_version_id },
-        data: { status: "superseded", retired_at: new Date() },
+    if (!version) {
+      res.status(404).json({ error: "Flow not found" });
+      return;
+    }
+
+    if (req.user?.userId) {
+      await logAuditEvent({
+        eventType: "flow_published",
+        userId: req.user.userId,
+        targetType: "flow",
+        targetId: id,
+        details: { versionId: version.id, versionNumber: version.version_number },
       });
     }
 
-    const createdVersion = await tx.case_flow_versions.create({
-      data: {
-        case_flow_id: flow.id,
-        version_number: nextVersion,
-        graph_json: toInputJson(graph),
-        data_schema_json: toInputJson(flow.draft_data_schema_json),
-        change_summary: typeof req.body?.changeSummary === "string" ? req.body.changeSummary : null,
-        published_by_user_id: req.user?.userId ?? null,
-      },
-    });
+    res.status(201).json({ data: version });
+  } catch (err) {
+    if (err instanceof FlowPublishValidationError) {
+      res.status(400).json({
+        error: err.message,
+        issues: err.issues,
+      });
+      return;
+    }
 
-    await tx.case_flows.update({
-      where: { id: flow.id },
-      data: {
-        status: "published",
-        current_published_version_id: createdVersion.id,
-      },
-    });
-
-    return createdVersion;
-  });
-
-  if (req.user?.userId) {
-    await logAuditEvent({
-      eventType: "flow_published",
-      userId: req.user.userId,
-      targetType: "flow",
-      targetId: flow.id,
-      details: { versionId: version.id, versionNumber: version.version_number },
-    });
+    throw err;
   }
-
-  res.status(201).json({ data: version });
 });
 
 export default router;

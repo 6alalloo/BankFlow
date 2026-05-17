@@ -69,6 +69,34 @@ const validBaseGraph = graph(
     graph(
       [
         { node_key: "start", kind: "trigger", name: "Start", config_json: {} },
+        { node_key: "database", kind: "database", name: "Database", config_json: { operation: "query" } },
+        { node_key: "variable", kind: "variable", name: "Set Variable", config_json: { variables: [] } },
+        { node_key: "wait", kind: "wait", name: "Wait", config_json: { duration: 15, unit: "minutes" } },
+        { node_key: "datetime", kind: "datetime", name: "Date Time", config_json: { operation: "now" } },
+        {
+          node_key: "approval-prep",
+          kind: "approval_support",
+          name: "Approval Prep",
+          config_json: { title: "Prepare approval package", claimPolicy: "claim_required" },
+        },
+      ],
+      [
+        { edge_key: "e1", from_node_key: "start", to_node_key: "database", label: null, priority: 0 },
+        { edge_key: "e2", from_node_key: "database", to_node_key: "variable", label: null, priority: 0 },
+        { edge_key: "e3", from_node_key: "variable", to_node_key: "wait", label: null, priority: 0 },
+        { edge_key: "e4", from_node_key: "wait", to_node_key: "datetime", label: null, priority: 0 },
+        { edge_key: "e5", from_node_key: "datetime", to_node_key: "approval-prep", label: null, priority: 0 },
+      ]
+    )
+  );
+  assert.equal(result.valid, true, JSON.stringify(result.issues));
+}
+
+{
+  const result = validateDraftFlowGraph(
+    graph(
+      [
+        { node_key: "start", kind: "trigger", name: "Start", config_json: {} },
         { node_key: "custom", kind: "unsupported", name: "Custom", config_json: {} },
       ],
       [{ edge_key: "e1", from_node_key: "start", to_node_key: "custom", label: null, priority: 0 }]

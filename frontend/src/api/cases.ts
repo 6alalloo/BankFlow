@@ -39,6 +39,9 @@ export type CaseTask = {
   completed_at: string | null;
   input_json?: unknown;
   output_json?: unknown;
+  assigned_user?: { id: number; email: string; full_name: string } | null;
+  assigned_team?: { id: number; key: string; name: string } | null;
+  case?: { id: number; case_reference: string; title: string | null; status: string; priority: string } | null;
 };
 
 export type CaseApproval = {
@@ -53,6 +56,12 @@ export type CaseApproval = {
   due_at?: string | null;
   decided_at: string | null;
   decision_reason: string | null;
+  approval_label?: string;
+  case?: { id: number; case_reference: string; title: string | null; status: string } | null;
+  requested_from_user?: { id: number; email: string; full_name: string } | null;
+  requested_from_team?: { id: number; key: string; name: string } | null;
+  requested_from_role?: { id: number; name: string } | null;
+  decided_by_user?: { id: number; email: string; full_name: string } | null;
 };
 
 export type CaseEvent = {
@@ -115,8 +124,10 @@ export type CreateCasePayload = {
 
 async function parseError(response: Response, fallback: string): Promise<string> {
   try {
-    const json = (await response.json()) as { error?: string; message?: string };
-    return json.error || json.message || fallback;
+    const json = (await response.json()) as { error?: string | { message?: string; requestId?: string }; message?: string };
+    if (typeof json.error === "string") return json.error;
+    if (json.error?.message) return json.error.requestId ? `${json.error.message} (${json.error.requestId})` : json.error.message;
+    return json.message || fallback;
   } catch {
     return fallback;
   }

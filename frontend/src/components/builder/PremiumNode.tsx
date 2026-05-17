@@ -1,4 +1,3 @@
-
 import React, { memo } from 'react';
 import { Handle, Position, type NodeProps } from 'reactflow';
 import {
@@ -13,23 +12,21 @@ import {
 import clsx from 'clsx';
 import { getFriendlyLabel, replaceExpressionsWithLabels } from '../../utils/expressionLabels';
 
-// Map node kinds to icons
 const getIcon = (kind: string) => {
     switch (kind.toLowerCase()) {
-        case 'trigger': return <LuZap className="size-5 text-amber-400" />;
-        case 'email': return <LuMail className="size-5 text-blue-400" />;
-        case 'http': return <LuGlobe className="size-5 text-green-400" />;
-        case 'condition': return <LuSplit className="size-5 text-purple-400" />;
-        case 'database': return <LuDatabase className="size-5 text-rose-400" />;
-        case 'wait': return <LuClock className="size-5 text-neutral-400" />;
-        default: return <LuFileJson className="size-5 text-cyan-400" />;
+        case 'trigger': return <LuZap className="size-4 text-white" />;
+        case 'email': return <LuMail className="size-4 text-[#9c9c9d]" />;
+        case 'http': return <LuGlobe className="size-4 text-[#9c9c9d]" />;
+        case 'condition': return <LuSplit className="size-4 text-[#9c9c9d]" />;
+        case 'database': return <LuDatabase className="size-4 text-[#9c9c9d]" />;
+        case 'wait': return <LuClock className="size-4 text-[#9c9c9d]" />;
+        default: return <LuFileJson className="size-4 text-[#9c9c9d]" />;
     }
 }
 
 const PremiumNode = ({ data, selected }: NodeProps) => {
     const { name, kind, config } = data;
 
-    // Config summary generation with friendly labels
     const summary = React.useMemo(() => {
         if (!config) return "Click to configure";
         if (kind === 'email') {
@@ -41,7 +38,7 @@ const PremiumNode = ({ data, selected }: NodeProps) => {
             const method = config.method || 'GET';
             const url = config.url ? String(config.url) : '';
             if (!url) return `${method} (configure URL)`;
-            return `${method} ${url.length > 25 ? url.slice(0, 25) + '?' : url}`;
+            return `${method} ${url.length > 25 ? url.slice(0, 25) + '...' : url}`;
         }
         if (kind === 'condition') {
             if (!config.field) return "Click to configure";
@@ -50,9 +47,8 @@ const PremiumNode = ({ data, selected }: NodeProps) => {
         }
         if (kind === 'logger') {
             if (!config.message || config.message === '') return "Click to configure";
-            // Replace expressions with friendly labels and truncate
             const msg = replaceExpressionsWithLabels(String(config.message));
-            return msg.length > 35 ? msg.slice(0, 35) + '?' : msg;
+            return msg.length > 35 ? msg.slice(0, 35) + '...' : msg;
         }
         if (kind === 'database') {
             const table = config.table || '';
@@ -61,7 +57,6 @@ const PremiumNode = ({ data, selected }: NodeProps) => {
             return `${op} → ${table}`.trim();
         }
         if (kind === 'trigger') {
-            // Count how many fields are configured
             const configuredFields = Object.entries(config).filter(
                 ([, v]) => v !== '' && v !== null && v !== undefined
             ).length;
@@ -87,49 +82,42 @@ const PremiumNode = ({ data, selected }: NodeProps) => {
 
     return (
         <div className={clsx(
-            "relative group transition-all duration-300 min-w-[240px]",
-            "rounded-xl bg-navy-900/90 backdrop-blur-md border-[1.5px]",
-            selected ? "border-cyan-glow shadow-glow-md scale-105" : "border-white/10 hover:border-white/20 shadow-lg"
+            "relative group transition-all duration-200 min-w-[220px]",
+            "rounded-xl bg-[#111214] border",
+            selected 
+                ? "border-white/[0.18] shadow-[rgba(255,255,255,0.05)_0px_1px_0px_0px_inset,rgba(255,255,255,0.18)_0px_0px_0px_1px,rgba(0,0,0,0.2)_0px_-1px_0px_0px_inset]" 
+                : "border-white/[0.08] hover:border-white/[0.14]"
         )}>
-            {/* Glow backing */}
-            <div className={clsx(
-                "absolute -inset-0.5 rounded-xl opacity-0 transition-opacity duration-300",
-                selected ? "bg-cyan-glow/20 opacity-100 blur-sm" : "group-hover:opacity-30 bg-white/5"
-            )} />
-
-            <div className="relative p-4 flex flex-col gap-2 z-10">
-                {/* Header */}
-                <div className="flex items-center gap-3 border-b border-white/5 pb-2">
-                    <div className="p-2 rounded-lg bg-white/5 ring-1 ring-white/10">
+            <div className="relative p-3.5 flex flex-col gap-2 z-10">
+                <div className="flex items-center gap-2.5 border-b border-white/[0.06] pb-2">
+                    <div className="p-1.5 rounded-md bg-white/[0.05] border border-white/[0.08]">
                         {getIcon(kind)}
                     </div>
-                    <div className="flex flex-col">
-                        <span className="text-xs uppercase tracking-wider text-zinc-400 font-semibold">
+                    <div className="flex flex-col min-w-0">
+                        <span className="text-[10px] uppercase tracking-wider text-[#6a6b6c] font-semibold">
                             {kind}
                         </span>
-                        <span className="text-sm font-semibold text-white leading-tight">
+                        <span className="text-sm font-medium text-white leading-tight truncate">
                             {name || kind.charAt(0).toUpperCase() + kind.slice(1)}
                         </span>
                     </div>
                 </div>
 
-                {/* Body */}
-                <div className="text-xs text-zinc-400 font-mono bg-navy-950/50 rounded p-2 border border-white/5 truncate">
+                <div className="text-[11px] text-[#6a6b6c] font-mono bg-[#07080a] rounded-md px-2 py-1.5 border border-white/[0.06] truncate">
                     {summary}
                 </div>
             </div>
 
-            {/* Connection Handles - visible on hover for manual edge creation */}
             <Handle 
                 type="target" 
                 position={Position.Left} 
-                className="!w-3 !h-3 !bg-zinc-600 !border-2 !border-zinc-400 opacity-0 group-hover:opacity-100 transition-opacity !-left-1.5"
+                className="!size-2.5 !bg-[#6a6b6c] !border-2 !border-[#363739] opacity-0 group-hover:opacity-100 transition-opacity !-left-1.5"
                 style={{ top: '50%' }}
             />
             <Handle 
                 type="source" 
                 position={Position.Right} 
-                className="!w-3 !h-3 !bg-cyan-500 !border-2 !border-cyan-400 opacity-0 group-hover:opacity-100 transition-opacity !-right-1.5"
+                className="!size-2.5 !bg-white !border-2 !border-white/[0.18] opacity-0 group-hover:opacity-100 transition-opacity !-right-1.5"
                 style={{ top: '50%' }}
             />
         </div>

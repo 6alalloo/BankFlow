@@ -46,6 +46,7 @@ DATABASE_URL=postgresql://bankflow:bankflow_dev@localhost:5433/bankflow
   - `operator@bankflow.local` / `operator123`
   - `supervisor@bankflow.local` / `supervisor123`
   - `approver@bankflow.local` / `approver123`
+  - `auditor@bankflow.local` / `auditor123`
 - teams:
   - AML Review Queue
   - Payments Operations

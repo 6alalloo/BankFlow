@@ -10,6 +10,8 @@ import FlowsListPage from "./pages/Flows/flowListPage";
 import FlowBuilderPage from "./pages/Flows/flowBuilderPage";
 import CasesListPage from "./pages/Cases/CasesListPage";
 import CaseDetailPage from "./pages/Cases/CaseDetailPage";
+import TasksWorkbenchPage from "./pages/Tasks/TasksWorkbenchPage";
+import ApprovalsInboxPage from "./pages/Approvals/ApprovalsInboxPage";
 import AuditLogPage from "./pages/Admin/AuditLogPage";
 import SecurityPage from "./pages/Admin/SecurityPage";
 import UserManagementPage from "./pages/Admin/UserManagementPage";
@@ -23,14 +25,12 @@ const ProtectedRoute: React.FC<{ children: React.ReactNode }> = ({ children }) =
   if (isLoading) {
     return (
       <div
-        className="min-vh-100 d-flex align-items-center justify-content-center"
-        style={{ backgroundColor: "#0a0e1a" }}
+        className="h-screen flex items-center justify-center"
+        style={{ backgroundColor: "#040506" }}
       >
-        <div className="text-center">
-          <div className="spinner-border text-primary mb-3" role="status">
-            <span className="visually-hidden">Loading?</span>
-          </div>
-          <p className="text-muted">Loading?</p>
+        <div className="flex flex-col items-center gap-3">
+          <div className="size-6 border-2 border-white/20 border-t-white rounded-full animate-spin" role="status" />
+          <p className="text-sm text-zinc-400">Loading?</p>
         </div>
       </div>
     );
@@ -56,12 +56,10 @@ const App: React.FC = () => {
         element={
           isLoading ? (
             <div
-              className="min-vh-100 d-flex align-items-center justify-content-center"
-              style={{ backgroundColor: "#0a0e1a" }}
+              className="h-screen flex items-center justify-center"
+              style={{ backgroundColor: "#040506" }}
             >
-              <div className="spinner-border text-primary" role="status">
-                <span className="visually-hidden">Loading?</span>
-              </div>
+              <div className="size-6 border-2 border-white/20 border-t-white rounded-full animate-spin" role="status" />
             </div>
           ) : isAuthenticated ? (
             <Navigate to="/" replace />
@@ -88,6 +86,8 @@ const App: React.FC = () => {
                 {/* Cases */}
                 <Route path="/cases" element={<CasesListPage />} />
                 <Route path="/cases/:id" element={<CaseDetailPage />} />
+                <Route path="/tasks" element={<TasksWorkbenchPage />} />
+                <Route path="/approvals" element={<ApprovalsInboxPage />} />
 
                 {/* Admin */}
                 <Route path="/admin/audit-logs" element={<AuditLogPage />} />
@@ -98,9 +98,9 @@ const App: React.FC = () => {
                 <Route
                   path="*"
                   element={
-                    <div className="p-4">
-                      <h1 className="h3">404</h1>
-                      <p className="text-muted">Page not found.</p>
+                    <div className="p-6">
+                      <h1 className="text-2xl font-semibold text-white mb-1">404</h1>
+                      <p className="text-sm text-zinc-400">Page not found.</p>
                     </div>
                   }
                 />

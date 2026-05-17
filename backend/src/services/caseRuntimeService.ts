@@ -31,7 +31,7 @@ type RuntimeContext = {
   pendingDueAt?: Date | null;
 };
 
-const blockingTaskKinds = new Set(["review", "data_capture", "document_collection", "decision_followup", "escalation_followup"]);
+const blockingTaskKinds = new Set(["review", "data_capture", "document_collection", "approval_support", "decision_followup", "escalation_followup"]);
 const nonBlockingKinds = new Set(["trigger", "intake", "variable", "logger", "notification", "email", "http", "integration", "database", "datetime", "wait"]);
 
 const asObject = (value: unknown): Record<string, unknown> => {

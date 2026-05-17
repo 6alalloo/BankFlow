@@ -53,7 +53,6 @@ export default function UserManagementPage() {
   const [roleFilter, setRoleFilter] = useState("");
   const [statusFilter, setStatusFilter] = useState<string>("");
 
-  // Modal state
   const [showModal, setShowModal] = useState(false);
   const [modalMode, setModalMode] = useState<"create" | "edit">("create");
   const [selectedUser, setSelectedUser] = useState<User | null>(null);
@@ -63,10 +62,8 @@ export default function UserManagementPage() {
   const [submitError, setSubmitError] = useState<string | null>(null);
   const [successMessage, setSuccessMessage] = useState<string | null>(null);
 
-  // Toggle status state
   const [togglingUserId, setTogglingUserId] = useState<number | null>(null);
 
-  // Password change state (only for editing operators)
   const [showPasswordChange, setShowPasswordChange] = useState(false);
   const [newPassword, setNewPassword] = useState("");
   const [confirmNewPassword, setConfirmNewPassword] = useState("");
@@ -92,7 +89,6 @@ export default function UserManagementPage() {
   const fetchRoles = useCallback(async () => {
     try {
       const data = await getRoles();
-      // Only allow Admin and Operator roles
       const allowedRoles = data.filter((r) => r.name === "Admin" || r.name === "Operator");
       setRoles(allowedRoles);
     } catch (error) {
@@ -105,7 +101,6 @@ export default function UserManagementPage() {
     fetchRoles();
   }, [fetchUsers, fetchRoles]);
 
-  // Stats
   const stats = {
     total: users.length,
     active: users.filter((u) => u.is_active).length,
@@ -144,7 +139,6 @@ export default function UserManagementPage() {
     setFormData(initialFormData);
     setFormErrors({});
     setSubmitError(null);
-    // Reset password change state
     setShowPasswordChange(false);
     setNewPassword("");
     setConfirmNewPassword("");
@@ -245,7 +239,6 @@ export default function UserManagementPage() {
   const handleChangePassword = async () => {
     if (!selectedUser) return;
 
-    // Validate password
     if (!newPassword || newPassword.length < 8) {
       setPasswordError("Password must be at least 8 characters");
       return;
@@ -274,46 +267,38 @@ export default function UserManagementPage() {
 
   const isSelf = (userId: number) => currentUser?.id === userId;
 
-  // Access Denied
   if (!currentUser || currentUser.role?.name !== "Admin") {
     return (
-      <div className="flex items-center justify-center h-full bg-[#020408]">
-        <div
-          className="p-10 border border-rose-500/20 bg-rose-950/10 text-center max-w-md"
-          style={{ clipPath: "polygon(20px 0, 100% 0, 100% calc(100% - 20px), calc(100% - 20px) 100%, 0 100%, 0 20px)" }}
-        >
-          <FiShield className="mx-auto text-5xl text-rose-500 mb-6 animate-pulse" />
+      <div className="flex items-center justify-center h-full bg-[#040506]">
+        <div className="p-10 border border-[#ff6363]/20 bg-[#452324]/10 text-center max-w-md rounded-2xl">
+          <FiShield className="mx-auto text-5xl text-[#ff6363] mb-6" />
           <h2 className="text-2xl font-semibold font-mono text-white mb-2 uppercase tracking-widest">Access Denied</h2>
-          <p className="text-rose-400 font-mono text-sm">Administrator privileges required.</p>
+          <p className="text-[#ff6363] font-mono text-sm">Administrator privileges required.</p>
         </div>
       </div>
     );
   }
 
   return (
-    <div className="h-full flex flex-col bg-[#020408] text-white overflow-hidden relative font-sans">
-      {/* Tech Grid Background */}
-      <div className="absolute inset-0 bg-[linear-gradient(rgba(6,182,212,0.02)_1px,transparent_1px),linear-gradient(90deg,rgba(6,182,212,0.02)_1px,transparent_1px)] bg-[size:40px_40px] pointer-events-none" />
-
+    <div className="h-full flex flex-col bg-[#040506] text-white overflow-hidden relative font-sans">
       {/* Header */}
-      <div className="px-8 py-6 border-b border-cyan-900/20 z-10 shrink-0 bg-[#020408]/90 backdrop-blur-md">
+      <div className="px-8 py-6 border-b border-white/[0.08] z-10 shrink-0 bg-[#07080a]">
         <div className="flex flex-col md:flex-row md:items-end justify-between gap-6">
           <div>
             <div className="flex items-center gap-3 mb-2">
-              <div className="size-10 flex items-center justify-center border border-cyan-500/30 bg-cyan-950/20 text-cyan-400">
+              <div className="size-10 flex items-center justify-center border border-white/[0.08] bg-[#111214] text-white rounded-lg">
                 <FiUsers size={20} />
               </div>
-              <h1 className="text-2xl font-semibold tracking-widest text-white uppercase font-mono">User Management</h1>
+              <h1 className="text-2xl font-semibold tracking-tight text-white font-mono">User Management</h1>
             </div>
-            <p className="text-cyan-900/60 text-xs font-mono tracking-widest uppercase pl-14">
+            <p className="text-[#6a6b6c] text-xs font-mono tracking-widest uppercase pl-14">
               System Users // Access Control
             </p>
           </div>
 
-          {/* Add User Button */}
           <button
             onClick={openCreateModal}
-            className="px-4 py-2.5 bg-cyan-500 text-navy-950 font-semibold text-xs uppercase tracking-wider flex items-center gap-2 hover:bg-cyan-400 transition-colors shadow-lg shadow-cyan-500/20"
+            className="px-4 py-2.5 bg-[#e6e6e6] text-[#040506] font-semibold text-xs uppercase tracking-wider flex items-center gap-2 hover:bg-white transition-colors rounded-lg"
           >
             <FiUserPlus size={16} />
             Add User
@@ -323,57 +308,55 @@ export default function UserManagementPage() {
 
       {/* Success/Error Banner */}
       {successMessage && (
-        <div className="mx-8 mt-4 p-3 bg-emerald-950/30 border border-emerald-500/30 rounded-lg flex items-center gap-2 animate-in slide-in-from-top-2 z-10">
-          <FiCheck className="text-emerald-400" />
-          <span className="text-sm text-emerald-300">{successMessage}</span>
+        <div className="mx-8 mt-4 p-3 bg-[#0d2b1a]/40 border border-[#59d499]/20 rounded-lg flex items-center gap-2 z-10">
+          <FiCheck className="text-[#59d499]" />
+          <span className="text-sm text-[#59d499]">{successMessage}</span>
         </div>
       )}
 
       {/* Stats Cards */}
       <div className="px-8 py-3 z-10 grid grid-cols-2 md:grid-cols-5 gap-3">
-        <div className="p-3 bg-[#050b14]/80 border border-white/5 rounded-lg">
+        <div className="p-3 bg-[#07080a] border border-white/[0.08] rounded-lg">
           <div className="text-xl font-semibold text-white font-mono">{stats.total}</div>
-          <div className="text-[9px] text-zinc-500 uppercase tracking-wider font-mono">Total</div>
+          <div className="text-[9px] text-[#6a6b6c] uppercase tracking-wider font-mono">Total</div>
         </div>
-        <div className="p-3 bg-[#050b14]/80 border border-emerald-500/20 rounded-lg">
-          <div className="text-xl font-semibold text-emerald-400 font-mono">{stats.active}</div>
-          <div className="text-[9px] text-zinc-500 uppercase tracking-wider font-mono">Active</div>
+        <div className="p-3 bg-[#07080a] border border-[#59d499]/20 rounded-lg">
+          <div className="text-xl font-semibold text-[#59d499] font-mono">{stats.active}</div>
+          <div className="text-[9px] text-[#6a6b6c] uppercase tracking-wider font-mono">Active</div>
         </div>
-        <div className="p-3 bg-[#050b14]/80 border border-zinc-500/20 rounded-lg">
-          <div className="text-xl font-semibold text-zinc-400 font-mono">{stats.inactive}</div>
-          <div className="text-[9px] text-zinc-500 uppercase tracking-wider font-mono">Inactive</div>
+        <div className="p-3 bg-[#07080a] border border-white/[0.08] rounded-lg">
+          <div className="text-xl font-semibold text-[#9c9c9d] font-mono">{stats.inactive}</div>
+          <div className="text-[9px] text-[#6a6b6c] uppercase tracking-wider font-mono">Inactive</div>
         </div>
-        <div className="p-3 bg-[#050b14]/80 border border-cyan-500/20 rounded-lg">
-          <div className="text-xl font-semibold text-cyan-400 font-mono">{stats.admins}</div>
-          <div className="text-[9px] text-zinc-500 uppercase tracking-wider font-mono">Admins</div>
+        <div className="p-3 bg-[#07080a] border border-white/[0.08] rounded-lg">
+          <div className="text-xl font-semibold text-white font-mono">{stats.admins}</div>
+          <div className="text-[9px] text-[#6a6b6c] uppercase tracking-wider font-mono">Admins</div>
         </div>
-        <div className="p-3 bg-[#050b14]/80 border border-violet-500/20 rounded-lg">
-          <div className="text-xl font-semibold text-violet-400 font-mono">{stats.operators}</div>
-          <div className="text-[9px] text-zinc-500 uppercase tracking-wider font-mono">Operators</div>
+        <div className="p-3 bg-[#07080a] border border-white/[0.08] rounded-lg">
+          <div className="text-xl font-semibold text-white font-mono">{stats.operators}</div>
+          <div className="text-[9px] text-[#6a6b6c] uppercase tracking-wider font-mono">Operators</div>
         </div>
       </div>
 
       {/* Filters */}
       <div className="px-8 py-3 z-10 flex flex-wrap gap-3">
-        {/* Search */}
         <div className="relative flex-1 min-w-[200px] max-w-md">
-          <FiSearch className="absolute left-3 top-1/2 -translate-y-1/2 text-cyan-700" size={14} />
+          <FiSearch className="absolute left-3 top-1/2 -translate-y-1/2 text-[#6a6b6c]" size={14} />
           <input
             type="text"
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
-            placeholder="Search by name or email?"
-            className="w-full pl-9 pr-4 py-2 bg-[#050b14]/80 border border-cyan-900/30 text-xs font-mono text-cyan-300 placeholder:text-cyan-900/50 focus:outline-none focus:border-cyan-500/50"
+            placeholder="Search by name or email..."
+            className="w-full pl-9 pr-4 py-2 bg-[#111214] border border-white/[0.08] text-xs font-mono text-white placeholder:text-[#6a6b6c] focus:outline-none focus:border-white/[0.18] rounded-lg transition-all"
           />
         </div>
 
-        {/* Role Filter */}
         <div className="relative">
-          <FiFilter className="absolute left-3 top-1/2 -translate-y-1/2 text-cyan-700" size={14} />
+          <FiFilter className="absolute left-3 top-1/2 -translate-y-1/2 text-[#6a6b6c]" size={14} />
           <select
             value={roleFilter}
             onChange={(e) => setRoleFilter(e.target.value)}
-            className="pl-9 pr-8 py-2 bg-[#050b14]/80 border border-cyan-900/30 text-xs font-mono text-cyan-300 focus:outline-none focus:border-cyan-500/50 appearance-none cursor-pointer min-w-[140px] uppercase tracking-wider"
+            className="pl-9 pr-8 py-2 bg-[#111214] border border-white/[0.08] text-xs font-mono text-[#9c9c9d] focus:outline-none focus:border-white/[0.18] appearance-none cursor-pointer min-w-[140px] uppercase tracking-wider rounded-lg"
           >
             <option value="">All Roles</option>
             {roles.map((role) => (
@@ -382,36 +365,35 @@ export default function UserManagementPage() {
               </option>
             ))}
           </select>
-          <FiChevronRight className="absolute right-2 top-1/2 -translate-y-1/2 rotate-90 text-cyan-700" size={12} />
+          <FiChevronRight className="absolute right-2 top-1/2 -translate-y-1/2 rotate-90 text-[#6a6b6c]" size={12} />
         </div>
 
-        {/* Status Filter */}
         <div className="relative">
-          <FiPower className="absolute left-3 top-1/2 -translate-y-1/2 text-cyan-700" size={14} />
+          <FiPower className="absolute left-3 top-1/2 -translate-y-1/2 text-[#6a6b6c]" size={14} />
           <select
             value={statusFilter}
             onChange={(e) => setStatusFilter(e.target.value)}
-            className="pl-9 pr-8 py-2 bg-[#050b14]/80 border border-cyan-900/30 text-xs font-mono text-cyan-300 focus:outline-none focus:border-cyan-500/50 appearance-none cursor-pointer min-w-[140px] uppercase tracking-wider"
+            className="pl-9 pr-8 py-2 bg-[#111214] border border-white/[0.08] text-xs font-mono text-[#9c9c9d] focus:outline-none focus:border-white/[0.18] appearance-none cursor-pointer min-w-[140px] uppercase tracking-wider rounded-lg"
           >
             <option value="">All Status</option>
             <option value="active">Active</option>
             <option value="inactive">Inactive</option>
           </select>
-          <FiChevronRight className="absolute right-2 top-1/2 -translate-y-1/2 rotate-90 text-cyan-700" size={12} />
+          <FiChevronRight className="absolute right-2 top-1/2 -translate-y-1/2 rotate-90 text-[#6a6b6c]" size={12} />
         </div>
       </div>
 
       {/* User Table */}
       <div className="flex-1 overflow-y-auto px-8 py-2 z-10 custom-scrollbar">
         {loading ? (
-          <div className="flex flex-col items-center justify-center py-20 text-cyan-900 gap-4">
+          <div className="flex flex-col items-center justify-center py-20 text-[#6a6b6c] gap-4">
             <FiLoader className="animate-spin text-3xl opacity-50" />
-            <p className="font-mono text-xs uppercase tracking-widest animate-pulse">Loading Users?</p>
+            <p className="font-mono text-xs uppercase tracking-widest">Loading Users...</p>
           </div>
         ) : users.length === 0 ? (
-          <div className="flex flex-col items-center justify-center py-24 text-zinc-500 opacity-60">
-            <FiUsers className="text-4xl mb-4 text-cyan-900" />
-            <p className="font-mono text-xs uppercase tracking-widest text-cyan-800">No Users Found</p>
+          <div className="flex flex-col items-center justify-center py-24 text-[#6a6b6c] opacity-60">
+            <FiUsers className="text-4xl mb-4" />
+            <p className="font-mono text-xs uppercase tracking-widest">No Users Found</p>
           </div>
         ) : (
           <div className="space-y-1">
@@ -419,58 +401,52 @@ export default function UserManagementPage() {
               <div
                 key={user.id}
                 style={{ animationDelay: `${idx * 15}ms` }}
-                className={`group relative overflow-hidden border-l-2 transition-all duration-200 animate-in fade-in slide-in-from-bottom-1 fill-mode-backwards bg-[#03060c] border-y border-r border-y-white/5 border-r-white/5 hover:bg-[#050910] ${
-                  user.is_active ? "border-l-emerald-500/50" : "border-l-zinc-600"
-                } ${isSelf(user.id) ? "ring-1 ring-cyan-500/20" : ""}`}
+                className={`group relative overflow-hidden border-l-2 transition-all duration-200 bg-[#07080a] border-y border-r border-y-white/[0.04] border-r-white/[0.04] hover:bg-[#0a0b0d] ${
+                  user.is_active ? "border-l-[#59d499]/50" : "border-l-[#363739]"
+                } ${isSelf(user.id) ? "ring-1 ring-white/[0.08]" : ""}`}
               >
                 <div className="flex items-center gap-3 px-3 py-2">
-                  {/* Avatar - smaller */}
                   <div
                     className={`size-8 rounded-full flex items-center justify-center text-white font-semibold text-xs shrink-0 ${
                       user.is_active
-                        ? "bg-gradient-to-br from-cyan-600 to-blue-700"
-                        : "bg-gradient-to-br from-zinc-600 to-zinc-700"
+                        ? "bg-[#1b1c1e] border border-white/[0.08]"
+                        : "bg-[#111214] border border-white/[0.08]"
                     }`}
                   >
                     {user.full_name.charAt(0).toUpperCase()}
                   </div>
 
-                  {/* User Info */}
                   <div className="flex-1 min-w-0">
                     <div className="flex items-center gap-2">
                       <span className="text-white font-medium text-sm truncate">{user.full_name}</span>
                       {isSelf(user.id) && (
-                        <span className="text-[8px] px-1 py-0.5 bg-cyan-500/20 text-cyan-400 rounded font-mono uppercase">
+                        <span className="text-[8px] px-1.5 py-0.5 bg-white/[0.08] text-[#9c9c9d] rounded font-mono uppercase">
                           You
                         </span>
                       )}
                     </div>
-                    <div className="text-[11px] text-zinc-500 font-mono truncate">{user.email}</div>
+                    <div className="text-[11px] text-[#6a6b6c] font-mono truncate">{user.email}</div>
                   </div>
 
-                  {/* Role Badge */}
                   <div
-                    className={`px-2 py-0.5 text-[9px] font-semibold font-mono uppercase tracking-wider border shrink-0 ${
+                    className={`px-2 py-0.5 text-[9px] font-semibold font-mono uppercase tracking-wider border shrink-0 rounded ${
                       user.roles.name === "Admin"
-                        ? "text-cyan-400 border-cyan-500/30 bg-cyan-950/20"
-                        : "text-violet-400 border-violet-500/30 bg-violet-950/20"
+                        ? "text-white border-white/[0.08] bg-[#111214]"
+                        : "text-[#9c9c9d] border-white/[0.08] bg-[#07080a]"
                     }`}
                   >
                     {user.roles.name}
                   </div>
 
-                  {/* Status */}
                   <div className="flex items-center gap-1.5 shrink-0">
-                    <div className={`size-1.5 rounded-full ${user.is_active ? "bg-emerald-500" : "bg-zinc-600"}`} />
-                    <span className="text-[9px] text-zinc-500 font-mono uppercase w-12">{user.is_active ? "Active" : "Inactive"}</span>
+                    <div className={`size-1.5 rounded-full ${user.is_active ? "bg-[#59d499]" : "bg-[#6a6b6c]"}`} />
+                    <span className="text-[9px] text-[#6a6b6c] font-mono uppercase w-12">{user.is_active ? "Active" : "Inactive"}</span>
                   </div>
 
-                  {/* Created Date */}
-                  <div className="hidden lg:block text-[9px] text-cyan-900 font-mono shrink-0 w-20">
+                  <div className="hidden lg:block text-[9px] text-[#6a6b6c] font-mono shrink-0 w-20">
                     {formatDisplayDate(user.created_at)}
                   </div>
 
-                  {/* Actions */}
                   <div className="flex items-center shrink-0">
                     <button
                       onClick={() => openEditModal(user)}
@@ -478,8 +454,8 @@ export default function UserManagementPage() {
                       title={isSelf(user.id) ? "Cannot modify your own account" : "Edit user"}
                       className={`p-1.5 rounded transition-colors ${
                         isSelf(user.id)
-                          ? "text-zinc-700 cursor-not-allowed"
-                          : "text-zinc-500 hover:text-cyan-400 hover:bg-cyan-500/10"
+                          ? "text-[#363739] cursor-not-allowed"
+                          : "text-[#6a6b6c] hover:text-white hover:bg-white/[0.05]"
                       }`}
                     >
                       <FiEdit2 size={13} />
@@ -496,10 +472,10 @@ export default function UserManagementPage() {
                       }
                       className={`p-1.5 rounded transition-colors ${
                         isSelf(user.id)
-                          ? "text-zinc-700 cursor-not-allowed"
+                          ? "text-[#363739] cursor-not-allowed"
                           : user.is_active
-                          ? "text-zinc-500 hover:text-rose-400 hover:bg-rose-500/10"
-                          : "text-zinc-500 hover:text-emerald-400 hover:bg-emerald-500/10"
+                          ? "text-[#6a6b6c] hover:text-[#ff6363] hover:bg-[#452324]/30"
+                          : "text-[#6a6b6c] hover:text-[#59d499] hover:bg-[#0d2b1a]/40"
                       }`}
                     >
                       {togglingUserId === user.id ? <FiLoader className="animate-spin" size={13} /> : <FiPower size={13} />}
@@ -513,32 +489,32 @@ export default function UserManagementPage() {
       </div>
 
       {/* Footer */}
-      <div className="flex items-center justify-between border-t border-white/5 px-8 py-4 bg-[#020408]/90 z-10">
-        <p className="text-[10px] text-cyan-900 font-mono uppercase tracking-wider">
-          Displaying <span className="text-cyan-400">{users.length}</span> users
+      <div className="flex items-center justify-between border-t border-white/[0.08] px-8 py-4 bg-[#07080a] z-10">
+        <p className="text-[10px] text-[#6a6b6c] font-mono uppercase tracking-wider">
+          Displaying <span className="text-white">{users.length}</span> users
         </p>
       </div>
 
       {/* Create/Edit Modal */}
       {showModal && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-zinc-950/60 backdrop-blur-sm">
-          <div className="bg-[#0a0e1a] border border-cyan-500/30 rounded-xl w-[480px] shadow-2xl overflow-hidden animate-in fade-in zoom-in-95">
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-[#040506]/60 backdrop-blur-sm">
+          <div className="bg-[#111214] border border-white/[0.08] rounded-2xl w-[480px] shadow-2xl overflow-hidden">
             {/* Modal Header */}
-            <div className="flex items-center justify-between px-6 py-4 border-b border-white/5">
+            <div className="flex items-center justify-between px-6 py-4 border-b border-white/[0.08]">
               <div className="flex items-center gap-3">
-                <div className="size-10 flex items-center justify-center bg-cyan-500/10 border border-cyan-500/30 rounded-lg">
-                  <FiUser className="text-cyan-400" />
+                <div className="size-10 flex items-center justify-center bg-white/[0.05] border border-white/[0.08] rounded-lg">
+                  <FiUser className="text-white" />
                 </div>
                 <div>
                   <h3 className="text-lg font-semibold text-white">
                     {modalMode === "create" ? "Create User" : "Edit User"}
                   </h3>
-                  <p className="text-xs text-zinc-500">
+                  <p className="text-xs text-[#6a6b6c]">
                     {modalMode === "create" ? "Add a new user to the system" : "Update user details"}
                   </p>
                 </div>
               </div>
-              <button onClick={closeModal} className="p-2 text-zinc-500 hover:text-white transition-colors">
+              <button onClick={closeModal} className="p-2 text-[#6a6b6c] hover:text-white transition-colors">
                 <FiX size={18} />
               </button>
             </div>
@@ -546,15 +522,15 @@ export default function UserManagementPage() {
             {/* Modal Body */}
             <form onSubmit={handleSubmit} className="p-6 space-y-4">
               {submitError && (
-                <div className="p-3 bg-rose-950/30 border border-rose-500/30 rounded-lg flex items-center gap-2">
-                  <FiAlertCircle className="text-rose-400" />
-                  <span className="text-sm text-rose-300">{submitError}</span>
+                <div className="p-3 bg-[#452324]/40 border border-[#ff6363]/20 rounded-lg flex items-center gap-2">
+                  <FiAlertCircle className="text-[#ff6363]" />
+                  <span className="text-sm text-[#ff6363]">{submitError}</span>
                 </div>
               )}
 
               {/* Full Name */}
               <div>
-                <label htmlFor="user-full-name" className="block text-[10px] font-semibold uppercase text-zinc-500 mb-1.5 tracking-wider">
+                <label htmlFor="user-full-name" className="block text-[10px] font-semibold uppercase text-[#6a6b6c] mb-1.5 tracking-wider">
                   Full Name
                 </label>
                 <input
@@ -562,19 +538,19 @@ export default function UserManagementPage() {
                   type="text"
                   value={formData.full_name}
                   onChange={(e) => setFormData((prev) => ({ ...prev, full_name: e.target.value }))}
-                  className={`w-full px-3 py-2.5 bg-zinc-950/30 text-sm text-white border rounded-lg focus:outline-none transition-all placeholder:text-zinc-600 ${
-                    formErrors.full_name ? "border-rose-500/50 focus:border-rose-500" : "border-white/10 focus:border-cyan-500/50"
+                  className={`w-full px-3 py-2.5 bg-white/[0.05] text-sm text-white border rounded-lg focus:outline-none transition-all placeholder:text-[#6a6b6c] ${
+                    formErrors.full_name ? "border-[#ff6363]/50 focus:border-[#ff6363]" : "border-white/[0.08] focus:border-white/[0.18]"
                   }`}
                   placeholder="John Doe"
                 />
                 {formErrors.full_name && (
-                  <p className="mt-1 text-xs text-rose-400">{formErrors.full_name}</p>
+                  <p className="mt-1 text-xs text-[#ff6363]">{formErrors.full_name}</p>
                 )}
               </div>
 
               {/* Email */}
               <div>
-                <label htmlFor="user-email" className="block text-[10px] font-semibold uppercase text-zinc-500 mb-1.5 tracking-wider">
+                <label htmlFor="user-email" className="block text-[10px] font-semibold uppercase text-[#6a6b6c] mb-1.5 tracking-wider">
                   Email Address
                 </label>
                 <input
@@ -582,45 +558,45 @@ export default function UserManagementPage() {
                   type="email"
                   value={formData.email}
                   onChange={(e) => setFormData((prev) => ({ ...prev, email: e.target.value }))}
-                  className={`w-full px-3 py-2.5 bg-zinc-950/30 text-sm text-white border rounded-lg focus:outline-none transition-all placeholder:text-zinc-600 ${
-                    formErrors.email ? "border-rose-500/50 focus:border-rose-500" : "border-white/10 focus:border-cyan-500/50"
+                  className={`w-full px-3 py-2.5 bg-white/[0.05] text-sm text-white border rounded-lg focus:outline-none transition-all placeholder:text-[#6a6b6c] ${
+                    formErrors.email ? "border-[#ff6363]/50 focus:border-[#ff6363]" : "border-white/[0.08] focus:border-white/[0.18]"
                   }`}
                   placeholder="john@example.com"
                 />
-                {formErrors.email && <p className="mt-1 text-xs text-rose-400">{formErrors.email}</p>}
+                {formErrors.email && <p className="mt-1 text-xs text-[#ff6363]">{formErrors.email}</p>}
               </div>
 
               {/* Role */}
               <div>
-                <label htmlFor="user-role" className="block text-[10px] font-semibold uppercase text-zinc-500 mb-1.5 tracking-wider">
+                <label htmlFor="user-role" className="block text-[10px] font-semibold uppercase text-[#6a6b6c] mb-1.5 tracking-wider">
                   Role
                 </label>
                 <select
                   id="user-role"
                   value={formData.role_id ?? ""}
                   onChange={(e) => setFormData((prev) => ({ ...prev, role_id: e.target.value ? Number(e.target.value) : null }))}
-                  className={`w-full px-3 py-2.5 bg-zinc-950/30 text-sm text-white border rounded-lg focus:outline-none transition-all appearance-none cursor-pointer ${
-                    formErrors.role_id ? "border-rose-500/50 focus:border-rose-500" : "border-white/10 focus:border-cyan-500/50"
+                  className={`w-full px-3 py-2.5 bg-white/[0.05] text-sm text-white border rounded-lg focus:outline-none transition-all appearance-none cursor-pointer ${
+                    formErrors.role_id ? "border-[#ff6363]/50 focus:border-[#ff6363]" : "border-white/[0.08] focus:border-white/[0.18]"
                   }`}
                 >
-                  <option value="">Select a role</option>
+                  <option value="" className="bg-[#111214]">Select a role</option>
                   {roles.map((role) => (
-                    <option key={role.id} value={role.id}>
+                    <option key={role.id} value={role.id} className="bg-[#111214]">
                       {role.name}
                     </option>
                   ))}
                 </select>
-                {formErrors.role_id && <p className="mt-1 text-xs text-rose-400">{formErrors.role_id}</p>}
+                {formErrors.role_id && <p className="mt-1 text-xs text-[#ff6363]">{formErrors.role_id}</p>}
               </div>
 
               {/* Password Change Section - Only for editing Operators */}
               {modalMode === "edit" && selectedUser && selectedUser.roles.name === "Operator" && (
-                <div className="pt-2 border-t border-white/10">
+                <div className="pt-2 border-t border-white/[0.08]">
                   {!showPasswordChange ? (
                     <button
                       type="button"
                       onClick={() => setShowPasswordChange(true)}
-                      className="flex items-center gap-2 text-sm text-cyan-400 hover:text-cyan-300 transition-colors"
+                      className="flex items-center gap-2 text-sm text-[#9c9c9d] hover:text-white transition-colors"
                     >
                       <FiKey size={14} />
                       Change Password
@@ -628,7 +604,7 @@ export default function UserManagementPage() {
                   ) : (
                     <div className="space-y-3">
                       <div className="flex items-center justify-between">
-                    <label htmlFor="operator-password-panel" className="text-[10px] font-semibold uppercase text-zinc-500 tracking-wider">
+                    <label htmlFor="operator-password-panel" className="text-[10px] font-semibold uppercase text-[#6a6b6c] tracking-wider">
                       Change Password
                     </label>
                         <button
@@ -639,16 +615,16 @@ export default function UserManagementPage() {
                             setConfirmNewPassword("");
                             setPasswordError(null);
                           }}
-                          className="text-xs text-zinc-500 hover:text-white transition-colors"
+                          className="text-xs text-[#6a6b6c] hover:text-white transition-colors"
                         >
                           Cancel
                         </button>
                       </div>
 
                       {passwordError && (
-                        <div className="p-2 bg-rose-950/30 border border-rose-500/30 rounded-lg flex items-center gap-2">
-                          <FiAlertCircle className="text-rose-400 shrink-0" size={14} />
-                          <span className="text-xs text-rose-300">{passwordError}</span>
+                        <div className="p-2 bg-[#452324]/40 border border-[#ff6363]/20 rounded-lg flex items-center gap-2">
+                          <FiAlertCircle className="text-[#ff6363] shrink-0" size={14} />
+                          <span className="text-xs text-[#ff6363]">{passwordError}</span>
                         </div>
                       )}
 
@@ -657,7 +633,7 @@ export default function UserManagementPage() {
                         type="password"
                         value={newPassword}
                         onChange={(e) => setNewPassword(e.target.value)}
-                        className="w-full px-3 py-2.5 bg-zinc-950/30 text-sm text-white border border-white/10 rounded-lg focus:outline-none focus:border-cyan-500/50 transition-all placeholder:text-zinc-600"
+                        className="w-full px-3 py-2.5 bg-white/[0.05] text-sm text-white border border-white/[0.08] rounded-lg focus:outline-none focus:border-white/[0.18] transition-all placeholder:text-[#6a6b6c]"
                         placeholder="New password (min 8 characters)"
                       />
 
@@ -665,7 +641,7 @@ export default function UserManagementPage() {
                         type="password"
                         value={confirmNewPassword}
                         onChange={(e) => setConfirmNewPassword(e.target.value)}
-                        className="w-full px-3 py-2.5 bg-zinc-950/30 text-sm text-white border border-white/10 rounded-lg focus:outline-none focus:border-cyan-500/50 transition-all placeholder:text-zinc-600"
+                        className="w-full px-3 py-2.5 bg-white/[0.05] text-sm text-white border border-white/[0.08] rounded-lg focus:outline-none focus:border-white/[0.18] transition-all placeholder:text-[#6a6b6c]"
                         placeholder="Confirm new password"
                       />
 
@@ -673,12 +649,12 @@ export default function UserManagementPage() {
                         type="button"
                         onClick={handleChangePassword}
                         disabled={isChangingPassword}
-                        className="w-full px-3 py-2 rounded-lg text-sm font-medium bg-amber-500/20 text-amber-400 border border-amber-500/30 hover:bg-amber-500/30 transition-colors flex items-center justify-center gap-2 disabled:opacity-50"
+                        className="w-full px-3 py-2 rounded-lg text-sm font-medium bg-white/[0.05] text-white border border-white/[0.08] hover:bg-white/[0.1] transition-colors flex items-center justify-center gap-2 disabled:opacity-50"
                       >
                         {isChangingPassword ? (
                           <>
                             <FiLoader className="animate-spin" size={14} />
-                            Changing?
+                            Changing...
                           </>
                         ) : (
                           <>
@@ -696,7 +672,7 @@ export default function UserManagementPage() {
               {modalMode === "create" && (
                 <>
                   <div>
-                    <label htmlFor="user-password" className="block text-[10px] font-semibold uppercase text-zinc-500 mb-1.5 tracking-wider">
+                    <label htmlFor="user-password" className="block text-[10px] font-semibold uppercase text-[#6a6b6c] mb-1.5 tracking-wider">
                       Password
                     </label>
                     <input
@@ -704,18 +680,18 @@ export default function UserManagementPage() {
                       type="password"
                       value={formData.password}
                       onChange={(e) => setFormData((prev) => ({ ...prev, password: e.target.value }))}
-                      className={`w-full px-3 py-2.5 bg-zinc-950/30 text-sm text-white border rounded-lg focus:outline-none transition-all placeholder:text-zinc-600 ${
-                        formErrors.password ? "border-rose-500/50 focus:border-rose-500" : "border-white/10 focus:border-cyan-500/50"
+                      className={`w-full px-3 py-2.5 bg-white/[0.05] text-sm text-white border rounded-lg focus:outline-none transition-all placeholder:text-[#6a6b6c] ${
+                        formErrors.password ? "border-[#ff6363]/50 focus:border-[#ff6363]" : "border-white/[0.08] focus:border-white/[0.18]"
                       }`}
                       placeholder="Minimum 8 characters"
                     />
                     {formErrors.password && (
-                      <p className="mt-1 text-xs text-rose-400">{formErrors.password}</p>
+                      <p className="mt-1 text-xs text-[#ff6363]">{formErrors.password}</p>
                     )}
                   </div>
 
                   <div>
-                    <label htmlFor="user-confirm-password" className="block text-[10px] font-semibold uppercase text-zinc-500 mb-1.5 tracking-wider">
+                    <label htmlFor="user-confirm-password" className="block text-[10px] font-semibold uppercase text-[#6a6b6c] mb-1.5 tracking-wider">
                       Confirm Password
                     </label>
                     <input
@@ -723,15 +699,15 @@ export default function UserManagementPage() {
                       type="password"
                       value={formData.confirmPassword}
                       onChange={(e) => setFormData((prev) => ({ ...prev, confirmPassword: e.target.value }))}
-                      className={`w-full px-3 py-2.5 bg-zinc-950/30 text-sm text-white border rounded-lg focus:outline-none transition-all placeholder:text-zinc-600 ${
+                      className={`w-full px-3 py-2.5 bg-white/[0.05] text-sm text-white border rounded-lg focus:outline-none transition-all placeholder:text-[#6a6b6c] ${
                         formErrors.confirmPassword
-                          ? "border-rose-500/50 focus:border-rose-500"
-                          : "border-white/10 focus:border-cyan-500/50"
+                          ? "border-[#ff6363]/50 focus:border-[#ff6363]"
+                          : "border-white/[0.08] focus:border-white/[0.18]"
                       }`}
                       placeholder="Re-enter password"
                     />
                     {formErrors.confirmPassword && (
-                      <p className="mt-1 text-xs text-rose-400">{formErrors.confirmPassword}</p>
+                      <p className="mt-1 text-xs text-[#ff6363]">{formErrors.confirmPassword}</p>
                     )}
                   </div>
                 </>
@@ -743,19 +719,19 @@ export default function UserManagementPage() {
                   type="button"
                   onClick={closeModal}
                   disabled={isSubmitting}
-                  className="px-4 py-2 rounded-lg text-sm font-medium text-zinc-300 hover:text-white hover:bg-white/5 transition-colors disabled:opacity-50"
+                  className="px-4 py-2 rounded-lg text-sm font-medium text-[#9c9c9d] hover:text-white hover:bg-white/[0.05] transition-colors disabled:opacity-50"
                 >
                   Cancel
                 </button>
                 <button
                   type="submit"
                   disabled={isSubmitting}
-                  className="px-4 py-2 rounded-lg text-sm font-semibold bg-cyan-500 text-navy-950 hover:bg-cyan-400 transition-colors shadow-lg flex items-center gap-2 disabled:opacity-50"
+                  className="px-4 py-2 rounded-lg text-sm font-semibold bg-[#e6e6e6] text-[#040506] hover:bg-white transition-colors flex items-center gap-2 disabled:opacity-50"
                 >
                   {isSubmitting ? (
                     <>
                       <FiLoader className="animate-spin" />
-                      {modalMode === "create" ? "Creating?" : "Saving?"}
+                      {modalMode === "create" ? "Creating..." : "Saving..."}
                     </>
                   ) : modalMode === "create" ? (
                     <>

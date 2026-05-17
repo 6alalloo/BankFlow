@@ -10,12 +10,10 @@ interface TemplateSelectionModalProps {
     isCreating?: boolean;
 }
 
-// Category icons and colors
 const categoryConfig = {
-    general: { icon: LuBriefcaseBusiness, color: 'text-cyan-400', bgColor: 'bg-cyan-400/10', borderColor: 'border-cyan-400/30' },
+    general: { icon: LuBriefcaseBusiness },
 };
 
-// Node kind icons
 const nodeIcons: Record<string, React.ElementType> = {
     trigger: LuZap,
     email: LuMail,
@@ -45,23 +43,23 @@ const TemplateSelectionModal: React.FC<TemplateSelectionModalProps> = ({
     return (
         <LazyMotion features={domAnimation}>
         <AnimatePresence>
-            <div className="fixed inset-0 z-50 flex items-center justify-center bg-zinc-950/60 backdrop-blur-sm">
+            <div className="fixed inset-0 z-50 flex items-center justify-center bg-[#040506]/60 backdrop-blur-sm">
                 <button type="button" aria-label="Close template chooser" className="absolute inset-0" onClick={onClose} />
                 <m.div
                     initial={{ opacity: 0, scale: 0.95, y: 20 }}
                     animate={{ opacity: 1, scale: 1, y: 0 }}
                     exit={{ opacity: 0, scale: 0.95, y: 20 }}
-                    className="bg-navy-900 border border-white/10 rounded-2xl w-[800px] max-h-[85vh] shadow-2xl flex flex-col overflow-hidden"
+                    className="bg-[#111214] border border-white/[0.08] rounded-2xl w-[800px] max-h-[85vh] shadow-2xl flex flex-col overflow-hidden"
                 >
                     {/* Header */}
-                    <div className="flex items-center justify-between p-6 border-b border-white/10 bg-gradient-to-r from-cyan-950/30 to-transparent">
+                    <div className="flex items-center justify-between p-6 border-b border-white/[0.08] bg-white/[0.02]">
                         <div>
                             <h2 className="text-xl font-semibold text-white">Choose a Template</h2>
-                            <p className="text-sm text-zinc-400 mt-1">Start with a case-flow starter instead of a blank canvas</p>
+                            <p className="text-sm text-[#9c9c9d] mt-1">Start with a case-flow starter instead of a blank canvas</p>
                         </div>
                         <button
                             onClick={onClose}
-                            className="p-2 hover:bg-white/10 rounded-lg text-zinc-400 hover:text-white transition-colors"
+                            className="p-2 hover:bg-white/[0.05] rounded-lg text-[#6a6b6c] hover:text-white transition-colors"
                         >
                             <LuX className="size-5" />
                         </button>
@@ -81,67 +79,61 @@ const TemplateSelectionModal: React.FC<TemplateSelectionModalProps> = ({
                                         key={template.id}
                                         whileHover={{ scale: 1.02 }}
                                         whileTap={{ scale: 0.98 }}
-                                        className={`relative p-5 rounded-xl border cursor-pointer transition-all duration-300 group shadow-sm ${
+                                        className={`relative p-5 rounded-xl border cursor-pointer transition-all duration-300 group ${
                                             isSelected
-                                                ? 'border-cyan-400 bg-cyan-400/10 shadow-[0_0_30px_rgba(34,211,238,0.2)]'
-                                                : `border-white/10 bg-white/5 hover:border-white/20 hover:bg-white/10 hover:shadow-[0_0_24px_rgba(15,23,42,0.6)] hover:-translate-y-0.5`
+                                                ? 'border-white/[0.18] bg-[#07080a] shadow-[rgba(255,255,255,0.05)_0px_1px_0px_0px_inset,rgba(255,255,255,0.18)_0px_0px_0px_1px,rgba(0,0,0,0.2)_0px_-1px_0px_0px_inset]'
+                                                : 'border-white/[0.08] bg-white/[0.02] hover:border-white/[0.14] hover:bg-white/[0.04]'
                                         }`}
                                         onClick={() => !isCreating && handleSelect(template)}
                                     >
-                                        {/* Loading Overlay */}
                                         {isLoading && (
-                                            <div className="absolute inset-0 bg-navy-900/80 rounded-xl flex items-center justify-center z-10">
-                                                <div className="flex items-center gap-3 text-cyan-400">
-                                                    <div className="size-5 border-2 border-cyan-400 border-t-transparent rounded-full animate-spin" />
-                                                    <span className="text-sm font-medium">Creating flow…</span>
+                                            <div className="absolute inset-0 bg-[#040506]/80 rounded-xl flex items-center justify-center z-10">
+                                                <div className="flex items-center gap-3 text-white">
+                                                    <div className="size-5 border-2 border-white/30 border-t-white rounded-full animate-spin" />
+                                                    <span className="text-sm font-medium">Creating flow...</span>
                                                 </div>
                                             </div>
                                         )}
 
-                                        {/* Category Badge */}
-                                        <div className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-semibold uppercase tracking-wider ${config.bgColor} ${config.color} ${config.borderColor} border mb-3`}>
+                                        <div className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-md text-xs font-semibold uppercase tracking-wider bg-[#1b1c1e] text-[#9c9c9d] border border-white/[0.08] mb-3">
                                             <CategoryIcon className="size-3" />
                                             {template.category}
                                         </div>
 
-                                        {/* Template Name */}
-                                        <h3 className="text-lg font-semibold text-white mb-2 group-hover:text-cyan-300 transition-colors">
+                                        <h3 className="text-lg font-semibold text-white mb-2">
                                             {template.name}
                                         </h3>
 
-                                        {/* Description */}
-                                        <p className="text-sm text-zinc-400 mb-4 line-clamp-2">
+                                        <p className="text-sm text-[#9c9c9d] mb-4 line-clamp-2">
                                             {template.description}
                                         </p>
 
-                                        {/* Node Preview */}
                                         <div className="flex items-center gap-1.5 mb-4">
                                             {template.nodes.slice(0, 5).map((node) => {
                                                 const NodeIcon = nodeIcons[node.kind] || LuBox;
                                                 return (
                                                     <div
                                                         key={`${template.id}-${node.id}`}
-                                                        className="size-7 rounded-lg bg-navy-950 border border-white/10 flex items-center justify-center"
+                                                        className="size-7 rounded-lg bg-[#07080a] border border-white/[0.08] flex items-center justify-center"
                                                         title={node.name}
                                                     >
-                                                        <NodeIcon className="size-3.5 text-zinc-400" />
+                                                        <NodeIcon className="size-3.5 text-[#6a6b6c]" />
                                                     </div>
                                                 );
                                             })}
                                             {template.nodes.length > 5 && (
-                                                <div className="size-7 rounded-lg bg-navy-950 border border-white/10 flex items-center justify-center text-xs text-zinc-500">
+                                                <div className="size-7 rounded-lg bg-[#07080a] border border-white/[0.08] flex items-center justify-center text-xs text-[#6a6b6c]">
                                                     +{template.nodes.length - 5}
                                                 </div>
                                             )}
                                         </div>
 
-                                        {/* Stats */}
                                         <div className="flex items-center justify-between">
-                                            <span className="text-xs text-zinc-500">
-                                                {template.nodes.length} nodes • {template.edges.length} connections
+                                            <span className="text-xs text-[#6a6b6c]">
+                                                {template.nodes.length} nodes &bull; {template.edges.length} connections
                                             </span>
                                             <div className={`flex items-center gap-1 text-sm font-medium transition-all ${
-                                                isSelected ? 'text-cyan-400' : 'text-zinc-500 group-hover:text-cyan-400'
+                                                isSelected ? 'text-white' : 'text-[#6a6b6c] group-hover:text-white'
                                             }`}>
                                                 Use Template
                                                 <LuArrowRight className="size-4 group-hover:translate-x-0.5 transition-transform" />
@@ -154,13 +146,13 @@ const TemplateSelectionModal: React.FC<TemplateSelectionModalProps> = ({
                     </div>
 
                     {/* Footer */}
-                    <div className="p-4 border-t border-white/10 bg-navy-950/50 flex items-center justify-between">
-                        <p className="text-xs text-zinc-500">
+                    <div className="p-4 border-t border-white/[0.08] bg-white/[0.02] flex items-center justify-between">
+                        <p className="text-xs text-[#6a6b6c]">
                             Templates provide a starting point. You can customize after creation.
                         </p>
                         <button
                             onClick={onClose}
-                            className="px-4 py-2 rounded-lg text-sm font-medium text-zinc-400 hover:text-white hover:bg-white/5 transition-colors"
+                            className="px-4 py-2 rounded-lg text-sm font-medium text-[#9c9c9d] hover:text-white hover:bg-white/[0.05] transition-colors"
                         >
                             Cancel
                         </button>

@@ -152,6 +152,7 @@ async function main() {
   const operatorRole = roleByName.get('Operator')!;
   const supervisorRole = roleByName.get('Supervisor')!;
   const approverRole = roleByName.get('Approver')!;
+  const auditorRole = roleByName.get('Auditor')!;
 
   const adminUser = await prisma.users.upsert({
     where: { email: 'admin@bankflow.local' },
@@ -194,6 +195,17 @@ async function main() {
       password_hash: await hashPassword('approver123'),
       full_name: 'Credit Approver',
       role_id: approverRole.id,
+    },
+  });
+
+  await prisma.users.upsert({
+    where: { email: 'auditor@bankflow.local' },
+    update: { password_hash: await hashPassword('auditor123') },
+    create: {
+      email: 'auditor@bankflow.local',
+      password_hash: await hashPassword('auditor123'),
+      full_name: 'Internal Auditor',
+      role_id: auditorRole.id,
     },
   });
 
@@ -336,6 +348,7 @@ async function main() {
   console.log('  Operator:   operator@bankflow.local / operator123');
   console.log('  Supervisor: supervisor@bankflow.local / supervisor123');
   console.log('  Approver:   approver@bankflow.local / approver123');
+  console.log('  Auditor:    auditor@bankflow.local / auditor123');
 }
 
 main()

@@ -50,12 +50,12 @@ const FormField: React.FC<{
     icon?: React.ReactNode;
 }> = ({ label, children, hint, icon }) => (
     <div className="space-y-1">
-        <label className="flex items-center gap-1.5 text-[10px] font-semibold text-zinc-400 uppercase tracking-wide">
-            {icon && <span className="text-zinc-500">{icon}</span>}
+        <label className="flex items-center gap-1.5 text-[10px] font-semibold text-[#868788] uppercase tracking-wide">
+            {icon && <span className="text-[#8f8f8f]">{icon}</span>}
             {label}
         </label>
         {children}
-        {hint && <p className="text-[10px] text-zinc-500">{hint}</p>}
+        {hint && <p className="text-[10px] text-[#868788]">{hint}</p>}
     </div>
 );
 
@@ -67,13 +67,13 @@ const TextInput: React.FC<{
     icon?: React.ReactNode;
 }> = ({ value, onChange, placeholder, type = 'text', icon }) => (
     <div className="relative">
-        {icon && <div className="absolute left-2.5 top-1/2 -translate-y-1/2 text-zinc-500 text-sm">{icon}</div>}
+        {icon && <div className="absolute left-2.5 top-1/2 -translate-y-1/2 text-[#8f8f8f] text-sm">{icon}</div>}
         <input
             type={type}
             value={value || ''}
             onChange={(e) => onChange(e.target.value)}
             placeholder={placeholder}
-            className={`w-full bg-raycast-surface-2 border border-white/10 rounded-lg px-2.5 py-1.5 text-sm text-white focus:border-white/20 focus:outline-none transition-colors ${icon ? 'pl-8' : ''}`}
+            className={`w-full bg-[#f2f2f4] border border-[#0f1012]/[0.08] rounded-[10px] px-2.5 py-1.5 text-sm text-[#0f1012] focus:border-[#0071e3]/40 focus:outline-none transition-colors ${icon ? 'pl-8' : ''}`}
         />
     </div>
 );
@@ -89,7 +89,7 @@ const TextArea: React.FC<{
         value={value || ''}
         onChange={(e) => onChange(e.target.value)}
         placeholder={placeholder}
-        className="w-full bg-raycast-surface-2 border border-white/10 rounded-lg px-2.5 py-1.5 text-sm text-white focus:border-white/20 focus:outline-none transition-colors resize-none"
+        className="w-full bg-[#f2f2f4] border border-[#0f1012]/[0.08] rounded-[10px] px-2.5 py-1.5 text-sm text-[#0f1012] focus:border-[#0071e3]/40 focus:outline-none transition-colors resize-none"
     />
 );
 
@@ -100,11 +100,11 @@ const Select: React.FC<{
     icon?: React.ReactNode;
 }> = ({ value, onChange, options, icon }) => (
     <div className="relative">
-        {icon && <div className="absolute left-2.5 top-1/2 -translate-y-1/2 text-zinc-500 pointer-events-none text-sm">{icon}</div>}
+        {icon && <div className="absolute left-2.5 top-1/2 -translate-y-1/2 text-[#8f8f8f] pointer-events-none text-sm">{icon}</div>}
         <select
             value={value || options[0]?.value || ''}
             onChange={(e) => onChange(e.target.value)}
-            className={`w-full bg-raycast-surface-2 border border-white/10 rounded-lg px-2.5 py-1.5 text-sm text-white focus:border-white/20 focus:outline-none transition-colors appearance-none cursor-pointer ${icon ? 'pl-8' : ''}`}
+            className={`w-full bg-[#f2f2f4] border border-[#0f1012]/[0.08] rounded-[10px] px-2.5 py-1.5 text-sm text-[#0f1012] focus:border-[#0071e3]/40 focus:outline-none transition-colors appearance-none cursor-pointer ${icon ? 'pl-8' : ''}`}
         >
             {options.map((opt) => (
                 <option key={opt.value} value={opt.value}>
@@ -112,7 +112,7 @@ const Select: React.FC<{
                 </option>
             ))}
         </select>
-        <div className="absolute right-2.5 top-1/2 -translate-y-1/2 text-zinc-500 pointer-events-none">
+        <div className="absolute right-2.5 top-1/2 -translate-y-1/2 text-[#8f8f8f] pointer-events-none">
             <svg className="size-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
             </svg>
@@ -130,7 +130,7 @@ const NumberInput: React.FC<{
         value={value ?? 0}
         onChange={(e) => onChange(parseInt(e.target.value) || 0)}
         min={min}
-        className="w-full bg-raycast-surface-2 border border-white/10 rounded-lg px-2.5 py-1.5 text-sm text-white focus:border-white/20 focus:outline-none transition-colors"
+        className="w-full bg-[#f2f2f4] border border-[#0f1012]/[0.08] rounded-[10px] px-2.5 py-1.5 text-sm text-[#0f1012] focus:border-[#0071e3]/40 focus:outline-none transition-colors"
     />
 );
 
@@ -144,19 +144,19 @@ const QuickActionButton: React.FC<{
     <button
         type="button"
         onClick={onClick}
-        className={`w-full p-2 rounded-lg border text-left transition-all ${
-            selected ? 'border-white/20 bg-white/5 shadow-raycast-highlight' : 'border-white/10 hover:border-white/20 hover:bg-white/5'
+        className={`w-full p-2 rounded-[10px] border text-left transition-all ${
+            selected ? 'border-[#0f1012]/[0.18] bg-[#0f1012]/[0.04] shadow-card' : 'border-[#0f1012]/[0.08] hover:border-[#0f1012]/[0.14] hover:bg-[#0f1012]/[0.02]'
         }`}
     >
         <div className="flex items-center gap-2">
-            <div className={`p-1.5 rounded-md text-sm ${selected ? 'bg-white/10 text-white' : 'bg-white/10 text-zinc-400'}`}>
+            <div className={`p-1.5 rounded-[6px] text-sm ${selected ? 'bg-[#0f1012]/[0.08] text-[#0f1012]' : 'bg-[#0f1012]/[0.04] text-[#868788]'}`}>
                 {icon}
             </div>
             <div className="flex-1 min-w-0">
-                <div className={`text-sm font-medium ${selected ? 'text-white' : 'text-zinc-300'}`}>{label}</div>
-                <div className="text-[10px] text-zinc-500 truncate">{description}</div>
+                <div className={`text-sm font-medium ${selected ? 'text-[#0f1012]' : 'text-[#8f8f8f]'}`}>{label}</div>
+                <div className="text-[10px] text-[#868788] truncate">{description}</div>
             </div>
-            {selected && <LuCheck className="text-white text-sm flex-shrink-0" />}
+            {selected && <LuCheck className="text-[#0f1012] text-sm flex-shrink-0" />}
         </div>
     </button>
 );
@@ -166,13 +166,13 @@ const InfoBox: React.FC<{
     variant?: 'info' | 'success' | 'warning' | 'tip';
 }> = ({ children, variant = 'info' }) => {
     const styles = {
-        info: 'bg-raycast-surface-2 border-white/10 text-zinc-300',
-        success: 'bg-raycast-surface-2 border-white/10 text-[#59d499]',
-        warning: 'bg-raycast-surface-2 border-white/10 text-zinc-300',
-        tip: 'bg-raycast-surface-2 border-white/10 text-zinc-300',
+        info: 'bg-[#f2f2f4] border-[#0f1012]/[0.08] text-[#8f8f8f]',
+        success: 'bg-[#f2f2f4] border-[#0f1012]/[0.08] text-[#1b5e20]',
+        warning: 'bg-[#f2f2f4] border-[#0f1012]/[0.08] text-[#8f8f8f]',
+        tip: 'bg-[#f2f2f4] border-[#0f1012]/[0.08] text-[#8f8f8f]',
     };
 
-    return <div className={`p-2 rounded-md border text-[10px] ${styles[variant]}`}>{children}</div>;
+    return <div className={`p-2 rounded-[6px] border text-[10px] ${styles[variant]}`}>{children}</div>;
 };
 
 const TriggerConfigForm: React.FC<LegacyUtilityConfigFormProps> = ({ localConfig, handleChange }) => (
@@ -186,9 +186,9 @@ const TriggerConfigForm: React.FC<LegacyUtilityConfigFormProps> = ({ localConfig
                 </div>
             </div>
         </InfoBox>
-        <div className="space-y-4 border-t border-white/5 pt-4">
-            <h3 className="text-sm font-semibold text-white flex items-center gap-2">
-                <LuUser className="size-4 text-white" />
+        <div className="space-y-4 border-t border-[#0f1012]/[0.08] pt-4">
+            <h3 className="text-sm font-semibold text-[#0f1012] flex items-center gap-2">
+                <LuUser className="size-4 text-[#0f1012]" />
                 Case Intake
             </h3>
             <FormField label="Case Name" icon={<LuUser className="size-3" />}>
@@ -242,8 +242,8 @@ const EmailConfigForm: React.FC<LegacyUtilityConfigFormProps> = ({ localConfig, 
                     </div>
                 </div>
             </InfoBox>
-            <div className="space-y-4 border-t border-white/5 pt-4">
-                <h3 className="text-sm font-semibold text-white">Who should receive this email?</h3>
+            <div className="space-y-4 border-t border-[#0f1012]/[0.08] pt-4">
+                <h3 className="text-sm font-semibold text-[#0f1012]">Who should receive this email?</h3>
                 <div className="space-y-2">
                     <QuickActionButton
                         label="Case Contact"
@@ -279,7 +279,7 @@ const EmailConfigForm: React.FC<LegacyUtilityConfigFormProps> = ({ localConfig, 
                 </FormField>
                 <div className="flex flex-wrap gap-2">
                     {['Case update available', 'Action required on your case', 'Review completed', 'Escalation notice'].map((template) => (
-                        <button key={template} type="button" onClick={() => handleChange('subject', template)} className="text-xs bg-white/5 hover:bg-white/10 text-zinc-400 hover:text-white px-2 py-1 rounded transition-colors">
+                        <button key={template} type="button" onClick={() => handleChange('subject', template)} className="text-xs bg-[#0f1012]/[0.04] hover:bg-[#0f1012]/[0.08] text-[#868788] hover:text-[#0f1012] px-2 py-1 rounded-[6px] transition-colors">
                             {template}
                         </button>
                     ))}
@@ -302,8 +302,8 @@ const HttpConfigForm: React.FC<LegacyUtilityConfigFormProps> = ({ localConfig, h
                     </div>
                 </div>
             </InfoBox>
-            <div className="space-y-4 border-t border-white/5 pt-4">
-                <h3 className="text-sm font-semibold text-white">What do you want to do?</h3>
+            <div className="space-y-4 border-t border-[#0f1012]/[0.08] pt-4">
+                <h3 className="text-sm font-semibold text-[#0f1012]">What do you want to do?</h3>
                 <div className="space-y-2">
                     <QuickActionButton label="Notify Slack Channel" description="Send a message to a Slack channel" icon={<LuMessageSquare className="size-4" />} onClick={() => { handleChange('useCase', 'slack'); handleChange('method', 'POST'); handleChange('url', ''); handleChange('headers', [{ key: 'Content-Type', value: 'application/json' }]); }} selected={useCase === 'slack'} />
                     <QuickActionButton label="Update Case System" description="Send case intake data to an external platform" icon={<LuDatabase className="size-4" />} onClick={() => { handleChange('useCase', 'case_api'); handleChange('method', 'POST'); }} selected={useCase === 'case_api'} />
@@ -364,8 +364,8 @@ const DatabaseConfigForm: React.FC<LegacyUtilityConfigFormProps> = ({ localConfi
                     </div>
                 </div>
             </InfoBox>
-            <div className="space-y-4 border-t border-white/5 pt-4">
-                <h3 className="text-sm font-semibold text-white">What do you want to do?</h3>
+            <div className="space-y-4 border-t border-[#0f1012]/[0.08] pt-4">
+                <h3 className="text-sm font-semibold text-[#0f1012]">What do you want to do?</h3>
                 <div className="space-y-2">
                     <QuickActionButton label="Look Up Records" description="Search and retrieve data from a table" icon={<LuDatabase className="size-4" />} onClick={() => handleChange('operation', 'query')} selected={operation === 'query'} />
                     <QuickActionButton label="Add New Record" description="Insert a new row into a table" icon={<LuPlus className="size-4" />} onClick={() => handleChange('operation', 'create')} selected={operation === 'create'} />
@@ -420,10 +420,10 @@ const ConditionConfigForm: React.FC<LegacyUtilityConfigFormProps> = ({ localConf
                     </div>
                 </div>
             </InfoBox>
-            <div className="space-y-4 border-t border-white/5 pt-4">
-                <h3 className="text-sm font-semibold text-white">Set Up Your Condition</h3>
-                <div className="p-4 rounded-xl bg-raycast-surface-2 border border-white/10 space-y-4">
-                    <div className="text-sm text-zinc-300"><span className="text-white font-medium">IF</span> the case data?</div>
+            <div className="space-y-4 border-t border-[#0f1012]/[0.08] pt-4">
+                <h3 className="text-sm font-semibold text-[#0f1012]">Set Up Your Condition</h3>
+                <div className="p-4 rounded-[10px] bg-[#f2f2f4] border border-[#0f1012]/[0.08] space-y-4">
+                    <div className="text-sm text-[#8f8f8f]"><span className="text-[#0f1012] font-medium">IF</span> the case data?</div>
                     <FormField label="Field to Check">
                         <Select
                             value={checkField}
@@ -449,13 +449,13 @@ const ConditionConfigForm: React.FC<LegacyUtilityConfigFormProps> = ({ localConf
                     )}
                 </div>
                 <div className="grid grid-cols-2 gap-3">
-                    <div className="p-3 rounded-lg bg-raycast-surface-2 border border-white/10">
-                        <div className="flex items-center gap-2 text-white text-sm font-medium"><LuCheck className="size-4" />If TRUE</div>
-                        <p className="text-xs text-zinc-400 mt-1">Continue to the next step</p>
+                    <div className="p-3 rounded-[10px] bg-[#f2f2f4] border border-[#0f1012]/[0.08]">
+                        <div className="flex items-center gap-2 text-[#0f1012] text-sm font-medium"><LuCheck className="size-4" />If TRUE</div>
+                        <p className="text-xs text-[#868788] mt-1">Continue to the next step</p>
                     </div>
-                    <div className="p-3 rounded-lg bg-raycast-surface-2 border border-white/10">
-                        <div className="flex items-center gap-2 text-zinc-300 text-sm font-medium"><LuX className="size-4" />If FALSE</div>
-                        <p className="text-xs text-zinc-400 mt-1">Take alternate path</p>
+                    <div className="p-3 rounded-[10px] bg-[#f2f2f4] border border-[#0f1012]/[0.08]">
+                        <div className="flex items-center gap-2 text-[#8f8f8f] text-sm font-medium"><LuX className="size-4" />If FALSE</div>
+                        <p className="text-xs text-[#868788] mt-1">Take alternate path</p>
                     </div>
                 </div>
             </div>
@@ -477,8 +477,8 @@ const WaitConfigForm: React.FC<LegacyUtilityConfigFormProps> = ({ localConfig, h
                     </div>
                 </div>
             </InfoBox>
-            <div className="space-y-4 border-t border-white/5 pt-4">
-                <h3 className="text-sm font-semibold text-white">How long should we wait?</h3>
+            <div className="space-y-4 border-t border-[#0f1012]/[0.08] pt-4">
+                <h3 className="text-sm font-semibold text-[#0f1012]">How long should we wait?</h3>
                 <div className="grid grid-cols-2 gap-3">
                     <FormField label="Duration">
                         <NumberInput value={duration} onChange={(val) => handleChange('duration', val)} min={1} />
@@ -504,8 +504,8 @@ const LoggerConfigForm: React.FC<LegacyUtilityConfigFormProps> = ({ localConfig,
                 </div>
             </div>
         </InfoBox>
-        <div className="space-y-4 border-t border-white/5 pt-4">
-            <h3 className="text-sm font-semibold text-white">What should we log?</h3>
+        <div className="space-y-4 border-t border-[#0f1012]/[0.08] pt-4">
+            <h3 className="text-sm font-semibold text-[#0f1012]">What should we log?</h3>
             <FormField label="Message Type">
                 <Select value={getString(localConfig, 'level', 'info')} onChange={(val) => handleChange('level', val)} options={[{ value: 'info', label: 'Information - General status update' }, { value: 'warn', label: 'Warning - Something to watch' }, { value: 'error', label: 'Error - Something went wrong' }]} />
             </FormField>
@@ -514,7 +514,7 @@ const LoggerConfigForm: React.FC<LegacyUtilityConfigFormProps> = ({ localConfig,
             </FormField>
             <div className="flex flex-wrap gap-2">
                 {['Flow step completed', 'Processing case data', 'Sending notification', 'Task completed successfully'].map((template) => (
-                    <button key={template} type="button" onClick={() => handleChange('message', template)} className="px-2.5 py-1 text-xs rounded-full bg-white/5 hover:bg-white/10 text-zinc-400 hover:text-white transition-colors">{template}</button>
+                    <button key={template} type="button" onClick={() => handleChange('message', template)} className="px-2.5 py-1 text-xs rounded-full bg-[#0f1012]/[0.04] hover:bg-[#0f1012]/[0.08] text-[#868788] hover:text-[#0f1012] transition-colors">{template}</button>
                 ))}
             </div>
         </div>
@@ -534,8 +534,8 @@ const DateTimeConfigForm: React.FC<LegacyUtilityConfigFormProps> = ({ localConfi
                     </div>
                 </div>
             </InfoBox>
-            <div className="space-y-4 border-t border-white/5 pt-4">
-                <h3 className="text-sm font-semibold text-white">What do you want to do?</h3>
+            <div className="space-y-4 border-t border-[#0f1012]/[0.08] pt-4">
+                <h3 className="text-sm font-semibold text-[#0f1012]">What do you want to do?</h3>
                 <div className="space-y-2">
                     <QuickActionButton label="Get Current Date/Time" description="Capture the current moment" icon={<LuClock className="size-4" />} onClick={() => handleChange('operation', 'now')} selected={dtOperation === 'now'} />
                     <QuickActionButton label="Calculate Future Date" description="Add days/hours to a date" icon={<LuPlus className="size-4" />} onClick={() => handleChange('operation', 'add')} selected={dtOperation === 'add'} />
@@ -586,8 +586,8 @@ const VariableConfigForm: React.FC<LegacyUtilityConfigFormProps> = ({ localConfi
                     </div>
                 </div>
             </InfoBox>
-            <div className="space-y-4 border-t border-white/5 pt-4">
-                <h3 className="text-sm font-semibold text-white">What do you want to store?</h3>
+            <div className="space-y-4 border-t border-[#0f1012]/[0.08] pt-4">
+                <h3 className="text-sm font-semibold text-[#0f1012]">What do you want to store?</h3>
                 <div className="space-y-2">
                     <QuickActionButton label="Custom Value" description="Enter a specific value to save" icon={<LuPlus className="size-4" />} onClick={() => handleChange('variableAction', 'store')} selected={variableAction === 'store'} />
                     <QuickActionButton label="Copy from Trigger Data" description="Save case intake values for later use" icon={<LuUser className="size-4" />} onClick={() => handleChange('variableAction', 'copy')} selected={variableAction === 'copy'} />

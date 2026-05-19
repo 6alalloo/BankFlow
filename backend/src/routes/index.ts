@@ -11,6 +11,7 @@ import caseRoutes from "./caseRoutes";
 import taskRoutes from "./taskRoutes";
 import approvalRoutes from "./approvalRoutes";
 import teamRoutes from "./teamRoutes";
+import settingsRoutes from "./settingsRoutes";
 
 const router = Router();
 
@@ -25,6 +26,7 @@ router.use("/cases", caseRoutes);
 router.use("/tasks", taskRoutes);
 router.use("/approvals", approvalRoutes);
 router.use("/teams", teamRoutes);
+router.use("/settings", settingsRoutes);
 
 // /api/users/...
 router.use("/users", userRoutes);

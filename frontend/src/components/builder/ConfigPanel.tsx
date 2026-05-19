@@ -139,7 +139,7 @@ const ConfigPanel: React.FC<ConfigPanelProps> = ({ isOpen, node, onClose, onUpda
         }
 
         return (
-            <div className="p-4 rounded-lg bg-raycast-surface-2 border border-white/10 text-zinc-300 text-sm">
+            <div className="p-4 rounded-[10px] bg-[#f2f2f4] border border-[#0f1012]/[0.08] text-[#8f8f8f] text-sm">
                 Configuration for <strong>{node.kind}</strong> is not yet available.
             </div>
         );
@@ -153,17 +153,17 @@ const ConfigPanel: React.FC<ConfigPanelProps> = ({ isOpen, node, onClose, onUpda
                 animate={{ x: 0 }}
                 exit={{ x: '100%' }}
                 transition={{ type: 'spring', damping: 25, stiffness: 200 }}
-                className="fixed right-4 top-4 bottom-4 w-[420px] bg-raycast-surface-1/95 backdrop-blur-xl border border-white/10 rounded-2xl shadow-raycast-ring z-40 flex flex-col overflow-hidden"
+                className="fixed right-4 top-4 bottom-4 w-[420px] bg-[#fdfdfd]/95 backdrop-blur-xl border border-[#0f1012]/[0.08] rounded-[10px] shadow-elevated z-40 flex flex-col overflow-hidden"
             >
                 {/* Header */}
-                <div className="flex items-center justify-between p-5 border-b border-white/10 bg-raycast-surface-2">
+                <div className="flex items-center justify-between p-5 border-b border-[#0f1012]/[0.08] bg-[#f2f2f4]">
                     <div>
-                        <h2 className="text-lg font-semibold text-white">{node.name || 'Configure Step'}</h2>
-                        <span className="text-xs text-raycast-text-secondary uppercase tracking-wider font-semibold">{node.kind.replace('_', ' ')}</span>
+                        <h2 className="text-lg font-medium text-[#0f1012]">{node.name || 'Configure Step'}</h2>
+                        <span className="text-xs text-[#8f8f8f] uppercase tracking-wider font-medium">{node.kind.replace('_', ' ')}</span>
                     </div>
                     <button
                         onClick={onClose}
-                        className="p-2 hover:bg-white/10 rounded-lg text-zinc-400 hover:text-white transition-colors"
+                        className="p-2 hover:bg-[#0f1012]/[0.05] rounded-[6px] text-[#868788] hover:text-[#0f1012] transition-colors"
                     >
                         <LuX className="size-5" />
                     </button>
@@ -176,18 +176,18 @@ const ConfigPanel: React.FC<ConfigPanelProps> = ({ isOpen, node, onClose, onUpda
                 </div>
 
                 {/* Footer */}
-                <div className="p-4 border-t border-white/10 bg-transparent space-y-2">
+                <div className="p-4 border-t border-[#0f1012]/[0.08] bg-transparent space-y-2">
                     {/* Keyboard hints */}
-                    <div className="flex justify-center gap-3 text-[9px] text-zinc-500 font-mono">
-                        <span><kbd className="px-1 py-0.5 bg-raycast-surface-2 border border-white/10 rounded text-zinc-400 font-mono">Esc</kbd> Close</span>
-                        <span><kbd className="px-1 py-0.5 bg-raycast-surface-2 border border-white/10 rounded text-zinc-400 font-mono">Ctrl+S</kbd> Save</span>
-                        <span><kbd className="px-1 py-0.5 bg-raycast-surface-2 border border-white/10 rounded text-zinc-400 font-mono">Tab</kbd> Navigate</span>
+                    <div className="flex justify-center gap-3 text-[9px] text-[#868788] font-mono">
+                        <span><kbd className="px-1 py-0.5 bg-[#f2f2f4] border border-[#0f1012]/[0.08] rounded-[4px] text-[#868788] font-mono">Esc</kbd> Close</span>
+                        <span><kbd className="px-1 py-0.5 bg-[#f2f2f4] border border-[#0f1012]/[0.08] rounded-[4px] text-[#868788] font-mono">Ctrl+S</kbd> Save</span>
+                        <span><kbd className="px-1 py-0.5 bg-[#f2f2f4] border border-[#0f1012]/[0.08] rounded-[4px] text-[#868788] font-mono">Tab</kbd> Navigate</span>
                     </div>
 
                     <div className="flex gap-2">
                         <button
                             onClick={handleDeleteClick}
-                            className="flex-1 px-3 py-2 rounded-lg text-xs font-semibold bg-transparent border border-[#ff6363]/20 text-[#ff6363] hover:bg-[#ff6363]/10 transition-colors flex items-center justify-center gap-1.5"
+                            className="flex-1 px-3 py-2 rounded-[10px] text-xs font-normal bg-transparent border border-[#b71c1c]/20 text-[#b71c1c] hover:bg-[#ffebee] transition-colors flex items-center justify-center gap-1.5"
                             tabIndex={0}
                         >
                             <LuTrash2 className="size-3.5" />
@@ -196,7 +196,7 @@ const ConfigPanel: React.FC<ConfigPanelProps> = ({ isOpen, node, onClose, onUpda
 
                         <button
                             onClick={handleSave}
-                            className="flex-[2] px-3 py-2 rounded-lg text-xs font-semibold bg-[#e6e6e6] text-[#2f3031] hover:bg-white transition-all flex items-center justify-center gap-1.5"
+                            className="flex-[2] px-3 py-2 rounded-[10px] text-xs font-medium bg-[#0f1012] text-white hover:bg-[#020201] transition-all flex items-center justify-center gap-1.5"
                             tabIndex={0}
                         >
                             <LuCheck className="size-3.5" />
@@ -209,22 +209,22 @@ const ConfigPanel: React.FC<ConfigPanelProps> = ({ isOpen, node, onClose, onUpda
 
             {/* Delete Confirmation Modal */}
             {showDeleteConfirm && (
-                <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm">
-                    <div className="bg-raycast-surface-1 border border-white/10 rounded-2xl p-6 w-[400px] shadow-raycast-highlight space-y-4">
-                        <h3 className="text-xl font-semibold text-white">Delete Step?</h3>
-                        <p className="text-zinc-300 text-sm">
+                <div className="fixed inset-0 z-50 flex items-center justify-center bg-[#0f1012]/20 backdrop-blur-sm">
+                    <div className="bg-[#fdfdfd] border border-[#0f1012]/[0.08] rounded-[10px] p-6 w-[400px] shadow-elevated space-y-4">
+                        <h3 className="text-xl font-medium text-[#0f1012]">Delete Step?</h3>
+                        <p className="text-[#8f8f8f] text-sm">
                             Are you sure you want to delete this step? This action cannot be undone and will remove connected edges.
                         </p>
                         <div className="flex gap-3 justify-end pt-2">
                             <button
                                 onClick={() => setShowDeleteConfirm(false)}
-                                className="px-4 py-2 rounded-lg text-sm font-medium text-zinc-300 hover:text-white hover:bg-white/5 transition-colors"
+                                className="px-4 py-2 rounded-[10px] text-sm font-normal text-[#8f8f8f] hover:text-[#0f1012] hover:bg-[#0f1012]/[0.05] transition-colors"
                             >
                                 Cancel
                             </button>
                             <button
                                 onClick={confirmDelete}
-                                className="px-4 py-2 rounded-lg text-sm font-semibold bg-[#ff6363]/10 border border-[#ff6363]/30 text-[#ff6363] hover:bg-[#ff6363]/20 transition-colors"
+                                className="px-4 py-2 rounded-[10px] text-sm font-medium bg-[#ffebee] border border-[#b71c1c]/20 text-[#b71c1c] hover:bg-[#ffebee]/80 transition-colors"
                             >
                                 Delete Step
                             </button>

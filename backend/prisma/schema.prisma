@@ -144,10 +144,21 @@ model users {
   case_escalations_to_user           case_escalations[]   @relation("case_escalations_to_user")
   case_events_actor                  case_events[]        @relation("case_events_actor")
   audit_logs                         audit_logs[]
+  http_allow_list_domains            http_allow_list_domains[]
   roles                              roles                @relation(fields: [role_id], references: [id], onUpdate: NoAction)
   team_memberships                   team_memberships[]
 
   @@index([role_id], map: "idx_users_role_id")
+}
+
+model http_allow_list_domains {
+  id         Int      @id @default(autoincrement())
+  domain     String   @unique @db.VarChar(255)
+  created_by Int
+  created_at DateTime @default(now()) @db.Timestamptz(6)
+  users      users    @relation(fields: [created_by], references: [id], onUpdate: NoAction)
+
+  @@index([created_by], map: "idx_http_allow_list_created_by")
 }
 
 model teams {

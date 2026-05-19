@@ -8,28 +8,28 @@ interface StatCardProps {
     trend?: 'up' | 'down' | 'neutral';
     trendValue?: string;
     trendLabel?: string;
-    color?: 'neutral' | 'mint' | 'ember';
+    color?: 'neutral' | 'success' | 'danger';
     className?: string;
 }
 
 const colorMap = {
     neutral: {
-        border: 'border-white/[0.08]',
-        hover: 'hover:border-white/[0.18]',
-        iconBg: 'bg-[#111214]',
-        iconText: 'text-[#9c9c9d]',
+        border: 'border-[#0f1012]/[0.08]',
+        hover: 'hover:border-[#0f1012]/[0.18]',
+        iconBg: 'bg-[#f2f2f4]',
+        iconText: 'text-[#8f8f8f]',
     },
-    mint: {
-        border: 'border-[#59d499]/20',
-        hover: 'hover:border-[#59d499]/40',
-        iconBg: 'bg-[#0d2b1a]',
-        iconText: 'text-[#59d499]',
+    success: {
+        border: 'border-[#1b5e20]/20',
+        hover: 'hover:border-[#1b5e20]/40',
+        iconBg: 'bg-[#e8f5e9]',
+        iconText: 'text-[#1b5e20]',
     },
-    ember: {
-        border: 'border-[#ff6363]/20',
-        hover: 'hover:border-[#ff6363]/40',
-        iconBg: 'bg-[#452324]',
-        iconText: 'text-[#ff6363]',
+    danger: {
+        border: 'border-[#b71c1c]/20',
+        hover: 'hover:border-[#b71c1c]/40',
+        iconBg: 'bg-[#ffebee]',
+        iconText: 'text-[#b71c1c]',
     },
 };
 
@@ -46,16 +46,16 @@ export default function StatCard({
     const styles = colorMap[color];
 
     return (
-        <div className={`group relative p-5 rounded-2xl border bg-[#07080a] transition-all duration-300 ${styles.border} ${styles.hover} ${className}`}>
+        <div className={`group relative p-5 rounded-[10px] border bg-[#fdfdfd] transition-all duration-200 ${styles.border} ${styles.hover} ${className}`}>
             <div className="relative flex justify-between items-start mb-4">
-                <div className={`p-2.5 rounded-lg ${styles.iconBg} ${styles.iconText} border border-white/[0.08]`}>
+                <div className={`p-2.5 rounded-[6px] ${styles.iconBg} ${styles.iconText} border border-[#0f1012]/[0.08]`}>
                     <Icon size={20} />
                 </div>
                 {trend && (
-                    <div className={`flex items-center gap-1 text-xs font-mono font-semibold px-2 py-0.5 rounded-md border ${
-                        trend === 'up' ? 'text-[#59d499] border-[#59d499]/20 bg-[#0d2b1a]' :
-                        trend === 'down' ? 'text-[#ff6363] border-[#ff6363]/20 bg-[#452324]' :
-                        'text-[#9c9c9d] border-white/[0.08] bg-[#111214]'
+                    <div className={`flex items-center gap-1 text-xs font-mono font-medium px-2 py-0.5 rounded-[6px] border ${
+                        trend === 'up' ? 'text-[#1b5e20] border-[#1b5e20]/20 bg-[#e8f5e9]' :
+                        trend === 'down' ? 'text-[#b71c1c] border-[#b71c1c]/20 bg-[#ffebee]' :
+                        'text-[#8f8f8f] border-[#0f1012]/[0.08] bg-[#f2f2f4]'
                     }`}>
                         {trend === 'up' && <FiTrendingUp />}
                         {trend === 'down' && <FiTrendingDown />}
@@ -66,11 +66,11 @@ export default function StatCard({
             </div>
 
             <div className="relative">
-                <h3 className="text-[#6a6b6c] font-mono text-[10px] uppercase tracking-widest mb-1">{title}</h3>
-                <div className="text-2xl font-semibold text-white tracking-tight font-mono">{value}</div>
+                <h3 className="text-[#868788] font-mono text-[10px] uppercase tracking-widest mb-1">{title}</h3>
+                <div className="text-2xl font-medium text-[#0f1012] tracking-tight font-mono">{value}</div>
                 {trendLabel && (
-                    <p className="text-[10px] text-[#6a6b6c] font-mono mt-2 flex items-center gap-1">
-                        <span className="size-1 rounded-full bg-[#6a6b6c]" />
+                    <p className="text-[10px] text-[#868788] font-mono mt-2 flex items-center gap-1">
+                        <span className="size-1 rounded-full bg-[#868788]" />
                         {trendLabel}
                     </p>
                 )}

@@ -190,57 +190,57 @@ const FlowDetailPanel: React.FC<FlowDetailPanelProps> = ({ flow, onDelete, onDup
 
     if (!flow) {
         return (
-            <div className="flex-1 flex flex-col items-center justify-center text-[#6a6b6c] h-full bg-[#040506] border-l border-white/[0.08] font-mono">
-                <div className="size-14 rounded-2xl border border-white/[0.08] flex items-center justify-center mb-4 bg-[#07080a]">
-                     <FiLayers size={24} className="text-[#6a6b6c]" />
+            <div className="flex-1 flex flex-col items-center justify-center text-[#868788] h-full bg-[#f2f2f4] border-l border-[#0f1012]/[0.06]">
+                <div className="size-14 rounded-[10px] border border-[#0f1012]/[0.08] flex items-center justify-center mb-4 bg-[#fdfdfd] shadow-card">
+                     <FiLayers size={24} className="text-[#868788]" strokeWidth={1.5} />
                 </div>
-                <p className="text-xs uppercase tracking-[0.2em] text-[#6a6b6c]">Awaiting Selection</p>
+                <p className="text-xs uppercase tracking-[0.2em] text-[#868788]">Awaiting Selection</p>
             </div>
         );
     }
 
     return (
-        <div className="flex flex-col h-full bg-[#040506] relative overflow-hidden font-sans text-[#9c9c9d]">
+        <div className="flex flex-col h-full bg-[#f2f2f4] relative overflow-hidden font-sans text-[#8f8f8f]">
             <div className="flex-1 overflow-y-auto custom-scrollbar p-8 relative z-10">
                 <div className="max-w-4xl space-y-10"> 
                     
                     {/* Header */}
-                    <div className="flex items-start gap-5 border-b border-white/[0.08] pb-8">
-                        <div className="size-14 rounded-2xl bg-[#07080a] border border-white/[0.08] flex items-center justify-center shrink-0">
-                             <FiLayers size={28} className="text-white" />
+                    <div className="flex items-start gap-5 border-b border-[#0f1012]/[0.06] pb-8">
+                        <div className="size-14 rounded-[10px] bg-[#fdfdfd] border border-[#0f1012]/[0.08] flex items-center justify-center shrink-0 shadow-card">
+                             <FiLayers size={28} className="text-[#0f1012]" strokeWidth={1.5} />
                         </div>
                         <div className="pt-1 min-w-0">
                             <div className="flex items-center gap-3 mb-2 flex-wrap">
-                                <span className="text-[10px] font-mono text-[#6a6b6c] border border-white/[0.08] px-1.5 py-0.5 rounded-md tracking-widest bg-[#111214]">ID: {flow.id.toString().padStart(4, '0')}</span>
-                                <span className="text-[10px] font-mono text-[#6a6b6c] uppercase tracking-widest">Ver. {flow.version}.0</span>
-                                <Badge variant={flow.status === 'published' ? 'mint' : 'secondary'}>
+                                <span className="text-[10px] text-[#868788] border border-[#0f1012]/[0.08] px-1.5 py-0.5 rounded-[6px] tracking-widest bg-[#f2f2f4]">ID: {flow.id.toString().padStart(4, '0')}</span>
+                                <span className="text-[10px] text-[#868788] uppercase tracking-widest">Ver. {flow.version}.0</span>
+                                <Badge variant={flow.status === 'published' ? 'success' : 'secondary'}>
                                     {flow.status}
                                 </Badge>
                             </div>
-                            <h1 className="text-3xl font-semibold text-white tracking-tight mb-3">
+                            <h1 className="text-3xl font-medium text-[#0f1012] tracking-tight mb-3">
                                 {flow.name}
                             </h1>
-                            <p className="text-[#9c9c9d] text-sm leading-relaxed max-w-2xl font-light">
+                            <p className="text-[#8f8f8f] text-sm leading-relaxed max-w-2xl font-normal">
                                 {flow.description || "System description unavailable."}
                             </p>
                         </div>
                     </div>
 
                     {(publishError || publishSuccess) && (
-                        <div className={`border rounded-lg p-4 ${publishError ? 'border-[#ff6363]/20 bg-[#452324]/30 text-[#ff6363]' : 'border-[#59d499]/20 bg-[#0d2b1a]/40 text-[#59d499]'}`}>
-                            <div className="flex items-center gap-2 font-mono text-xs uppercase tracking-widest mb-2">
-                                {publishError ? <FiAlertTriangle /> : <FiCheckCircle />}
+                        <div className={`border rounded-[10px] p-4 ${publishError ? 'border-[#b71c1c]/15 bg-[#ffebee]/40 text-[#b71c1c]' : 'border-[#1b5e20]/15 bg-[#e8f5e9]/40 text-[#1b5e20]'}`}>
+                            <div className="flex items-center gap-2 text-xs uppercase tracking-widest mb-2">
+                                {publishError ? <FiAlertTriangle strokeWidth={1.5} /> : <FiCheckCircle strokeWidth={1.5} />}
                                 {publishError || publishSuccess}
                             </div>
                             {publishIssues.length > 0 && (
                                 <div className="space-y-2">
                                     {publishIssues.map((issue) => (
-                                        <div key={`${issue.code}-${issue.message}`} className="text-sm text-[#ff6363]/80">
-                                            <span className="font-mono text-[#ff6363]">{issue.code}</span>
+                                        <div key={`${issue.code}-${issue.message}`} className="text-sm text-[#b71c1c]/80">
+                                            <span className="font-mono text-[#b71c1c]">{issue.code}</span>
                                             {': '}
                                             {issue.message}
                                             {(issue.nodeKey || issue.node_key || issue.edgeKey || issue.edge_key) && (
-                                                <span className="font-mono text-[#ff6363]">
+                                                <span className="font-mono text-[#b71c1c]">
                                                     {' '}[{issue.nodeKey || issue.node_key || issue.edgeKey || issue.edge_key}]
                                                 </span>
                                             )}
@@ -254,40 +254,40 @@ const FlowDetailPanel: React.FC<FlowDetailPanelProps> = ({ flow, onDelete, onDup
                     {/* Configuration Matrix */}
                     <div>
                         <div className="flex items-center justify-between mb-4">
-                             <h3 className="text-xs font-semibold text-[#9c9c9d] uppercase tracking-[0.2em] flex items-center gap-2">
+                             <h3 className="text-xs font-medium text-[#8f8f8f] uppercase tracking-[0.2em] flex items-center gap-2">
                                 <FiCpu />
                                 System Configuration
                             </h3>
-                            <div className="h-px flex-1 bg-white/[0.08] ml-4" />
+                            <div className="h-px flex-1 bg-[#0f1012]/[0.08] ml-4" />
                         </div>
                         
-                        <div className="bg-[#07080a] border border-white/[0.08] rounded-2xl overflow-hidden">
-                            <div className="grid grid-cols-2 divide-x divide-white/[0.08]">
-                                <div className="p-4 border-b border-white/[0.08] flex justify-between items-center group hover:bg-white/[0.02] transition-colors cursor-default">
-                                    <span className="text-[10px] uppercase tracking-widest text-[#6a6b6c] font-mono">Trigger Protocol</span>
-                                    <span className="text-xs font-semibold font-mono text-white uppercase">{triggerProtocol}</span>
+                        <div className="bg-[#fdfdfd] border border-[#0f1012]/[0.06] rounded-[10px] overflow-hidden shadow-card">
+                            <div className="grid grid-cols-2 divide-x divide-[#0f1012]/[0.06]">
+                                <div className="p-4 border-b border-[#0f1012]/[0.06] flex justify-between items-center group hover:bg-[#0f1012]/[0.02] transition-colors cursor-default">
+                                    <span className="text-[10px] uppercase tracking-widest text-[#868788]">Trigger Protocol</span>
+                                    <span className="text-xs font-medium text-[#0f1012] uppercase">{triggerProtocol}</span>
                                 </div>
-                                <div className="p-4 border-b border-white/[0.08] flex justify-between items-center group hover:bg-white/[0.02] transition-colors cursor-default">
-                                    <span className="text-[10px] uppercase tracking-widest text-[#6a6b6c] font-mono">Integrations</span>
-                                    <span className="text-xs font-semibold font-mono text-white">{integrationsLabel}</span>
-                                </div>
-
-                                <div className="p-4 border-b border-white/[0.08] flex justify-between items-center group hover:bg-white/[0.02] transition-colors cursor-default">
-                                    <span className="text-[10px] uppercase tracking-widest text-[#6a6b6c] font-mono">Engine Version</span>
-                                    <span className="text-xs font-semibold font-mono text-white">V{flow.version}.0.0</span>
-                                </div>
-                                <div className="p-4 border-b border-white/[0.08] flex justify-between items-center group hover:bg-white/[0.02] transition-colors cursor-default">
-                                    <span className="text-[10px] uppercase tracking-widest text-[#6a6b6c] font-mono">System Owner</span>
-                                    <span className="text-xs font-semibold font-mono text-white">{ownerLabel}</span>
+                                <div className="p-4 border-b border-[#0f1012]/[0.06] flex justify-between items-center group hover:bg-[#0f1012]/[0.02] transition-colors cursor-default">
+                                    <span className="text-[10px] uppercase tracking-widest text-[#868788]">Integrations</span>
+                                    <span className="text-xs font-medium text-[#0f1012]">{integrationsLabel}</span>
                                 </div>
 
-                                <div className="p-4 flex justify-between items-center group hover:bg-white/[0.02] transition-colors cursor-default">
-                                    <span className="text-[10px] uppercase tracking-widest text-[#6a6b6c] font-mono">Last Config</span>
-                                    <span className="text-xs font-semibold font-mono text-white uppercase">{lastConfigLabel}</span>
+                                <div className="p-4 border-b border-[#0f1012]/[0.06] flex justify-between items-center group hover:bg-[#0f1012]/[0.02] transition-colors cursor-default">
+                                    <span className="text-[10px] uppercase tracking-widest text-[#868788]">Engine Version</span>
+                                    <span className="text-xs font-medium text-[#0f1012]">V{flow.version}.0.0</span>
                                 </div>
-                                <div className="p-4 flex justify-between items-center group hover:bg-white/[0.02] transition-colors cursor-default">
-                                    <span className="text-[10px] uppercase tracking-widest text-[#6a6b6c] font-mono">Complexity</span>
-                                    <span className="text-xs font-semibold font-mono text-white">{nodeCountLabel}</span>
+                                <div className="p-4 border-b border-[#0f1012]/[0.06] flex justify-between items-center group hover:bg-[#0f1012]/[0.02] transition-colors cursor-default">
+                                    <span className="text-[10px] uppercase tracking-widest text-[#868788]">System Owner</span>
+                                    <span className="text-xs font-medium text-[#0f1012]">{ownerLabel}</span>
+                                </div>
+
+                                <div className="p-4 flex justify-between items-center group hover:bg-[#0f1012]/[0.02] transition-colors cursor-default">
+                                    <span className="text-[10px] uppercase tracking-widest text-[#868788]">Last Config</span>
+                                    <span className="text-xs font-medium text-[#0f1012] uppercase">{lastConfigLabel}</span>
+                                </div>
+                                <div className="p-4 flex justify-between items-center group hover:bg-[#0f1012]/[0.02] transition-colors cursor-default">
+                                    <span className="text-[10px] uppercase tracking-widest text-[#868788]">Complexity</span>
+                                    <span className="text-xs font-medium text-[#0f1012]">{nodeCountLabel}</span>
                                 </div>
                             </div>
                         </div>
@@ -297,7 +297,7 @@ const FlowDetailPanel: React.FC<FlowDetailPanelProps> = ({ flow, onDelete, onDup
             </div>
 
             {/* Footer Actions */}
-            <div className="p-4 bg-[#07080a] border-t border-white/[0.08] z-20 flex items-center justify-end gap-3">
+            <div className="p-4 bg-[#fdfdfd]/80 border-t border-[#0f1012]/[0.06] z-20 flex items-center justify-end gap-3 backdrop-blur-md">
                 <Button
                     variant="secondary"
                     size="sm"
@@ -346,44 +346,44 @@ const FlowDetailPanel: React.FC<FlowDetailPanelProps> = ({ flow, onDelete, onDup
 
             {isCreateCaseOpen && (
                 <div className="fixed inset-0 z-50 flex items-center justify-center">
-                    <button type="button" aria-label="Close create case dialog" className="absolute inset-0 bg-[#040506]/80 backdrop-blur-sm" onClick={() => setIsCreateCaseOpen(false)} />
+                    <button type="button" aria-label="Close create case dialog" className="absolute inset-0 bg-[#0f1012]/20 backdrop-blur-sm" onClick={() => setIsCreateCaseOpen(false)} />
                     <div className="relative z-10 w-full max-w-lg">
-                        <div className="bg-[#111214] border border-white/[0.08] rounded-2xl p-6 shadow-xl">
-                            <h3 className="text-lg font-semibold text-white mb-1">Create Case</h3>
-                            <p className="text-[#9c9c9d] text-sm mb-5">Start a live case from the current published version of {flow.name}.</p>
+                        <div className="rounded-[10px] bg-[#fdfdfd] border border-[#0f1012]/[0.08] shadow-elevated p-6">
+                            <h3 className="text-lg font-medium text-[#0f1012] mb-1">Create Case</h3>
+                            <p className="text-[#8f8f8f] text-sm mb-5">Start a live case from the current published version of {flow.name}.</p>
                             <div className="space-y-4">
                                 <label className="block">
-                                    <span className="text-[10px] uppercase tracking-widest text-[#6a6b6c] font-mono">Title</span>
+                                    <span className="text-[10px] uppercase tracking-widest text-[#868788]">Title</span>
                                     <input
                                         value={caseTitle}
                                         onChange={(event) => setCaseTitle(event.target.value)}
-                                        className="mt-1.5 w-full bg-white/[0.05] border border-white/[0.08] rounded-lg px-3 py-2.5 text-sm text-white focus:outline-none focus:border-white/[0.18] focus:ring-1 focus:ring-white/[0.18] transition-all"
+                                        className="mt-1.5 w-full bg-[#0f1012]/[0.04] border border-[#0f1012]/[0.08] rounded-[10px] px-3 py-2.5 text-sm text-[#020201] focus:outline-none focus:border-[#0f1012]/[0.18] focus:ring-1 focus:ring-[#0071e3]/20 transition-all"
                                     />
                                 </label>
                                 <label className="block">
-                                    <span className="text-[10px] uppercase tracking-widest text-[#6a6b6c] font-mono">Priority</span>
+                                    <span className="text-[10px] uppercase tracking-widest text-[#868788]">Priority</span>
                                     <select
                                         value={casePriority}
                                         onChange={(event) => setCasePriority(event.target.value as typeof casePriority)}
-                                        className="mt-1.5 w-full bg-white/[0.05] border border-white/[0.08] rounded-lg px-3 py-2.5 text-sm text-white focus:outline-none focus:border-white/[0.18] focus:ring-1 focus:ring-white/[0.18] transition-all"
+                                        className="mt-1.5 w-full bg-[#0f1012]/[0.04] border border-[#0f1012]/[0.08] rounded-[10px] px-3 py-2.5 text-sm text-[#020201] focus:outline-none focus:border-[#0f1012]/[0.18] focus:ring-1 focus:ring-[#0071e3]/20 transition-all"
                                     >
-                                        <option value="low" className="bg-[#111214]">Low</option>
-                                        <option value="normal" className="bg-[#111214]">Normal</option>
-                                        <option value="high" className="bg-[#111214]">High</option>
-                                        <option value="critical" className="bg-[#111214]">Critical</option>
+                                        <option value="low">Low</option>
+                                        <option value="normal">Normal</option>
+                                        <option value="high">High</option>
+                                        <option value="critical">Critical</option>
                                     </select>
                                 </label>
                                 <div>
-                                    <span className="text-[10px] uppercase tracking-widest text-[#6a6b6c] font-mono">Case Fields</span>
+                                    <span className="text-[10px] uppercase tracking-widest text-[#868788]">Case Fields</span>
                                     <div className="mt-1.5 grid grid-cols-1 md:grid-cols-2 gap-3">
                                         {caseFields.map((field) => (
                                             <label key={field.key} className="block">
-                                                <span className="mb-1 block text-xs text-[#9c9c9d]">{field.label}</span>
+                                                <span className="mb-1 block text-xs text-[#8f8f8f]">{field.label}</span>
                                                 <input
                                                     value={caseFieldValues[field.key] ?? ''}
                                                     onChange={(event) => setCaseFieldValues((current) => ({ ...current, [field.key]: event.target.value }))}
                                                     type={field.type === 'number' ? 'number' : 'text'}
-                                                    className="w-full bg-white/[0.05] border border-white/[0.08] rounded-lg px-3 py-2 text-sm text-white placeholder:text-[#6a6b6c] focus:outline-none focus:border-white/[0.18] focus:ring-1 focus:ring-white/[0.18] transition-all"
+                                                    className="w-full bg-[#0f1012]/[0.04] border border-[#0f1012]/[0.08] rounded-[10px] px-3 py-2 text-sm text-[#020201] placeholder:text-[#868788] focus:outline-none focus:border-[#0f1012]/[0.18] focus:ring-1 focus:ring-[#0071e3]/20 transition-all"
                                                     placeholder={field.placeholder}
                                                 />
                                             </label>
@@ -391,17 +391,17 @@ const FlowDetailPanel: React.FC<FlowDetailPanelProps> = ({ flow, onDelete, onDup
                                     </div>
                                 </div>
                                 <label className="block">
-                                    <span className="text-[10px] uppercase tracking-widest text-[#6a6b6c] font-mono">Additional Case Data JSON</span>
+                                    <span className="text-[10px] uppercase tracking-widest text-[#868788]">Additional Case Data JSON</span>
                                     <textarea
                                         value={caseDataText}
                                         onChange={(event) => setCaseDataText(event.target.value)}
                                         rows={6}
-                                        className="mt-1.5 w-full bg-white/[0.05] border border-white/[0.08] rounded-lg px-3 py-2.5 text-sm text-white font-mono focus:outline-none focus:border-white/[0.18] focus:ring-1 focus:ring-white/[0.18] transition-all resize-none"
+                                        className="mt-1.5 w-full bg-[#0f1012]/[0.04] border border-[#0f1012]/[0.08] rounded-[10px] px-3 py-2.5 text-sm text-[#020201] font-mono focus:outline-none focus:border-[#0f1012]/[0.18] focus:ring-1 focus:ring-[#0071e3]/20 transition-all resize-none"
                                     />
                                 </label>
                             </div>
                             {caseError && (
-                                <div className="mt-4 p-3 rounded-lg bg-[#452324]/40 border border-[#ff6363]/20 text-[#ff6363] text-sm">
+                                <div className="mt-4 p-3 rounded-[10px] bg-[#ffebee]/40 border border-[#b71c1c]/15 text-[#b71c1c] text-sm">
                                     {caseError}
                                 </div>
                             )}

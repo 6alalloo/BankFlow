@@ -30,14 +30,14 @@ const SmartField: React.FC<SmartFieldProps> = ({ value, onChange, placeholder, r
     return (
         <div className="space-y-2">
             {/* Mode Toggles */}
-            <div className="flex bg-navy-950 p-1 rounded-lg border border-white/10 w-full">
+            <div className="flex bg-[#f2f2f4] p-1 rounded-[10px] border border-[#0f1012]/[0.08] w-full">
                 <button
                     type="button"
                     onClick={() => handleModeSwitch('variable')}
-                    className={`flex-1 flex items-center justify-center gap-1.5 py-1 text-[10px] font-medium rounded-md transition-all ${
+                    className={`flex-1 flex items-center justify-center gap-1.5 py-1 text-[10px] font-medium rounded-[6px] transition-all ${
                         mode === 'variable'
-                            ? 'bg-cyan-glow/20 text-cyan-glow shadow-sm'
-                            : 'text-zinc-500 hover:text-zinc-300'
+                            ? 'bg-[#0071e3]/10 text-[#0071e3] shadow-sm'
+                            : 'text-[#868788] hover:text-[#8f8f8f]'
                     }`}
                 >
                     <LuZap className="size-3" />
@@ -46,10 +46,10 @@ const SmartField: React.FC<SmartFieldProps> = ({ value, onChange, placeholder, r
                 <button
                     type="button"
                     onClick={() => handleModeSwitch('custom')}
-                    className={`flex-1 flex items-center justify-center gap-1.5 py-1 text-[10px] font-medium rounded-md transition-all ${
+                    className={`flex-1 flex items-center justify-center gap-1.5 py-1 text-[10px] font-medium rounded-[6px] transition-all ${
                         mode === 'custom'
-                            ? 'bg-purple-500/20 text-purple-300 shadow-sm'
-                            : 'text-zinc-500 hover:text-zinc-300'
+                            ? 'bg-[#0f1012]/[0.06] text-[#0f1012] shadow-sm'
+                            : 'text-[#868788] hover:text-[#8f8f8f]'
                     }`}
                 >
                     <LuPenTool className="size-3" />
@@ -60,13 +60,13 @@ const SmartField: React.FC<SmartFieldProps> = ({ value, onChange, placeholder, r
             {/* Input Area */}
             {mode === 'variable' ? (
                 <div className="relative">
-                    <div className="absolute left-2.5 top-1/2 -translate-y-1/2 text-cyan-glow pointer-events-none">
+                    <div className="absolute left-2.5 top-1/2 -translate-y-1/2 text-[#0071e3] pointer-events-none">
                         <LuZap className="size-4" />
                     </div>
                     <select
                         value={value}
                         onChange={(e) => onChange(e.target.value)}
-                        className="w-full bg-navy-900 border border-cyan-glow/30 rounded-lg pl-9 pr-8 py-2 text-sm text-white focus:outline-none focus:border-cyan-glow appearance-none cursor-pointer"
+                        className="w-full bg-[#f2f2f4] border border-[#0071e3]/30 rounded-[10px] pl-9 pr-8 py-2 text-sm text-[#0f1012] focus:outline-none focus:border-[#0071e3] appearance-none cursor-pointer"
                         style={{
                             backgroundImage: 'none' // Remove default arrow to style custom one
                         }}
@@ -77,7 +77,7 @@ const SmartField: React.FC<SmartFieldProps> = ({ value, onChange, placeholder, r
                             </option>
                         ))}
                     </select>
-                    <div className="absolute right-2.5 top-1/2 -translate-y-1/2 text-zinc-400 pointer-events-none">
+                    <div className="absolute right-2.5 top-1/2 -translate-y-1/2 text-[#868788] pointer-events-none">
                         <LuChevronDown className="size-4" />
                     </div>
                 </div>
@@ -89,7 +89,7 @@ const SmartField: React.FC<SmartFieldProps> = ({ value, onChange, placeholder, r
                             value={value}
                             onChange={(e) => onChange(e.target.value)}
                             placeholder={placeholder}
-                            className="w-full bg-navy-950 border border-white/10 rounded-lg px-3 py-2 text-sm text-white focus:border-purple-500/50 focus:outline-none transition-colors resize-none font-mono"
+                            className="w-full bg-[#f2f2f4] border border-[#0f1012]/[0.08] rounded-[10px] px-3 py-2 text-sm text-[#0f1012] focus:border-[#0071e3]/40 focus:outline-none transition-colors resize-none font-mono"
                         />
                      ) : (
                         <input
@@ -97,7 +97,7 @@ const SmartField: React.FC<SmartFieldProps> = ({ value, onChange, placeholder, r
                             value={value}
                             onChange={(e) => onChange(e.target.value)}
                             placeholder={placeholder}
-                            className="w-full bg-navy-950 border border-white/10 rounded-lg px-3 py-2 text-sm text-white focus:border-purple-500/50 focus:outline-none transition-colors font-mono"
+                            className="w-full bg-[#f2f2f4] border border-[#0f1012]/[0.08] rounded-[10px] px-3 py-2 text-sm text-[#0f1012] focus:border-[#0071e3]/40 focus:outline-none transition-colors font-mono"
                         />
                      )}
                 </div>

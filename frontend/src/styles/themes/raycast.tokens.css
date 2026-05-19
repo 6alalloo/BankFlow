@@ -57,12 +57,12 @@
 
   --raycast-gradient-sky: linear-gradient(135deg, #56c2ff 0%, #138af2 100%);
   --raycast-gradient-nebula: radial-gradient(
-    84.6% 73.49% at 50% 26.51%,
+    closest-side at 50% 26.51%,
     rgba(4, 63, 150, 0.7),
     rgba(6, 18, 37, 0.25)
   );
   --raycast-gradient-violet: radial-gradient(
-    86.88% 75.47% at 50% 24.53%,
+    closest-side at 50% 24.53%,
     rgba(82, 48, 145, 0.7),
     rgba(26, 11, 51, 0.14)
   );
@@ -80,6 +80,17 @@
     rgba(255, 255, 255, 0.18) 0px 0px 0px 1px,
     rgba(0, 0, 0, 0.2) 0px -1px 0px 0px inset;
 
-  --raycast-font-sans: "Geist", Inter, ui-sans-serif, system-ui, sans-serif;
+  --raycast-shadow-diffuse:
+    0 20px 40px -15px rgba(0, 0, 0, 0.12);
+  --raycast-shadow-diffuse-hover:
+    0 24px 48px -12px rgba(0, 0, 0, 0.18);
+  --raycast-shadow-ember:
+    0 16px 32px -10px rgba(255, 99, 99, 0.12);
+  --raycast-shadow-mint:
+    0 16px 32px -10px rgba(89, 212, 153, 0.12);
+  --raycast-shadow-sky:
+    0 16px 32px -10px rgba(86, 194, 255, 0.12);
+
+  --raycast-font-sans: "Geist", ui-sans-serif, system-ui, sans-serif;
   --raycast-font-mono: "Geist Mono", "JetBrains Mono", "IBM Plex Mono", ui-monospace, monospace;
 }

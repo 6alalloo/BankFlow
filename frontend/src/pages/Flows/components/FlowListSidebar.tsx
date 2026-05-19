@@ -40,18 +40,18 @@ const FlowListSidebar: React.FC<FlowListSidebarProps> = ({
     });
 
     return (
-        <div className="flex flex-col h-full bg-[#07080a] border-r border-white/[0.08] relative z-30">
+        <div className="flex flex-col h-full bg-[#fdfdfd]/80 border-r border-[#0f1012]/[0.06] relative z-30">
             {/* Header */}
-            <div className="p-4 border-b border-white/[0.08] space-y-3">
+            <div className="p-4 border-b border-[#0f1012]/[0.06] space-y-3">
                 <div className="flex items-center gap-2">
                     <div className="relative flex-1 group">
-                        <FiSearch className="absolute left-3 top-1/2 -translate-y-1/2 text-[#6a6b6c] group-focus-within:text-white transition-colors" />
+                        <FiSearch className="absolute left-3 top-1/2 -translate-y-1/2 text-[#868788] group-focus-within:text-[#0f1012] transition-colors" size={14} strokeWidth={1.5} />
                         <input 
                             type="text" 
                             placeholder="Search flows..." 
                             value={searchQuery}
                             onChange={(e) => onSearchChange(e.target.value)}
-                            className="w-full bg-white/[0.05] border border-white/[0.08] rounded-lg pl-9 pr-3 py-2 text-xs text-white placeholder:text-[#6a6b6c] focus:outline-none focus:border-white/[0.18] focus:ring-1 focus:ring-white/[0.18] transition-all"
+                            className="w-full bg-[#0f1012]/[0.04] border border-[#0f1012]/[0.08] rounded-[10px] pl-9 pr-3 py-2 text-xs text-[#0f1012] placeholder:text-[#868788] focus:outline-none focus:border-[#0f1012]/[0.18] focus:ring-1 focus:ring-[#0071e3]/20 transition-all"
                         />
                     </div>
                     
@@ -59,21 +59,20 @@ const FlowListSidebar: React.FC<FlowListSidebarProps> = ({
                         <select 
                             value={filterStatus}
                             onChange={(e) => onFilterChange(e.target.value as 'all' | 'active' | 'inactive')}
-                            className="appearance-none bg-[#111214] border border-white/[0.08] rounded-lg px-3 py-2 text-xs text-[#9c9c9d] focus:outline-none focus:border-white/[0.18] cursor-pointer pr-7 hover:bg-[#1b1c1e] transition-colors"
-                            style={{ colorScheme: 'dark' }} 
+                            className="appearance-none bg-[#f2f2f4] border border-[#0f1012]/[0.08] rounded-[10px] px-3 py-2 text-xs text-[#8f8f8f] focus:outline-none focus:border-[#0f1012]/[0.18] cursor-pointer pr-7 hover:bg-[#fdfdfd] transition-colors"
                         >
-                            <option value="all" className="bg-[#111214]">All</option>
-                            <option value="active" className="bg-[#111214]">Active</option>
-                            <option value="inactive" className="bg-[#111214]">Inactive</option>
+                            <option value="all">All</option>
+                            <option value="active">Active</option>
+                            <option value="inactive">Inactive</option>
                         </select>
-                        <div className="absolute right-2.5 top-1/2 -translate-y-1/2 pointer-events-none text-[#6a6b6c]">
+                        <div className="absolute right-2.5 top-1/2 -translate-y-1/2 pointer-events-none text-[#868788]">
                            <svg width="10" height="6" viewBox="0 0 10 6" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"><path d="M1 1L5 5L9 1"/></svg>
                         </div>
                     </div>
 
                     <button 
                         onClick={onOpenTemplates}
-                        className="size-9 bg-[#111214] hover:bg-[#1b1c1e] text-[#9c9c9d] hover:text-white flex items-center justify-center transition-all rounded-lg border border-white/[0.08]"
+                        className="size-9 bg-[#0f1012]/[0.04] hover:bg-[#0f1012]/[0.07] text-[#8f8f8f] hover:text-[#0f1012] flex items-center justify-center transition-all rounded-[10px] border border-[#0f1012]/[0.08]"
                         title="Use Template"
                     >
                         <LuLayoutTemplate size={16} />
@@ -82,16 +81,16 @@ const FlowListSidebar: React.FC<FlowListSidebarProps> = ({
                     <button 
                         onClick={onCreate}
                         disabled={isCreating}
-                        className="size-9 bg-[#e6e6e6] hover:bg-white text-[#040506] flex items-center justify-center transition-all rounded-lg disabled:opacity-50"
+                        className="size-9 bg-[#0f1012] hover:bg-[#020201] text-white flex items-center justify-center transition-all rounded-[10px] disabled:opacity-50"
                         title="Create New Flow"
                     >
-                         {isCreating ? <div className="animate-spin size-4 border-2 border-[#040506]/30 border-t-[#040506] rounded-full" /> : <FiPlus size={18} />}
+                         {isCreating ? <div className="animate-spin size-4 border-2 border-white/30 border-t-white rounded-full" /> : <FiPlus size={18} strokeWidth={2.5} />}
                     </button>
                 </div>
             </div>
 
             {/* List */}
-            <div className="flex-1 overflow-y-auto p-3 space-y-1 custom-scrollbar">
+            <div className="flex-1 overflow-y-auto p-3 space-y-0.5 custom-scrollbar">
                 {filtered.length > 0 ? (
                     filtered.map(wf => (
                         <FlowCard 
@@ -102,11 +101,11 @@ const FlowListSidebar: React.FC<FlowListSidebarProps> = ({
                         />
                     ))
                 ) : (
-                    <div className="flex flex-col items-center justify-center py-16 text-[#6a6b6c] gap-2">
-                        <div className="size-10 rounded-full bg-white/[0.03] flex items-center justify-center mb-2">
-                            <FiSearch size={18} className="opacity-50" />
+                    <div className="flex flex-col items-center justify-center py-16 text-[#868788] gap-2">
+                        <div className="size-10 rounded-full bg-[#0f1012]/[0.03] flex items-center justify-center mb-2">
+                            <FiSearch size={18} className="opacity-50" strokeWidth={1.5} />
                         </div>
-                        <p className="text-sm font-medium">No flows found</p>
+                        <p className="text-sm font-normal">No flows found</p>
                     </div>
                 )}
             </div>

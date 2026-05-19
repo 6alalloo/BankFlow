@@ -16,6 +16,16 @@ const formatDate = (value?: string | null) => {
   return parsed.toLocaleString();
 };
 
+function formatLabel(raw: string): string {
+  if (!raw) return "";
+  const spaced = raw.replace(/[_\-.]+/g, " ");
+  const camelSpaced = spaced.replace(/([a-z])([A-Z])/g, "$1 $2");
+  return camelSpaced
+    .split(" ")
+    .map((word) => word.charAt(0).toUpperCase() + word.slice(1).toLowerCase())
+    .join(" ");
+}
+
 const formatJson = (value: unknown) => {
   if (value === null || value === undefined) return "{}";
   if (typeof value === "string") return value;
@@ -23,9 +33,9 @@ const formatJson = (value: unknown) => {
 };
 
 const statusBadgeVariant = (status: string): BadgeVariant => {
-  if (["resolved", "closed", "completed", "approved"].includes(status)) return "mint";
-  if (["critical", "rejected", "cancelled", "overdue", "escalated"].includes(status)) return "ember";
-  if (["pending_action", "pending_approval", "requested", "claimed", "assigned"].includes(status)) return "sky";
+  if (["resolved", "closed", "completed", "approved"].includes(status)) return "success";
+  if (["critical", "rejected", "cancelled", "overdue", "escalated"].includes(status)) return "danger";
+  if (["pending_action", "pending_approval", "requested", "claimed", "assigned"].includes(status)) return "future";
   return "secondary";
 };
 
@@ -136,8 +146,8 @@ const CaseDetailPage: React.FC = () => {
 
   if (loading) {
     return (
-      <div className="p-6 text-[#9c9c9d]">
-        <div className="animate-spin size-5 border-2 border-white/20 border-t-white rounded-full inline-block mr-2" />
+      <div className="p-6 text-[#8f8f8f]">
+        <div className="animate-spin size-5 border-2 border-[#0f1012]/20 border-t-[#0071e3] rounded-full inline-block mr-2" />
         Loading case...
       </div>
     );
@@ -146,74 +156,74 @@ const CaseDetailPage: React.FC = () => {
   if (error || !caseDetail) {
     return (
       <div className="p-6">
-        <Link to="/cases" className="text-[#9c9c9d] hover:text-white flex items-center gap-2 mb-4 transition-colors">
+        <Link to="/cases" className="text-[#8f8f8f] hover:text-[#0f1012] flex items-center gap-2 mb-4 transition-colors">
           <FiArrowLeft /> Cases
         </Link>
-        <div className="p-4 rounded-lg bg-[#452324]/40 border border-[#ff6363]/20 text-[#ff6363]">{error || "Case not found"}</div>
+        <div className="p-4 rounded-[10px] bg-[#ffebee] border border-[#b71c1c]/20 text-[#b71c1c]">{error || "Case not found"}</div>
       </div>
     );
   }
 
   return (
-    <div className="p-6 h-full overflow-y-auto custom-scrollbar text-[#9c9c9d]">
-      <Link to="/cases" className="text-[#9c9c9d] hover:text-white flex items-center gap-2 mb-4 transition-colors">
+    <div className="p-6 h-full overflow-y-auto custom-scrollbar text-[#8f8f8f]">
+      <Link to="/cases" className="text-[#8f8f8f] hover:text-[#0f1012] flex items-center gap-2 mb-4 transition-colors">
         <FiArrowLeft /> Cases
       </Link>
 
       <div className="flex flex-wrap items-start justify-between gap-4 mb-6">
         <div>
           <div className="flex flex-wrap gap-2 mb-3">
-            <Badge variant={statusBadgeVariant(caseDetail.status)}>{caseDetail.status.replace(/_/g, " ")}</Badge>
-            <Badge variant={statusBadgeVariant(caseDetail.priority)}>{caseDetail.priority}</Badge>
+            <Badge variant={statusBadgeVariant(caseDetail.status)}>{formatLabel(caseDetail.status)}</Badge>
+            <Badge variant={statusBadgeVariant(caseDetail.priority)}>{formatLabel(caseDetail.priority)}</Badge>
             {caseDetail.flow && <Badge variant="secondary">{caseDetail.flow.name}</Badge>}
           </div>
-          <h1 className="text-xl font-semibold text-white mb-1 font-mono">{caseDetail.case_reference}</h1>
-          <p className="text-[#9c9c9d] mb-0">{caseDetail.title || caseDetail.case_type}</p>
+          <h1 className="text-xl font-medium text-[#0f1012] mb-1 tabular-nums">{caseDetail.case_reference}</h1>
+          <p className="text-[#8f8f8f] mb-0">{caseDetail.title || formatLabel(caseDetail.case_type)}</p>
         </div>
       </div>
 
       {(actionError || actionSuccess) && (
-        <div className={`mb-4 p-4 rounded-lg text-sm ${actionError ? "bg-[#452324]/40 border border-[#ff6363]/20 text-[#ff6363]" : "bg-[#0d2b1a]/40 border border-[#59d499]/20 text-[#59d499]"}`}>
+        <div className={`mb-4 p-4 rounded-[10px] text-sm ${actionError ? "bg-[#ffebee] border border-[#b71c1c]/20 text-[#b71c1c]" : "bg-[#e8f5e9] border border-[#1b5e20]/20 text-[#1b5e20]"}`}>
           {actionError || actionSuccess}
         </div>
       )}
 
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-3 mb-6">
-        <div className="border border-white/[0.08] rounded-xl p-3 bg-[#07080a]">
-          <div className="text-[#6a6b6c] text-[10px] uppercase font-mono mb-2 tracking-wider">Owner</div>
-          <div className="flex items-center gap-2 text-white text-sm"><FiUser className="text-[#6a6b6c]" /> {currentOwner}</div>
+        <div className="border border-[#0f1012]/[0.06] rounded-[10px] p-3 bg-[#fdfdfd] shadow-card">
+          <div className="text-[#868788] text-[10px] uppercase mb-2 tracking-wider">Owner</div>
+          <div className="flex items-center gap-2 text-[#0f1012] text-sm"><FiUser className="text-[#868788]" strokeWidth={1.5} /> {currentOwner}</div>
         </div>
-        <div className="border border-white/[0.08] rounded-xl p-3 bg-[#07080a]">
-          <div className="text-[#6a6b6c] text-[10px] uppercase font-mono mb-2 tracking-wider">Opened</div>
-          <div className="flex items-center gap-2 text-white text-sm"><FiClock className="text-[#6a6b6c]" /> {formatDate(caseDetail.opened_at)}</div>
+        <div className="border border-[#0f1012]/[0.06] rounded-[10px] p-3 bg-[#fdfdfd] shadow-card">
+          <div className="text-[#868788] text-[10px] uppercase mb-2 tracking-wider">Opened</div>
+          <div className="flex items-center gap-2 text-[#0f1012] text-sm"><FiClock className="text-[#868788]" strokeWidth={1.5} /> {formatDate(caseDetail.opened_at)}</div>
         </div>
-        <div className="border border-white/[0.08] rounded-xl p-3 bg-[#07080a]">
-          <div className="text-[#6a6b6c] text-[10px] uppercase font-mono mb-2 tracking-wider">Current Node</div>
-          <div className="flex items-center gap-2 text-white text-sm"><FiGitBranch className="text-[#6a6b6c]" /> {caseDetail.current_node_key || "None"}</div>
+        <div className="border border-[#0f1012]/[0.06] rounded-[10px] p-3 bg-[#fdfdfd] shadow-card">
+          <div className="text-[#868788] text-[10px] uppercase mb-2 tracking-wider">Current Node</div>
+          <div className="flex items-center gap-2 text-[#0f1012] text-sm"><FiGitBranch className="text-[#868788]" strokeWidth={1.5} /> {caseDetail.current_node_key || "None"}</div>
         </div>
-        <div className="border border-white/[0.08] rounded-xl p-3 bg-[#07080a]">
-          <div className="text-[#6a6b6c] text-[10px] uppercase font-mono mb-2 tracking-wider">Intake</div>
-          <div className="flex items-center gap-2 text-white text-sm"><FiShield className="text-[#6a6b6c]" /> {caseDetail.intake_source || "manual"}</div>
+        <div className="border border-[#0f1012]/[0.06] rounded-[10px] p-3 bg-[#fdfdfd] shadow-card">
+          <div className="text-[#868788] text-[10px] uppercase mb-2 tracking-wider">Intake</div>
+          <div className="flex items-center gap-2 text-[#0f1012] text-sm"><FiShield className="text-[#868788]" strokeWidth={1.5} /> {caseDetail.intake_source || "manual"}</div>
         </div>
       </div>
 
       <div className="grid grid-cols-1 xl:grid-cols-7 gap-6">
         <div className="xl:col-span-4 space-y-6">
           <section>
-            <h2 className="text-sm font-semibold text-white uppercase tracking-wider mb-3">Tasks</h2>
+            <h2 className="text-sm font-medium text-[#0f1012] uppercase tracking-wider mb-3">Tasks</h2>
             <div className="space-y-3">
               {caseDetail.tasks.length === 0 ? (
-                <div className="border border-white/[0.08] rounded-xl p-4 text-[#6a6b6c] bg-[#07080a]">No tasks for this case yet.</div>
+                <div className="border border-[#0f1012]/[0.08] rounded-[10px] p-4 text-[#868788] bg-[#fdfdfd]">No tasks for this case yet.</div>
               ) : caseDetail.tasks.map((task) => (
-                <div key={task.id} className="border border-white/[0.08] rounded-xl p-4 bg-[#07080a]">
+                <div key={task.id} className="border border-[#0f1012]/[0.08] rounded-[10px] p-4 bg-[#fdfdfd]">
                   <div className="flex justify-between gap-3">
                     <div className="min-w-0">
-                      <div className="text-white font-medium text-sm">{task.title}</div>
-                      <div className="text-[#6a6b6c] text-xs">{task.task_type} {task.flow_node_key ? `// ${task.flow_node_key}` : ""}</div>
+                      <div className="text-[#0f1012] font-medium text-sm">{task.title}</div>
+                      <div className="text-[#868788] text-xs">{task.task_type} {task.flow_node_key ? `// ${task.flow_node_key}` : ""}</div>
                     </div>
-                    <Badge variant={statusBadgeVariant(task.status)}>{task.status.replace(/_/g, " ")}</Badge>
+                    <Badge variant={statusBadgeVariant(task.status)}>{formatLabel(task.status)}</Badge>
                   </div>
-                  <div className="text-[#9c9c9d] text-xs mt-2">Due: {formatDate(task.due_at)}</div>
+                  <div className="text-[#8f8f8f] text-xs mt-2">Due: {formatDate(task.due_at)}</div>
                   {!isAuditor && ["pending", "assigned"].includes(task.status) && task.claim_policy === "claim_required" && (
                     <Button
                       variant="secondary"
@@ -229,12 +239,12 @@ const CaseDetailPage: React.FC = () => {
                     </Button>
                   )}
                   {!isAuditor && ["pending", "assigned", "claimed", "overdue"].includes(task.status) && (
-                    <div className="mt-3 border-t border-white/[0.08] pt-3">
+                    <div className="mt-3 border-t border-[#0f1012]/[0.08] pt-3">
                       <div className="grid grid-cols-1 md:grid-cols-2 gap-2">
                         <input
                           value={taskDecisionById[task.id] ?? ""}
                           onChange={(event) => setTaskDecisionById((prev) => ({ ...prev, [task.id]: event.target.value }))}
-                          className="bg-white/[0.05] border border-white/[0.08] rounded-lg px-3 py-2 text-sm text-white placeholder:text-[#6a6b6c] focus:outline-none focus:border-white/[0.18] focus:ring-1 focus:ring-white/[0.18] transition-all"
+                          className="bg-[#0f1012]/[0.04] border border-[#0f1012]/[0.08] rounded-[10px] px-3 py-2 text-sm text-[#020201] placeholder:text-[#868788] focus:outline-none focus:border-[#0f1012]/[0.18] focus:ring-1 focus:ring-[#0071e3]/20 transition-all"
                           placeholder="Decision label, e.g. approved"
                         />
                         {getTaskOutputFields(task.task_type).map((field) => (
@@ -249,7 +259,7 @@ const CaseDetailPage: React.FC = () => {
                               },
                             }))}
                             type={field.type === "number" ? "number" : "text"}
-                            className="bg-white/[0.05] border border-white/[0.08] rounded-lg px-3 py-2 text-sm text-white placeholder:text-[#6a6b6c] focus:outline-none focus:border-white/[0.18] focus:ring-1 focus:ring-white/[0.18] transition-all"
+                            className="bg-[#0f1012]/[0.04] border border-[#0f1012]/[0.08] rounded-[10px] px-3 py-2 text-sm text-[#020201] placeholder:text-[#868788] focus:outline-none focus:border-[#0f1012]/[0.18] focus:ring-1 focus:ring-[#0071e3]/20 transition-all"
                             placeholder={field.placeholder || field.label}
                             aria-label={field.label}
                           />
@@ -257,7 +267,7 @@ const CaseDetailPage: React.FC = () => {
                         <textarea
                           value={taskOutputById[task.id] ?? ""}
                           onChange={(event) => setTaskOutputById((prev) => ({ ...prev, [task.id]: event.target.value }))}
-                          className="md:col-span-2 bg-white/[0.05] border border-white/[0.08] rounded-lg px-3 py-2 text-sm text-white placeholder:text-[#6a6b6c] focus:outline-none focus:border-white/[0.18] focus:ring-1 focus:ring-white/[0.18] transition-all resize-none"
+                          className="md:col-span-2 bg-[#0f1012]/[0.04] border border-[#0f1012]/[0.08] rounded-[10px] px-3 py-2 text-sm text-[#020201] placeholder:text-[#868788] focus:outline-none focus:border-[#0f1012]/[0.18] focus:ring-1 focus:ring-[#0071e3]/20 transition-all resize-none"
                           rows={2}
                           placeholder='Additional output JSON, e.g. {"finding":"clear"}'
                         />
@@ -279,27 +289,27 @@ const CaseDetailPage: React.FC = () => {
           </section>
 
           <section>
-            <h2 className="text-sm font-semibold text-white uppercase tracking-wider mb-3">Approvals</h2>
+            <h2 className="text-sm font-medium text-[#0f1012] uppercase tracking-wider mb-3">Approvals</h2>
             <div className="space-y-3">
               {caseDetail.approvals.length === 0 ? (
-                <div className="border border-white/[0.08] rounded-xl p-4 text-[#6a6b6c] bg-[#07080a]">No approvals requested.</div>
+                <div className="border border-[#0f1012]/[0.08] rounded-[10px] p-4 text-[#868788] bg-[#fdfdfd]">No approvals requested.</div>
               ) : caseDetail.approvals.map((approval) => (
-                <div key={approval.id} className="border border-white/[0.08] rounded-xl p-4 bg-[#07080a]">
+                <div key={approval.id} className="border border-[#0f1012]/[0.08] rounded-[10px] p-4 bg-[#fdfdfd]">
                   <div className="flex justify-between gap-3">
                     <div className="min-w-0">
-                      <div className="text-white font-medium text-sm">Approval #{approval.id}</div>
-                      <div className="text-[#6a6b6c] text-xs">{approval.flow_node_key || "approval node"}</div>
+                      <div className="text-[#0f1012] font-medium text-sm">Approval #{approval.id}</div>
+                      <div className="text-[#868788] text-xs">{approval.flow_node_key || "approval node"}</div>
                     </div>
-                    <Badge variant={statusBadgeVariant(approval.status)}>{approval.status.replace(/_/g, " ")}</Badge>
+                    <Badge variant={statusBadgeVariant(approval.status)}>{formatLabel(approval.status)}</Badge>
                   </div>
-                  <div className="text-[#9c9c9d] text-xs mt-2">Requested: {formatDate(approval.requested_at)}</div>
-                  {approval.decision_reason && <div className="text-[#6a6b6c] text-xs mt-1">Reason: {approval.decision_reason}</div>}
+                  <div className="text-[#8f8f8f] text-xs mt-2">Requested: {formatDate(approval.requested_at)}</div>
+                  {approval.decision_reason && <div className="text-[#868788] text-xs mt-1">Reason: {approval.decision_reason}</div>}
                   {!isAuditor && approval.status === "requested" && (
-                    <div className="mt-3 border-t border-white/[0.08] pt-3">
+                    <div className="mt-3 border-t border-[#0f1012]/[0.08] pt-3">
                       <textarea
                         value={approvalReasonById[approval.id] ?? ""}
                         onChange={(event) => setApprovalReasonById((prev) => ({ ...prev, [approval.id]: event.target.value }))}
-                        className="w-full bg-white/[0.05] border border-white/[0.08] rounded-lg px-3 py-2 text-sm text-white placeholder:text-[#6a6b6c] focus:outline-none focus:border-white/[0.18] focus:ring-1 focus:ring-white/[0.18] transition-all resize-none"
+                        className="w-full bg-[#0f1012]/[0.04] border border-[#0f1012]/[0.08] rounded-[10px] px-3 py-2 text-sm text-[#020201] placeholder:text-[#868788] focus:outline-none focus:border-[#0f1012]/[0.18] focus:ring-1 focus:ring-[#0071e3]/20 transition-all resize-none"
                         rows={2}
                         placeholder="Decision reason"
                       />
@@ -335,22 +345,22 @@ const CaseDetailPage: React.FC = () => {
           </section>
 
           <section>
-            <h2 className="text-sm font-semibold text-white uppercase tracking-wider mb-3">Timeline</h2>
+            <h2 className="text-sm font-medium text-[#0f1012] uppercase tracking-wider mb-3">Timeline</h2>
             <div className="space-y-3">
               {caseDetail.events.length === 0 ? (
-                <div className="border border-white/[0.08] rounded-xl p-4 text-[#6a6b6c] bg-[#07080a]">No events recorded.</div>
+                <div className="border border-[#0f1012]/[0.08] rounded-[10px] p-4 text-[#868788] bg-[#fdfdfd]">No events recorded.</div>
               ) : caseDetail.events.map((event) => (
-                <div key={event.id} className="border border-white/[0.08] rounded-xl p-4 bg-[#07080a]">
+                <div key={event.id} className="border border-[#0f1012]/[0.08] rounded-[10px] p-4 bg-[#fdfdfd]">
                   <div className="flex items-start gap-3">
-                    <div className="text-[#9c9c9d] mt-0.5 shrink-0">
+                    <div className="text-[#8f8f8f] mt-0.5 shrink-0">
                       {event.event_type.includes("resolved") || event.event_type.includes("completed") ? <FiCheckCircle /> : <FiClock />}
                     </div>
                     <div className="flex-1 min-w-0">
                       <div className="flex justify-between gap-3">
-                        <div className="text-white font-medium text-sm">{event.summary}</div>
-                        <div className="text-[#6a6b6c] text-xs font-mono whitespace-nowrap">{formatDate(event.created_at)}</div>
+                        <div className="text-[#0f1012] font-medium text-sm">{event.summary}</div>
+                        <div className="text-[#868788] text-xs whitespace-nowrap">{formatDate(event.created_at)}</div>
                       </div>
-                      <div className="text-[#6a6b6c] text-xs">{event.event_type} {event.flow_node_key ? `// ${event.flow_node_key}` : ""}</div>
+                      <div className="text-[#868788] text-xs">{event.event_type} {event.flow_node_key ? `// ${event.flow_node_key}` : ""}</div>
                     </div>
                   </div>
                 </div>
@@ -361,49 +371,49 @@ const CaseDetailPage: React.FC = () => {
 
         <div className="xl:col-span-3 space-y-6">
           <section>
-            <h2 className="text-sm font-semibold text-white uppercase tracking-wider mb-3">Case Data</h2>
-            <pre className="border border-white/[0.08] rounded-xl p-4 bg-[#07080a] text-[#9c9c9d] text-xs overflow-auto custom-scrollbar" style={{ maxHeight: 360 }}>
+            <h2 className="text-sm font-medium text-[#0f1012] uppercase tracking-wider mb-3">Case Data</h2>
+            <pre className="border border-[#0f1012]/[0.08] rounded-[10px] p-4 bg-[#fdfdfd] text-[#8f8f8f] text-xs overflow-auto custom-scrollbar" style={{ maxHeight: 360 }}>
               {formatJson(caseDetail.case_data_json)}
             </pre>
           </section>
 
           <section>
-            <h2 className="text-sm font-semibold text-white uppercase tracking-wider mb-3">Documents</h2>
+            <h2 className="text-sm font-medium text-[#0f1012] uppercase tracking-wider mb-3">Documents</h2>
             {!isAuditor && (
-              <div className="border border-white/[0.08] rounded-xl p-4 bg-[#07080a] mb-3">
+              <div className="border border-[#0f1012]/[0.08] rounded-[10px] p-4 bg-[#fdfdfd] mb-3">
                 <div className="grid grid-cols-1 md:grid-cols-3 gap-2 items-end">
                   <div>
-                    <label htmlFor="document-task" className="text-[#6a6b6c] text-[10px] uppercase font-mono mb-1 block tracking-wider">Task</label>
+                    <label htmlFor="document-task" className="text-[#868788] text-[10px] uppercase mb-1 block tracking-wider">Task</label>
                     <select
                       id="document-task"
                       value={selectedTaskId}
                       onChange={(event) => setSelectedTaskId(event.target.value)}
-                      className="w-full bg-white/[0.05] border border-white/[0.08] rounded-lg px-3 py-2 text-sm text-white focus:outline-none focus:border-white/[0.18] focus:ring-1 focus:ring-white/[0.18] transition-all"
+                      className="w-full bg-[#0f1012]/[0.04] border border-[#0f1012]/[0.08] rounded-[10px] px-3 py-2 text-sm text-[#020201] focus:outline-none focus:border-[#0f1012]/[0.18] focus:ring-1 focus:ring-[#0071e3]/20 transition-all"
                     >
-                      <option value="" className="bg-[#111214]">Case document</option>
+                      <option value="">Case document</option>
                       {caseDetail.tasks.map((task) => (
-                        <option key={task.id} value={task.id} className="bg-[#111214]">{task.title}</option>
+                        <option key={task.id} value={task.id}>{task.title}</option>
                       ))}
                     </select>
                   </div>
                   <div>
-                    <label htmlFor="document-type" className="text-[#6a6b6c] text-[10px] uppercase font-mono mb-1 block tracking-wider">Document Type</label>
+                    <label htmlFor="document-type" className="text-[#868788] text-[10px] uppercase mb-1 block tracking-wider">Document Type</label>
                     <input
                       id="document-type"
                       value={documentType}
                       onChange={(event) => setDocumentType(event.target.value)}
-                      className="w-full bg-white/[0.05] border border-white/[0.08] rounded-lg px-3 py-2 text-sm text-white placeholder:text-[#6a6b6c] focus:outline-none focus:border-white/[0.18] focus:ring-1 focus:ring-white/[0.18] transition-all"
+                      className="w-full bg-[#0f1012]/[0.04] border border-[#0f1012]/[0.08] rounded-[10px] px-3 py-2 text-sm text-[#020201] placeholder:text-[#868788] focus:outline-none focus:border-[#0f1012]/[0.18] focus:ring-1 focus:ring-[#0071e3]/20 transition-all"
                       placeholder="payment_instruction"
                     />
                   </div>
                   <div>
-                    <label htmlFor="document-file" className="text-[#6a6b6c] text-[10px] uppercase font-mono mb-1 block tracking-wider">File</label>
+                    <label htmlFor="document-file" className="text-[#868788] text-[10px] uppercase mb-1 block tracking-wider">File</label>
                     <input
                       id="document-file"
                       type="file"
                       accept=".pdf,.doc,.docx,application/pdf,application/msword,application/vnd.openxmlformats-officedocument.wordprocessingml.document"
                       onChange={(event) => setSelectedFile(event.target.files?.[0] ?? null)}
-                      className="w-full bg-white/[0.05] border border-white/[0.08] rounded-lg px-3 py-2 text-sm text-white file:bg-transparent file:border-0 file:text-sm file:font-medium file:text-[#9c9c9d] focus:outline-none focus:border-white/[0.18] focus:ring-1 focus:ring-white/[0.18] transition-all"
+                      className="w-full bg-[#0f1012]/[0.04] border border-[#0f1012]/[0.08] rounded-[10px] px-3 py-2 text-sm text-[#020201] file:bg-transparent file:border-0 file:text-sm file:font-medium file:text-[#8f8f8f] focus:outline-none focus:border-[#0f1012]/[0.18] focus:ring-1 focus:ring-[#0071e3]/20 transition-all"
                     />
                   </div>
                 </div>
@@ -420,19 +430,19 @@ const CaseDetailPage: React.FC = () => {
             )}
             <div className="space-y-3">
               {caseDetail.documents.length === 0 ? (
-                <div className="border border-white/[0.08] rounded-xl p-4 text-[#6a6b6c] bg-[#07080a]">No documents attached.</div>
+                <div className="border border-[#0f1012]/[0.08] rounded-[10px] p-4 text-[#868788] bg-[#fdfdfd]">No documents attached.</div>
               ) : caseDetail.documents.map((document) => (
-                <div key={document.id} className="border border-white/[0.08] rounded-xl p-4 bg-[#07080a] flex items-center gap-3 justify-between">
+                <div key={document.id} className="border border-[#0f1012]/[0.08] rounded-[10px] p-4 bg-[#fdfdfd] flex items-center gap-3 justify-between">
                   <div className="flex items-center gap-3 min-w-0">
-                    <FiFileText className="text-[#9c9c9d] shrink-0" />
+                    <FiFileText className="text-[#8f8f8f] shrink-0" />
                     <div className="min-w-0">
-                      <div className="text-white text-sm truncate">{document.filename}</div>
-                      <div className="text-[#6a6b6c] text-xs">{document.document_type || document.mime_type} // {formatDate(document.uploaded_at)}</div>
+                      <div className="text-[#0f1012] text-sm truncate">{document.filename}</div>
+                      <div className="text-[#868788] text-xs">{document.document_type || document.mime_type} // {formatDate(document.uploaded_at)}</div>
                     </div>
                   </div>
                   <button
                     type="button"
-                    className="p-2 text-[#6a6b6c] hover:text-white hover:bg-white/[0.05] rounded-lg transition-colors shrink-0"
+                    className="p-2 text-[#868788] hover:text-[#0f1012] hover:bg-[#0f1012]/[0.05] rounded-lg transition-colors shrink-0"
                     onClick={() => void runAction(`download-${document.id}`, async () => {
                       await downloadCaseDocument(document.id, document.filename);
                     })}
@@ -445,17 +455,17 @@ const CaseDetailPage: React.FC = () => {
           </section>
 
           <section>
-            <h2 className="text-sm font-semibold text-white uppercase tracking-wider mb-3">Escalations</h2>
+            <h2 className="text-sm font-medium text-[#0f1012] uppercase tracking-wider mb-3">Escalations</h2>
             <div className="space-y-3">
               {caseDetail.escalations.length === 0 ? (
-                <div className="border border-white/[0.08] rounded-xl p-4 text-[#6a6b6c] bg-[#07080a]">No escalations active.</div>
+                <div className="border border-[#0f1012]/[0.08] rounded-[10px] p-4 text-[#868788] bg-[#fdfdfd]">No escalations active.</div>
               ) : caseDetail.escalations.map((escalation) => (
-                <div key={escalation.id} className="border border-white/[0.08] rounded-xl p-4 bg-[#07080a]">
+                <div key={escalation.id} className="border border-[#0f1012]/[0.08] rounded-[10px] p-4 bg-[#fdfdfd]">
                   <div className="flex justify-between gap-3">
-                    <div className="text-white font-medium text-sm flex items-center gap-2"><FiAlertTriangle className="text-[#ff6363]" /> {escalation.reason}</div>
-                    <Badge variant={statusBadgeVariant(escalation.status)}>{escalation.status.replace(/_/g, " ")}</Badge>
+                    <div className="text-[#0f1012] font-medium text-sm flex items-center gap-2"><FiAlertTriangle className="text-[#b71c1c]" /> {escalation.reason}</div>
+                    <Badge variant={statusBadgeVariant(escalation.status)}>{formatLabel(escalation.status)}</Badge>
                   </div>
-                  <div className="text-[#6a6b6c] text-xs mt-2">{escalation.escalation_type} // {formatDate(escalation.triggered_at)}</div>
+                  <div className="text-[#868788] text-xs mt-2">{escalation.escalation_type} // {formatDate(escalation.triggered_at)}</div>
               {canManageCase && escalation.status === "triggered" && (
                     <Button
                       variant="secondary"
@@ -476,16 +486,16 @@ const CaseDetailPage: React.FC = () => {
           </section>
 
           <section>
-            <h2 className="text-sm font-semibold text-white uppercase tracking-wider mb-3">Case Controls</h2>
-            <div className="border border-white/[0.08] rounded-xl p-4 bg-[#07080a]">
+            <h2 className="text-sm font-medium text-[#0f1012] uppercase tracking-wider mb-3">Case Controls</h2>
+            <div className="border border-[#0f1012]/[0.08] rounded-[10px] p-4 bg-[#fdfdfd]">
               {isAuditor ? (
-                <div className="text-[#6a6b6c] text-sm">Auditor access is read-only for case controls.</div>
+                <div className="text-[#868788] text-sm">Auditor access is read-only for case controls.</div>
               ) : (
                 <>
                   <textarea
                     value={noteText}
                     onChange={(event) => setNoteText(event.target.value)}
-                    className="w-full bg-white/[0.05] border border-white/[0.08] rounded-lg px-3 py-2.5 text-sm text-white placeholder:text-[#6a6b6c] focus:outline-none focus:border-white/[0.18] focus:ring-1 focus:ring-white/[0.18] transition-all resize-none mb-3"
+                    className="w-full bg-[#0f1012]/[0.04] border border-[#0f1012]/[0.08] rounded-[10px] px-3 py-2.5 text-sm text-[#020201] placeholder:text-[#868788] focus:outline-none focus:border-[#0f1012]/[0.18] focus:ring-1 focus:ring-[#0071e3]/20 transition-all resize-none mb-3"
                     rows={3}
                     placeholder="Add a case note"
                   />

@@ -38,8 +38,8 @@ const VariableGrid: React.FC = () => {
     return (
         <div className="space-y-4">
              {/* Info Box */}
-            <div className="bg-blue-500/10 border border-blue-500/20 rounded-md p-3">
-                <p className="text-xs text-blue-200">
+            <div className="bg-[#0071e3]/5 border border-[#0071e3]/20 rounded-[10px] p-3">
+                <p className="text-xs text-[#0071e3]">
                     Click any variable below to copy it to your clipboard. You can paste these into any "Custom" field.
                 </p>
             </div>
@@ -50,13 +50,13 @@ const VariableGrid: React.FC = () => {
                         key={item.value}
                         type="button"
                         onClick={() => handleCopy(item.value)}
-                        className="flex items-center gap-2 p-2 rounded-lg border border-white/10 bg-navy-900 hover:bg-white/5 hover:border-cyan-glow/50 transition-all text-left group relative overflow-hidden"
+                        className="flex items-center gap-2 p-2 rounded-[10px] border border-[#0f1012]/[0.08] bg-[#fdfdfd] hover:bg-[#f2f2f4] hover:border-[#0071e3]/30 transition-all text-left group relative overflow-hidden"
                     >
-                        <div className={`p-1.5 rounded-md bg-white/5 text-zinc-400 group-hover:text-cyan-400 group-hover:bg-cyan-400/10 transition-colors`}>
+                        <div className={`p-1.5 rounded-[6px] bg-[#0f1012]/[0.04] text-[#868788] group-hover:text-[#0071e3] group-hover:bg-[#0071e3]/5 transition-colors`}>
                             {item.icon}
                         </div>
                         <div className="flex-1 min-w-0">
-                            <div className="text-xs font-medium text-zinc-200 group-hover:text-white truncate">
+                            <div className="text-xs font-medium text-[#8f8f8f] group-hover:text-[#0f1012] truncate">
                                 {item.label}
                             </div>
                         </div>
@@ -64,15 +64,15 @@ const VariableGrid: React.FC = () => {
                         {/* Status Icon */}
                         <div className="absolute right-2 top-1/2 -translate-y-1/2">
                              {copiedValue === item.value ? (
-                                <LuCheck className="size-4 text-emerald-400" />
+                                <LuCheck className="size-4 text-[#1b5e20]" />
                             ) : (
-                                <LuCopy className="size-3.5 text-zinc-600 opacity-0 group-hover:opacity-100 transition-opacity" />
+                                <LuCopy className="size-3.5 text-[#868788] opacity-0 group-hover:opacity-100 transition-opacity" />
                             )}
                         </div>
                        
                         {/* Copied Flash Effect */}
                         {copiedValue === item.value && (
-                            <div className="absolute inset-0 bg-emerald-500/10 animate-pulse" />
+                            <div className="absolute inset-0 bg-[#1b5e20]/5 animate-pulse" />
                         )}
                     </button>
                 ))}

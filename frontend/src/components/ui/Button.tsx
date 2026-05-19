@@ -3,19 +3,19 @@ import { cva, type VariantProps } from "class-variance-authority";
 import { cn } from "../../lib/utils";
 
 const buttonVariants = cva(
-  "inline-flex items-center justify-center gap-2 whitespace-nowrap rounded-lg text-sm font-medium transition-all duration-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white/18 disabled:pointer-events-none disabled:opacity-40",
+  "inline-flex items-center justify-center gap-2 whitespace-nowrap rounded-[10px] text-sm font-normal transition-all duration-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#0071e3]/25 disabled:pointer-events-none disabled:opacity-40",
   {
     variants: {
       variant: {
         primary:
-          "bg-[#e6e6e6] text-[#2f3031] hover:bg-white active:scale-[0.98] shadow-[rgba(0,0,0,0.03)_0px_7px_3px_0px,rgba(0,0,0,0.25)_0px_4px_4px_0px]",
+          "bg-[#0f1012] text-white hover:bg-[#020201] active:scale-[0.98]",
         secondary:
-          "bg-[#1b1c1e] text-white border border-white/[0.08] hover:bg-[#111214] hover:border-white/[0.18] active:scale-[0.98]",
+          "bg-[#fdfdfd] text-[#0f1012] border border-[#0f1012]/10 hover:border-[#0f1012]/20 hover:bg-white active:scale-[0.98] shadow-subtle",
         ghost:
-          "bg-transparent text-[#9c9c9d] hover:text-white hover:bg-white/5",
+          "bg-transparent text-[#8f8f8f] hover:text-[#0f1012] hover:bg-[#0f1012]/[0.04]",
         danger:
-          "bg-transparent text-[#ff6363] border border-[#ff6363]/20 hover:bg-[#452324]/30 hover:border-[#ff6363]/40 active:scale-[0.98]",
-        key: "bg-transparent text-[#6a6b6c] rounded-full px-5 py-5 shadow-[rgba(0,0,0,0.4)_0px_1.5px_0.5px_2.5px,rgb(0,0,0)_0px_0px_0.5px_1px,rgba(0,0,0,0.25)_0px_2px_1px_1px_inset,rgba(255,255,255,0.2)_0px_1px_1px_1px_inset] hover:text-white transition-colors",
+          "bg-transparent text-[#b71c1c] border border-[#b71c1c]/20 hover:bg-[#ffebee] hover:border-[#b71c1c]/40 active:scale-[0.98]",
+        key: "bg-transparent text-[#868788] rounded-full px-5 py-5 shadow-subtle hover:text-[#0f1012] transition-colors",
       },
       size: {
         sm: "h-8 px-3 text-xs",
@@ -41,6 +41,7 @@ const Button = React.forwardRef<HTMLButtonElement, ButtonProps>(
   ({ className, variant, size, ...props }, ref) => {
     return (
       <button
+        type={props.type ?? "button"}
         className={cn(buttonVariants({ variant, size, className }))}
         ref={ref}
         {...props}

@@ -159,11 +159,11 @@ export default function AuditLogPage() {
   };
 
   const getActionStyles = (action: string) => {
-    if (action.includes("create")) return "text-[#59d499] border-[#59d499]/20 bg-[#0d2b1a]";
-    if (action.includes("update")) return "text-white border-white/[0.08] bg-[#111214]";
-    if (action.includes("delete")) return "text-[#ff6363] border-[#ff6363]/20 bg-[#452324]";
-    if (action.includes("login")) return "text-[#9c9c9d] border-white/[0.08] bg-[#07080a]";
-    return "text-[#6a6b6c] border-white/[0.08] bg-[#07080a]";
+    if (action.includes("create")) return "text-[#1b5e20] border-[#1b5e20]/20 bg-[#e8f5e9]";
+    if (action.includes("update")) return "text-[#0f1012] border-[#0f1012]/[0.10] bg-[#f2f2f4]";
+    if (action.includes("delete")) return "text-[#b71c1c] border-[#b71c1c]/20 bg-[#ffebee]";
+    if (action.includes("login")) return "text-[#8f8f8f] border-[#0f1012]/[0.08] bg-[#fdfdfd]";
+    return "text-[#868788] border-[#0f1012]/[0.08] bg-[#fdfdfd]";
   };
 
   const formatActionName = (action: string) => {
@@ -181,15 +181,15 @@ export default function AuditLogPage() {
   };
 
   const formatValue = (value: unknown): React.ReactNode => {
-    if (value === null || value === undefined) return <span className="text-[#6a6b6c] font-mono">-</span>;
+    if (value === null || value === undefined) return <span className="text-[#868788] font-mono">-</span>;
 
     if (typeof value === 'boolean') {
       return value ? (
-        <span className="inline-flex items-center px-2 py-0.5 text-[9px] font-semibold font-mono uppercase tracking-widest bg-[#0d2b1a] text-[#59d499] border border-[#59d499]/20 rounded">
+        <span className="inline-flex items-center px-2 py-0.5 text-[9px] font-medium font-mono uppercase tracking-widest bg-[#e8f5e9] text-[#1b5e20] border border-[#1b5e20]/20 rounded">
           TRUE
         </span>
       ) : (
-        <span className="inline-flex items-center px-2 py-0.5 text-[9px] font-semibold font-mono uppercase tracking-widest bg-[#452324] text-[#ff6363] border border-[#ff6363]/20 rounded">
+        <span className="inline-flex items-center px-2 py-0.5 text-[9px] font-medium font-mono uppercase tracking-widest bg-[#ffebee] text-[#b71c1c] border border-[#b71c1c]/20 rounded">
           FALSE
         </span>
       );
@@ -198,11 +198,11 @@ export default function AuditLogPage() {
     if (typeof value === 'object' && !Array.isArray(value)) {
         const obj = value as Record<string, unknown>;
         return (
-             <div className="flex flex-col gap-1 border-l border-white/[0.08] pl-2">
+             <div className="flex flex-col gap-1 border-l border-[#0f1012]/[0.08] pl-2">
                 {Object.entries(obj).map(([k, v]) => (
                     <div key={k} className="flex gap-2 text-[10px] font-mono">
-                        <span className="text-[#6a6b6c]">{formatKey(k)}:</span>
-                        <span className="text-white">{formatValue(v)}</span>
+                        <span className="text-[#868788]">{formatKey(k)}:</span>
+                        <span className="text-[#0f1012]">{formatValue(v)}</span>
                     </div>
                 ))}
             </div>
@@ -268,31 +268,31 @@ export default function AuditLogPage() {
 
   if (!user || user.role?.name !== "Admin") {
     return (
-      <div className="flex items-center justify-center h-full bg-[#040506]">
-        <div className="p-10 border border-[#ff6363]/20 bg-[#452324]/10 text-center max-w-md rounded-2xl">
-            <FiShield className="mx-auto text-5xl text-[#ff6363] mb-6" />
-            <h2 className="text-2xl font-semibold font-mono text-white mb-2 uppercase tracking-widest">Access Denied</h2>
-            <p className="text-[#ff6363] font-mono text-sm">Administrator privileges required.</p>
+      <div className="flex items-center justify-center h-full bg-[#f2f2f4]">
+        <div className="p-10 border border-[#b71c1c]/20 bg-[#ffebee]/30 text-center max-w-md rounded-[10px]">
+            <FiShield className="mx-auto text-5xl text-[#b71c1c] mb-6" />
+                    <h2 className="text-2xl font-medium text-[#0f1012] mb-2 uppercase tracking-widest">Access Denied</h2>
+                    <p className="text-[#b71c1c] text-sm">Administrator privileges required.</p>
         </div>
       </div>
     );
   }
 
   return (
-    <div className="h-full flex flex-col bg-[#040506] text-white overflow-hidden relative font-sans">
+    <div className="h-full flex flex-col bg-[#f2f2f4] text-[#0f1012] overflow-hidden relative font-sans">
         {/* Header */}
-        <div className="px-8 py-6 border-b border-white/[0.08] z-10 shrink-0 bg-[#07080a]">
+        <div className="px-8 py-6 border-b border-[#0f1012]/[0.08] z-10 shrink-0 bg-[#fdfdfd]">
             <div className="flex flex-col md:flex-row md:items-end justify-between gap-6">
                 <div>
                    <div className="flex items-center gap-3 mb-2">
-                        <div className="size-10 flex items-center justify-center border border-white/[0.08] bg-[#111214] text-white rounded-lg">
+                        <div className="size-10 flex items-center justify-center border border-[#0f1012]/[0.08] bg-[#f2f2f4] text-[#0f1012] rounded-[10px]">
                             <FiShield size={20} />
                         </div>
-                        <h1 className="text-2xl font-semibold tracking-tight text-white font-mono flex items-center gap-3">
+                        <h1 className="text-2xl font-medium tracking-tight text-[#0f1012] flex items-center gap-3">
                             Security Audit Log
                         </h1>
                    </div>
-                   <p className="text-[#6a6b6c] text-xs font-mono tracking-widest uppercase pl-14">
+                   <p className="text-[#868788] text-xs tracking-widest uppercase pl-14">
                         System Access & Modification Records
                    </p>
                 </div>
@@ -301,42 +301,42 @@ export default function AuditLogPage() {
                 <div className="flex flex-wrap gap-2">
                     <div className="relative group">
                         <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                            <FiFilter className="text-[#6a6b6c]" size={14} />
+                            <FiFilter className="text-[#868788]" size={14} />
                         </div>
                         <select 
                             value={filters.eventType}
                             onChange={(e) => setFilters(prev => ({ ...prev, eventType: e.target.value }))}
-                            className="pl-9 pr-8 py-2 bg-[#111214] border border-white/[0.08] text-xs font-mono text-[#9c9c9d] focus:outline-none focus:border-white/[0.18] appearance-none hover:bg-[#1b1c1e] transition-colors cursor-pointer min-w-[180px] uppercase tracking-wider rounded-lg"
+                             className="pl-9 pr-8 py-2 bg-[#f2f2f4] border border-[#0f1012]/[0.08] text-xs text-[#8f8f8f] focus:outline-none focus:border-[#0f1012]/[0.18] appearance-none hover:bg-[#fdfdfd] transition-colors cursor-pointer min-w-[180px] uppercase tracking-wider rounded-[10px]"
                         >
-                            <option value="" className="bg-[#111214]">All Events</option>
-                            <option value="flow_created" className="bg-[#111214]">Flow Created</option>
-                            <option value="flow_updated" className="bg-[#111214]">Flow Updated</option>
-                            <option value="flow_deleted" className="bg-[#111214]">Flow Deleted</option>
-                    <option value="case_created" className="bg-[#111214]">Case Created</option>
-                    <option value="case_completed" className="bg-[#111214]">Case Completed</option>
-                    <option value="approval_decided" className="bg-[#111214]">Approval Decided</option>
-                            <option value="user_login" className="bg-[#111214]">User Login</option>
+                            <option value="">All Events</option>
+                            <option value="flow_created">Flow Created</option>
+                            <option value="flow_updated">Flow Updated</option>
+                            <option value="flow_deleted">Flow Deleted</option>
+                    <option value="case_created">Case Created</option>
+                    <option value="case_completed">Case Completed</option>
+                    <option value="approval_decided">Approval Decided</option>
+                            <option value="user_login">User Login</option>
                         </select>
-                        <div className="absolute inset-y-0 right-0 pr-2 flex items-center pointer-events-none text-[#6a6b6c]">
+                        <div className="absolute inset-y-0 right-0 pr-2 flex items-center pointer-events-none text-[#868788]">
                             <FiChevronRight className="rotate-90" size={12}/>
                         </div>
                     </div>
 
                     <div className="relative group">
                         <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                            <FiSearch className="text-[#6a6b6c]" size={14} />
+                            <FiSearch className="text-[#868788]" size={14} />
                         </div>
                         <select 
                             value={filters.targetType}
                             onChange={(e) => setFilters(prev => ({ ...prev, targetType: e.target.value }))}
-                            className="pl-9 pr-8 py-2 bg-[#111214] border border-white/[0.08] text-xs font-mono text-[#9c9c9d] focus:outline-none focus:border-white/[0.18] appearance-none hover:bg-[#1b1c1e] transition-colors cursor-pointer min-w-[150px] uppercase tracking-wider rounded-lg"
+                             className="pl-9 pr-8 py-2 bg-[#f2f2f4] border border-[#0f1012]/[0.08] text-xs text-[#8f8f8f] focus:outline-none focus:border-[#0f1012]/[0.18] appearance-none hover:bg-[#fdfdfd] transition-colors cursor-pointer min-w-[150px] uppercase tracking-wider rounded-[10px]"
                         >
-                            <option value="" className="bg-[#111214]">All Targets</option>
-                            <option value="flow" className="bg-[#111214]">Flow</option>
-                    <option value="case" className="bg-[#111214]">Case</option>
-                            <option value="user" className="bg-[#111214]">User</option>
+                            <option value="">All Targets</option>
+                            <option value="flow">Flow</option>
+                    <option value="case">Case</option>
+                            <option value="user">User</option>
                         </select>
-                        <div className="absolute inset-y-0 right-0 pr-2 flex items-center pointer-events-none text-[#6a6b6c]">
+                        <div className="absolute inset-y-0 right-0 pr-2 flex items-center pointer-events-none text-[#868788]">
                             <FiChevronRight className="rotate-90" size={12}/>
                         </div>
                     </div>
@@ -346,7 +346,7 @@ export default function AuditLogPage() {
                         <button 
                             onClick={handleExportCSV}
                             disabled={logs.length === 0}
-                            className="px-3 py-2 bg-[#111214] border border-white/[0.08] text-xs font-mono text-[#9c9c9d] hover:bg-[#1b1c1e] hover:border-white/[0.18] transition-colors disabled:opacity-40 disabled:cursor-not-allowed flex items-center gap-2 rounded-lg"
+                            className="px-3 py-2 bg-[#f2f2f4] border border-[#0f1012]/[0.08] text-xs text-[#8f8f8f] hover:bg-[#fdfdfd] hover:border-[#0f1012]/[0.18] transition-colors disabled:opacity-40 disabled:cursor-not-allowed flex items-center gap-2 rounded-[10px]"
                         >
                             <FiDownload size={12} />
                             CSV
@@ -354,14 +354,14 @@ export default function AuditLogPage() {
                         <button 
                             onClick={handleExportJSON}
                             disabled={logs.length === 0}
-                            className="px-3 py-2 bg-[#111214] border border-white/[0.08] text-xs font-mono text-[#9c9c9d] hover:bg-[#1b1c1e] hover:border-white/[0.18] transition-colors disabled:opacity-40 disabled:cursor-not-allowed flex items-center gap-2 rounded-lg"
+                            className="px-3 py-2 bg-[#f2f2f4] border border-[#0f1012]/[0.08] text-xs text-[#8f8f8f] hover:bg-[#fdfdfd] hover:border-[#0f1012]/[0.18] transition-colors disabled:opacity-40 disabled:cursor-not-allowed flex items-center gap-2 rounded-[10px]"
                         >
                             <FiDownload size={12} />
                             JSON
                         </button>
                         <button 
                             onClick={() => setShowPurgeModal(true)}
-                            className="px-3 py-2 bg-[#452324]/30 border border-[#ff6363]/20 text-xs font-mono text-[#ff6363] hover:bg-[#452324]/50 hover:border-[#ff6363]/40 transition-colors flex items-center gap-2 rounded-lg"
+                            className="px-3 py-2 bg-[#ffebee]/50 border border-[#b71c1c]/20 text-xs text-[#b71c1c] hover:bg-[#ffebee] hover:border-[#b71c1c]/40 transition-colors flex items-center gap-2 rounded-[10px]"
                         >
                             <FiTrash2 size={12} />
                             Purge Old
@@ -373,41 +373,41 @@ export default function AuditLogPage() {
 
         {/* Success Banner */}
         {purgeSuccess && (
-            <div className="mx-8 mt-4 p-3 bg-[#0d2b1a]/40 border border-[#59d499]/20 rounded-lg flex items-center gap-2 z-10">
-                <FiShield className="text-[#59d499]" />
-                <span className="text-sm text-[#59d499]">{purgeSuccess}</span>
+            <div className="mx-8 mt-4 p-3 bg-[#e8f5e9]/40 border border-[#1b5e20]/20 rounded-[10px] flex items-center gap-2 z-10">
+                <FiShield className="text-[#1b5e20]" />
+                <span className="text-sm text-[#1b5e20]">{purgeSuccess}</span>
             </div>
         )}
 
         {/* Purge Confirmation Modal */}
         {showPurgeModal && (
-            <div className="fixed inset-0 z-50 flex items-center justify-center bg-[#040506]/60 backdrop-blur-sm">
-                <div className="bg-[#111214] border border-[#ff6363]/20 rounded-2xl p-6 w-[450px] shadow-2xl space-y-4">
+            <div className="fixed inset-0 z-50 flex items-center justify-center bg-[#0f1012]/20 backdrop-blur-sm">
+                <div className="bg-[#fdfdfd] border border-[#b71c1c]/20 rounded-[10px] p-6 w-[450px] shadow-elevated space-y-4">
                     <div className="flex items-center gap-3">
-                        <div className="size-12 flex items-center justify-center bg-[#ff6363]/10 border border-[#ff6363]/20 rounded-xl">
-                            <FiAlertTriangle className="text-[#ff6363] text-xl" />
+                        <div className="size-12 flex items-center justify-center bg-[#ffebee] border border-[#b71c1c]/20 rounded-[10px]">
+                            <FiAlertTriangle className="text-[#b71c1c] text-xl" />
                         </div>
                         <div>
-                            <h3 className="text-lg font-semibold text-white">Purge Old Logs?</h3>
-                            <p className="text-xs text-[#9c9c9d]">This action cannot be undone</p>
+                            <h3 className="text-lg font-medium text-[#0f1012]">Purge Old Logs?</h3>
+                            <p className="text-xs text-[#8f8f8f]">This action cannot be undone</p>
                         </div>
                     </div>
-                    <p className="text-sm text-[#9c9c9d] leading-relaxed">
-                        This will permanently delete all audit log records older than <strong className="text-[#ff6363]">90 days</strong>. 
+                    <p className="text-sm text-[#8f8f8f] leading-relaxed">
+                        This will permanently delete all audit log records older than <strong className="text-[#b71c1c]">90 days</strong>. 
                         The purge action itself will be logged for compliance.
                     </p>
                     <div className="flex gap-3 justify-end pt-2">
                         <button 
                             onClick={() => setShowPurgeModal(false)}
                             disabled={isPurging}
-                            className="px-4 py-2 rounded-lg text-sm font-medium text-[#9c9c9d] hover:text-white hover:bg-white/[0.05] transition-colors disabled:opacity-50"
+                            className="px-4 py-2 rounded-[10px] text-sm font-normal text-[#8f8f8f] hover:text-[#0f1012] hover:bg-[#0f1012]/[0.05] transition-colors disabled:opacity-50"
                         >
                             Cancel
                         </button>
                         <button 
                             onClick={handlePurgeLogs}
                             disabled={isPurging}
-                            className="px-4 py-2 rounded-lg text-sm font-semibold bg-[#ff6363] text-white hover:bg-[#ff6363]/90 transition-colors shadow-lg flex items-center gap-2 disabled:opacity-50"
+                            className="px-4 py-2 rounded-[10px] text-sm font-medium bg-[#b71c1c] text-white hover:bg-[#b71c1c]/90 transition-colors shadow-lg flex items-center gap-2 disabled:opacity-50"
                         >
                             {isPurging ? (
                                 <>
@@ -429,14 +429,14 @@ export default function AuditLogPage() {
       {/* Logs Feed */}
       <div className="flex-1 overflow-y-auto px-8 py-6 custom-scrollbar z-10 space-y-2">
         {loading ? (
-            <div className="flex flex-col items-center justify-center py-20 text-[#6a6b6c] gap-4">
+            <div className="flex flex-col items-center justify-center py-20 text-[#868788] gap-4">
                 <FiActivity className="animate-spin text-3xl opacity-50" />
-                <p className="font-mono text-xs uppercase tracking-widest">Decrypting Audit Trail...</p>
+                <p className="text-xs uppercase tracking-widest">Decrypting Audit Trail...</p>
             </div>
         ) : logs.length === 0 ? (
-            <div className="flex flex-col items-center justify-center py-24 text-[#6a6b6c] opacity-60">
+            <div className="flex flex-col items-center justify-center py-24 text-[#868788] opacity-60">
                 <FiDatabase className="text-4xl mb-4" />
-                <p className="font-mono text-xs uppercase tracking-widest">No Records Found</p>
+                <p className="text-xs uppercase tracking-widest">No Records Found</p>
             </div>
         ) : (
             <>
@@ -452,8 +452,8 @@ export default function AuditLogPage() {
                             style={{ animationDelay: `${idx * 20}ms` }}
                             className={`group relative overflow-hidden border-l-2 transition-all duration-300
                                 ${isExpanded 
-                                    ? 'bg-[#111214] border-l-white border-y border-r border-y-white/[0.08] border-r-white/[0.08]' 
-                                    : 'bg-[#07080a] border-l-[#363739] border-y border-r border-y-white/[0.04] border-r-white/[0.04] hover:border-l-white/[0.18] hover:bg-[#0a0b0d]'}
+                                    ? 'bg-[#f2f2f4] border-l-[#0f1012] border-y border-r border-y-[#0f1012]/[0.08] border-r-[#0f1012]/[0.08]' 
+                                    : 'bg-[#fdfdfd] border-l-[#0f1012]/[0.10] border-y border-r border-y-[#0f1012]/[0.04] border-r-[#0f1012]/[0.04] hover:border-l-[#0f1012]/[0.30] hover:bg-[#fdfdfd]'}
                             `}
                         >
                             <div className={`flex items-center gap-4 px-4 py-3 ${hasDetails ? 'cursor-pointer' : 'cursor-default'}`}
@@ -462,44 +462,44 @@ export default function AuditLogPage() {
                                  role={hasDetails ? "button" : undefined}
                                  tabIndex={hasDetails ? 0 : undefined}
                             >
-                                <div className={`size-8 flex items-center justify-center border ${actionStyles} transition-colors rounded-md`}>
+                                <div className={`size-8 flex items-center justify-center border ${actionStyles} transition-colors rounded-[6px]`}>
                                     {getActionIcon(log.action)}
                                 </div>
 
                                 <div className="flex-1 flex flex-wrap items-center gap-x-6 gap-y-1 min-w-0">
-                                    <span className="text-white font-semibold text-xs tracking-wider uppercase font-mono">
+                                    <span className="text-[#0f1012] font-medium text-xs tracking-wider uppercase">
                                         {formatActionName(log.action)}
                                     </span>
                                     
-                                    <div className="hidden sm:block h-3 w-px bg-white/[0.08]"></div>
+                                    <div className="hidden sm:block h-3 w-px bg-[#0f1012]/[0.08]"></div>
 
-                                    <div className="flex items-center gap-2 text-xs text-[#9c9c9d] font-mono">
-                                        <FiUser size={12} className="text-[#6a6b6c]"/>
-                                        <span className="text-[#9c9c9d] truncate max-w-[200px]">
+                                    <div className="flex items-center gap-2 text-xs text-[#8f8f8f] font-mono">
+                                        <FiUser size={12} className="text-[#868788]"/>
+                                        <span className="text-[#8f8f8f] truncate max-w-[200px]">
                                             {log.users?.email || `User ${log.actor_user_id || 'System'}`}
                                         </span>
                                     </div>
 
                                     {log.entity_type && (
                                         <div className="flex items-center gap-2">
-                                            <FiDatabase size={12} className="text-[#6a6b6c]" />
-                                            <div className="text-[10px] text-[#6a6b6c] font-mono flex items-center gap-1 uppercase">
+                                            <FiDatabase size={12} className="text-[#868788]" />
+                                            <div className="text-[10px] text-[#868788] font-mono flex items-center gap-1 uppercase">
                                                 <span>{log.entity_type}</span>
-                                                <span className="text-[#6a6b6c]">::</span>
-                                                <span className="text-[#9c9c9d]">#{log.entity_id}</span>
+                                                <span className="text-[#868788]">::</span>
+                                                <span className="text-[#8f8f8f]">#{log.entity_id}</span>
                                             </div>
                                         </div>
                                     )}
                                 </div>
 
                                 <div className="flex items-center gap-6 shrink-0">
-                                    <div className="flex items-center gap-2 text-[10px] text-[#6a6b6c] font-mono uppercase tracking-wider">
+                                    <div className="flex items-center gap-2 text-[10px] text-[#868788] font-mono uppercase tracking-wider">
                                         <span>{formatAuditDate(log.created_at)}</span>
-                                        <span className="text-[#9c9c9d]">{formatAuditTime(log.created_at)}</span>
+                                        <span className="text-[#8f8f8f]">{formatAuditTime(log.created_at)}</span>
                                     </div>
                                     
                                     {hasDetails && (
-                                        <div className={`text-[#6a6b6c] transition-transform duration-300 ${isExpanded ? 'rotate-90 text-white' : 'group-hover:text-[#9c9c9d]'}`}>
+                                        <div className={`text-[#868788] transition-transform duration-300 ${isExpanded ? 'rotate-90 text-[#0f1012]' : 'group-hover:text-[#8f8f8f]'}`}>
                                             <FiChevronRight size={16} />
                                         </div>
                                     )}
@@ -507,8 +507,8 @@ export default function AuditLogPage() {
                             </div>
 
                             {isExpanded && hasDetails && (
-                                <div className="border-t border-white/[0.08] bg-[#040506] px-6 py-4">
-                                    <div className="flex items-center gap-2 text-[9px] text-[#6a6b6c] mb-4 uppercase tracking-[0.2em] font-semibold border-b border-white/[0.06] pb-2">
+                                <div className="border-t border-[#0f1012]/[0.08] bg-[#fdfdfd] px-6 py-4">
+                                    <div className="flex items-center gap-2 text-[9px] text-[#868788] mb-4 uppercase tracking-[0.2em] font-medium border-b border-[#0f1012]/[0.06] pb-2">
                                         <FiCpu size={12} />
                                         <span>Packet Data Inspection</span>
                                     </div>
@@ -516,10 +516,10 @@ export default function AuditLogPage() {
                                     <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-y-6 gap-x-12">
                                         {Object.entries(details).map(([key, value]) => (
                                             <div key={key} className="flex flex-col gap-1 min-w-0">
-                                                <span className="text-[9px] text-[#6a6b6c] font-mono uppercase tracking-wider truncate border-l-2 border-white/[0.08] pl-2">
+                                                <span className="text-[9px] text-[#868788] font-mono uppercase tracking-wider truncate border-l-2 border-[#0f1012]/[0.08] pl-2">
                                                     {formatKey(key)}
                                                 </span>
-                                                <div className="text-xs text-white font-mono break-all pl-2.5">
+                                                <div className="text-xs text-[#0f1012] font-mono break-all pl-2.5">
                                                     {formatValue(value)}
                                                 </div>
                                             </div>
@@ -535,22 +535,22 @@ export default function AuditLogPage() {
       </div>
 
        {/* Pagination */}
-      <div className="flex items-center justify-between border-t border-white/[0.08] px-8 py-4 bg-[#07080a]">
-        <p className="text-[10px] text-[#6a6b6c] font-mono uppercase tracking-wider">
-            Displaying <span className="text-white">{logs.length}</span> / <span className="text-white">{total}</span> records
+      <div className="flex items-center justify-between border-t border-[#0f1012]/[0.08] px-8 py-4 bg-[#fdfdfd]">
+        <p className="text-[10px] text-[#868788] uppercase tracking-wider">
+            Displaying <span className="text-[#0f1012]">{logs.length}</span> / <span className="text-[#0f1012]">{total}</span> records
         </p>
         <div className="flex gap-1">
             <button
                 onClick={() => setOffset((prev) => Math.max(0, prev - limit))}
                 disabled={offset === 0}
-                className="p-2 border border-white/[0.08] bg-[#111214] text-[#6a6b6c] hover:text-white hover:bg-[#1b1c1e] disabled:opacity-20 disabled:cursor-not-allowed transition-all rounded-lg"
+                className="p-2 border border-[#0f1012]/[0.08] bg-[#f2f2f4] text-[#868788] hover:text-[#0f1012] hover:bg-[#fdfdfd] disabled:opacity-20 disabled:cursor-not-allowed transition-all rounded-[10px]"
             >
                 <FiChevronLeft size={14} />
             </button>
             <button
                 onClick={() => setOffset((prev) => prev + limit)}
                 disabled={offset + limit >= total}
-                className="p-2 border border-white/[0.08] bg-[#111214] text-[#6a6b6c] hover:text-white hover:bg-[#1b1c1e] disabled:opacity-20 disabled:cursor-not-allowed transition-all rounded-lg"
+                className="p-2 border border-[#0f1012]/[0.08] bg-[#f2f2f4] text-[#868788] hover:text-[#0f1012] hover:bg-[#fdfdfd] disabled:opacity-20 disabled:cursor-not-allowed transition-all rounded-[10px]"
             >
                 <FiChevronRight size={14} />
             </button>

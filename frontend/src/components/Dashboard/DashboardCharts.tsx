@@ -38,7 +38,7 @@ interface ActivityChartProps {
     color?: string;
 }
 
-export function ActivityChart({ data, color = "#9c9c9d" }: ActivityChartProps) {
+export function ActivityChart({ data, color = "#8f8f8f" }: ActivityChartProps) {
     const gradientId = `colorValue-${color.replace('#', '')}`;
     return (
         <div className="w-full h-[250px]">
@@ -50,30 +50,30 @@ export function ActivityChart({ data, color = "#9c9c9d" }: ActivityChartProps) {
                             <stop offset="95%" stopColor={color} stopOpacity={0}/>
                         </linearGradient>
                     </defs>
-                    <CartesianGrid strokeDasharray="3 3" stroke="#363739" opacity={0.3} vertical={false} />
+                    <CartesianGrid strokeDasharray="3 3" stroke="#e4e4e7" opacity={0.5} vertical={false} />
                     <XAxis 
                         dataKey="name" 
-                        stroke="#6a6b6c" 
+                        stroke="#868788" 
                         fontSize={10} 
                         tickLine={false} 
                         axisLine={false}
                         dy={10}
                     />
                     <YAxis 
-                        stroke="#6a6b6c" 
+                        stroke="#868788" 
                         fontSize={10} 
                         tickLine={false} 
                         axisLine={false}
                     />
                     <Tooltip 
                         contentStyle={{ 
-                            backgroundColor: '#111214', 
-                            borderColor: 'rgba(255,255,255,0.08)', 
-                            borderRadius: '8px', 
-                            boxShadow: 'rgba(0,0,0,0.4) 0px 4px 40px 8px' 
+                            backgroundColor: '#fdfdfd', 
+                            borderColor: 'rgba(15,16,18,0.08)', 
+                            borderRadius: '10px', 
+                            boxShadow: '0 8px 30px rgba(15,16,18,0.08)' 
                         }}
-                        itemStyle={{ color: '#ffffff', fontFamily: 'Geist Mono, monospace', fontSize: '12px' }}
-                        labelStyle={{ color: '#9c9c9d', marginBottom: '4px', fontSize: '10px', textTransform: 'uppercase' }}
+                        itemStyle={{ color: '#0f1012', fontFamily: 'JetBrains Mono, monospace', fontSize: '12px' }}
+                        labelStyle={{ color: '#8f8f8f', marginBottom: '4px', fontSize: '10px', textTransform: 'uppercase' }}
                     />
                     <Area 
                         type="monotone" 
@@ -115,11 +115,11 @@ export function StatusChart({ data }: StatusChartProps) {
                     </Pie>
                     <Tooltip 
                         contentStyle={{ 
-                            backgroundColor: '#111214', 
-                            borderColor: 'rgba(255,255,255,0.08)', 
-                            borderRadius: '8px'
+                            backgroundColor: '#fdfdfd', 
+                            borderColor: 'rgba(15,16,18,0.08)', 
+                            borderRadius: '10px'
                         }}
-                        itemStyle={{ color: '#ffffff', fontFamily: 'Geist Mono, monospace', fontSize: '12px' }}
+                        itemStyle={{ color: '#0f1012', fontFamily: 'JetBrains Mono, monospace', fontSize: '12px' }}
                     />
                     <Legend 
                         layout="vertical" 
@@ -127,16 +127,16 @@ export function StatusChart({ data }: StatusChartProps) {
                         align="right"
                         iconType="circle"
                         iconSize={8}
-                        wrapperStyle={{ fontSize: '11px', fontFamily: 'Geist Mono, monospace', textTransform: 'uppercase', letterSpacing: '0.1em', color: '#9c9c9d' }}
+                        wrapperStyle={{ fontSize: '11px', fontFamily: 'JetBrains Mono, monospace', textTransform: 'uppercase', letterSpacing: '0.1em', color: '#8f8f8f' }}
                     />
                 </PieChart>
             </ResponsiveContainer>
              {/* Center Text Overlay */}
              <div className="absolute inset-0 flex flex-col items-center justify-center pointer-events-none pr-14">
-                <span className="text-2xl font-semibold text-white font-mono">
+                <span className="text-2xl font-medium text-[#0f1012] font-mono">
                     {data.reduce((acc, curr) => acc + curr.value, 0)}
                 </span>
-                <span className="text-[9px] text-[#6a6b6c] font-mono uppercase tracking-widest">Total</span>
+                <span className="text-[9px] text-[#868788] font-mono uppercase tracking-widest">Total</span>
             </div>
         </div>
     );
@@ -149,7 +149,7 @@ interface SparklineProps {
     height?: number;
 }
 
-export function Sparkline({ data, color = "#9c9c9d", height = 40 }: SparklineProps) {
+export function Sparkline({ data, color = "#8f8f8f", height = 40 }: SparklineProps) {
     if (data.length === 0) return <div className="w-full" style={{ height }} />;
     const max = Math.max(...data.map((d) => d.value), 1);
     const points = data
@@ -189,10 +189,10 @@ export function VolumeChart({ data }: VolumeChartProps) {
         <div className="w-full h-[120px] mt-4">
              <ResponsiveContainer width="100%" height="100%">
                 <BarChart data={data} margin={{ top: 0, right: 0, left: -25, bottom: 0 }}>
-                    <CartesianGrid strokeDasharray="3 3" stroke="#363739" opacity={0.2} vertical={false} />
+                    <CartesianGrid strokeDasharray="3 3" stroke="#e4e4e7" opacity={0.3} vertical={false} />
                     <XAxis 
                         dataKey="name" 
-                        stroke="#6a6b6c" 
+                        stroke="#868788" 
                         fontSize={8} 
                         tickLine={false} 
                         axisLine={false}
@@ -200,24 +200,24 @@ export function VolumeChart({ data }: VolumeChartProps) {
                         interval={0}
                     />
                      <YAxis 
-                        stroke="#6a6b6c" 
+                        stroke="#868788" 
                         fontSize={8} 
                         tickLine={false} 
                         axisLine={false}
                     />
                     <Tooltip 
-                        cursor={{ fill: 'rgba(255,255,255,0.03)' }}
+                        cursor={{ fill: 'rgba(15,16,18,0.03)' }}
                         contentStyle={{ 
-                            backgroundColor: '#111214', 
-                            borderColor: 'rgba(255,255,255,0.08)', 
-                            borderRadius: '8px',
+                            backgroundColor: '#fdfdfd', 
+                            borderColor: 'rgba(15,16,18,0.08)', 
+                            borderRadius: '10px',
                             fontSize: '10px'
                         }}
-                        itemStyle={{ color: '#ffffff', fontFamily: 'Geist Mono, monospace' }}
+                        itemStyle={{ color: '#0f1012', fontFamily: 'JetBrains Mono, monospace' }}
                     />
                     <Bar 
                         dataKey="value" 
-                        fill="#9c9c9d"
+                        fill="#8f8f8f"
                         radius={[2, 2, 0, 0]} 
                         barSize={4}
                     />

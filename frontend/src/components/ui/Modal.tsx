@@ -16,12 +16,12 @@ const Modal: React.FC<ModalProps> = ({ isOpen, onClose, children, className }) =
       <button
         type="button"
         aria-label="Close modal"
-        className="absolute inset-0 bg-[#040506]/80 backdrop-blur-sm"
+        className="absolute inset-0 bg-[#0f1012]/20 backdrop-blur-sm"
         onClick={onClose}
       />
       <div
         className={cn(
-          "relative z-10 w-full max-w-lg rounded-2xl border border-white/[0.08] bg-[#111214] p-6 shadow-xl",
+          "relative z-10 w-full max-w-lg rounded-[10px] border border-[#0f1012]/[0.08] bg-[#fdfdfd] p-6 shadow-elevated",
           className
         )}
       >

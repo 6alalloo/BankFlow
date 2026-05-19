@@ -1,19 +1,25 @@
-import React, { useState } from "react";
+import { useState } from "react";
+import { flushSync } from "react-dom";
 import { NavLink, useNavigate, useLocation, Link } from "react-router-dom";
-import { FiGitBranch, FiBriefcase, FiZap, FiLogOut, FiUser, FiShield, FiBarChart2, FiHome, FiUsers, FiCheckSquare } from "react-icons/fi";
+import {
+  FiGitBranch, FiBriefcase, FiZap, FiLogOut, FiUser, FiShield, FiBarChart2, FiUsers, FiCheckSquare
+} from "react-icons/fi";
 import { useAuth } from "../contexts/AuthContext";
 import { createFlow, fetchFlows } from "../api/flows";
-import { Logo } from "../components/common/Logo";
 
-const Sidebar: React.FC = () => {
+const Sidebar = () => {
   const { user, logout } = useAuth();
   const navigate = useNavigate();
   const location = useLocation();
   const [isCreating, setIsCreating] = useState(false);
 
-  const handleLogout = () => {
-    logout();
-    navigate("/login");
+  const handleLogout = (event?: React.MouseEvent<HTMLAnchorElement> | React.PointerEvent<HTMLAnchorElement>) => {
+    event?.preventDefault();
+    event?.stopPropagation();
+    window.localStorage.removeItem("bankflow_token");
+    window.localStorage.removeItem("bankflow_user");
+    flushSync(() => logout());
+    navigate("/logout", { replace: true });
   };
 
   const handleBuilderClick = async (e: React.MouseEvent) => {
@@ -45,138 +51,174 @@ const Sidebar: React.FC = () => {
   const isBuilderActive = location.pathname.includes('/builder');
 
   const navLinkClass = (isActive: boolean) =>
-    "flex items-center gap-3 px-3 py-2.5 rounded-lg transition-all duration-200 group no-underline " +
+    "flex items-center gap-3 px-3 py-2.5 rounded-[10px] transition-all duration-200 group no-underline " +
     (isActive
-      ? "bg-[#111214] text-white font-medium border border-white/[0.08] shadow-[rgba(255,255,255,0.05)_0px_1px_0px_0px_inset,rgba(255,255,255,0.18)_0px_0px_0px_1px,rgba(0,0,0,0.2)_0px_-1px_0px_0px_inset]"
-      : "text-[#9c9c9d] hover:text-white hover:bg-white/[0.03]"
+      ? "bg-[#0f1012]/[0.06] text-[#0f1012] font-medium relative"
+      : "text-[#8f8f8f] hover:text-[#0f1012] hover:bg-[#0f1012]/[0.03]"
     );
 
   return (
-    <aside className="w-[260px] h-full flex flex-col bg-[#07080a] border-r border-white/[0.08] shrink-0 z-30">
+    <aside className="w-[240px] h-[100dvh] sticky top-0 flex flex-col shrink-0 z-30 bg-[#fdfdfd] border-r border-[#0f1012]/[0.06]">
       {/* Brand */}
-      <div className="p-5 shrink-0 border-b border-white/[0.08]">
-        <Link to="/" className="flex items-center gap-3 no-underline group">
-            <Logo style={{ width: '28px', height: 'auto' }} />
+      <div className="px-5 pt-6 pb-5 shrink-0">
+        <Link to="/dashboard" className="flex items-center gap-3 no-underline group">
+            <img src="/favicon.png" alt="" className="size-7" />
             <div>
-                <div className="font-semibold text-white tracking-tight leading-4 text-lg group-hover:text-white transition-colors">BankFlow</div>
-                <div className="text-[#6a6b6c] font-medium text-[10px] tracking-[0.2em] mt-1 whitespace-nowrap uppercase">Case Orchestration</div>
+                <div className="font-medium text-[#0f1012] tracking-tight leading-4 text-[15px] group-hover:text-[#0071e3] transition-colors">BankFlow</div>
+                <div className="text-[#868788] font-normal text-[9px] tracking-[0.15em] mt-0.5 whitespace-nowrap uppercase">Case Orchestration</div>
             </div>
         </Link>
       </div>
 
       {/* Navigation */}
-      <div className="flex-1 overflow-y-auto px-3 py-4 custom-scrollbar space-y-1">
-        <NavLink
-          to="/"
-          end
-          className={({ isActive }) => navLinkClass(isActive)}
-        >
-          <FiHome size={18} className="shrink-0" />
-          <span className="text-sm tracking-wide">Home</span>
-        </NavLink>
-
+      <div className="flex-1 overflow-y-auto px-3 py-2 custom-scrollbar space-y-0.5">
         <NavLink
           to="/dashboard"
           className={({ isActive }) => navLinkClass(isActive)}
         >
-          <FiBarChart2 size={18} className="shrink-0" />
-          <span className="text-sm tracking-wide">Dashboard</span>
+          {({ isActive }) => (
+            <>
+              {isActive && <span className="absolute left-0 top-1/2 -translate-y-1/2 w-[3px] h-5 bg-[#0071e3] rounded-r-full" />}
+              <FiBarChart2 size={18} strokeWidth={1.5} className="shrink-0" />
+              <span className="text-sm tracking-tight">Dashboard</span>
+            </>
+          )}
         </NavLink>
 
         <NavLink
           to="/flows"
           className={({ isActive }) => navLinkClass(isActive && !isBuilderActive)}
         >
-          <FiGitBranch size={18} className="shrink-0" />
-          <span className="text-sm tracking-wide">Flows</span>
+          {({ isActive }) => (
+            <>
+              {isActive && <span className="absolute left-0 top-1/2 -translate-y-1/2 w-[3px] h-5 bg-[#0071e3] rounded-r-full" />}
+              <FiGitBranch size={18} strokeWidth={1.5} className="shrink-0" />
+              <span className="text-sm tracking-tight">Flows</span>
+            </>
+          )}
         </NavLink>
 
         <a
           href="/builder"
           onClick={handleBuilderClick}
-          className={navLinkClass(isBuilderActive) + " cursor-pointer"}
+          className={navLinkClass(isBuilderActive) + " cursor-pointer relative"}
         >
-          <FiZap size={18} className="shrink-0" />
-          <span className="text-sm tracking-wide">{isCreating ? "Loading..." : "Builder"}</span>
+          {isBuilderActive && <span className="absolute left-0 top-1/2 -translate-y-1/2 w-[3px] h-5 bg-[#0071e3] rounded-r-full" />}
+          <FiZap size={18} strokeWidth={1.5} className="shrink-0" />
+          <span className="text-sm tracking-tight">{isCreating ? "Loading..." : "Builder"}</span>
         </a>
 
         <NavLink
           to="/cases"
           className={({ isActive }) => navLinkClass(isActive)}
         >
-          <FiBriefcase size={18} className="shrink-0" />
-          <span className="text-sm tracking-wide">Cases</span>
+          {({ isActive }) => (
+            <>
+              {isActive && <span className="absolute left-0 top-1/2 -translate-y-1/2 w-[3px] h-5 bg-[#0071e3] rounded-r-full" />}
+              <FiBriefcase size={18} strokeWidth={1.5} className="shrink-0" />
+              <span className="text-sm tracking-tight">Cases</span>
+            </>
+          )}
         </NavLink>
 
         <NavLink
           to="/tasks"
           className={({ isActive }) => navLinkClass(isActive)}
         >
-          <FiCheckSquare size={18} className="shrink-0" />
-          <span className="text-sm tracking-wide">My Tasks</span>
+          {({ isActive }) => (
+            <>
+              {isActive && <span className="absolute left-0 top-1/2 -translate-y-1/2 w-[3px] h-5 bg-[#0071e3] rounded-r-full" />}
+              <FiCheckSquare size={18} strokeWidth={1.5} className="shrink-0" />
+              <span className="text-sm tracking-tight">My Tasks</span>
+            </>
+          )}
         </NavLink>
 
         <NavLink
           to="/approvals"
           className={({ isActive }) => navLinkClass(isActive)}
         >
-          <FiShield size={18} className="shrink-0" />
-          <span className="text-sm tracking-wide">Approvals</span>
+          {({ isActive }) => (
+            <>
+              {isActive && <span className="absolute left-0 top-1/2 -translate-y-1/2 w-[3px] h-5 bg-[#0071e3] rounded-r-full" />}
+              <FiShield size={18} strokeWidth={1.5} className="shrink-0" />
+              <span className="text-sm tracking-tight">Approvals</span>
+            </>
+          )}
         </NavLink>
 
         {user?.role?.name === "Admin" && (
           <>
             <div className="pt-4 pb-2 px-3">
-              <span className="text-[10px] font-medium text-[#6a6b6c] uppercase tracking-[0.15em]">Administration</span>
+              <span className="text-[10px] font-normal text-[#868788] uppercase tracking-[0.15em]">Administration</span>
             </div>
             <NavLink
               to="/admin/audit-logs"
               className={({ isActive }) => navLinkClass(isActive)}
             >
-              <FiShield size={18} className="shrink-0" />
-              <span className="text-sm tracking-wide">Audit Logs</span>
+              {({ isActive }) => (
+                <>
+                  {isActive && <span className="absolute left-0 top-1/2 -translate-y-1/2 w-[3px] h-5 bg-[#0071e3] rounded-r-full" />}
+                  <FiShield size={18} strokeWidth={1.5} className="shrink-0" />
+                  <span className="text-sm tracking-tight">Audit Logs</span>
+                </>
+              )}
             </NavLink>
             <NavLink
               to="/admin/security"
               className={({ isActive }) => navLinkClass(isActive)}
             >
-              <FiShield size={18} className="shrink-0" />
-              <span className="text-sm tracking-wide">Security</span>
+              {({ isActive }) => (
+                <>
+                  {isActive && <span className="absolute left-0 top-1/2 -translate-y-1/2 w-[3px] h-5 bg-[#0071e3] rounded-r-full" />}
+                  <FiShield size={18} strokeWidth={1.5} className="shrink-0" />
+                  <span className="text-sm tracking-tight">Security</span>
+                </>
+              )}
             </NavLink>
             <NavLink
               to="/admin/users"
               className={({ isActive }) => navLinkClass(isActive)}
             >
-              <FiUsers size={18} className="shrink-0" />
-              <span className="text-sm tracking-wide">User Management</span>
+              {({ isActive }) => (
+                <>
+                  {isActive && <span className="absolute left-0 top-1/2 -translate-y-1/2 w-[3px] h-5 bg-[#0071e3] rounded-r-full" />}
+                  <FiUsers size={18} strokeWidth={1.5} className="shrink-0" />
+                  <span className="text-sm tracking-tight">User Management</span>
+                </>
+              )}
             </NavLink>
           </>
         )}
       </div>
 
       {/* User Info & Logout */}
-      <div className="p-3 shrink-0 border-t border-white/[0.08] bg-[#07080a]">
+      <div className="p-3 shrink-0 border-t border-[#0f1012]/[0.06]">
         {user && (
-          <div className="flex items-center gap-3 p-2 rounded-xl border border-white/[0.08] bg-[#111214] hover:bg-[#1b1c1e] transition-colors group cursor-default">
-              <div className="size-8 rounded-full bg-[#1b1c1e] flex items-center justify-center text-white border border-white/[0.08] shrink-0">
-                <FiUser size={14} />
+          <div className="flex items-center gap-3 p-2 rounded-[10px] bg-[#0f1012]/[0.03] hover:bg-[#0f1012]/[0.05] transition-colors group cursor-default">
+              <div className="size-8 rounded-full bg-[#f2f2f4] flex items-center justify-center text-[#0f1012] border border-[#0f1012]/[0.08] shrink-0">
+                <FiUser size={14} strokeWidth={1.5} />
               </div>
               <div className="flex-1 min-w-0">
-                <div className="text-[#9c9c9d] text-sm font-medium truncate group-hover:text-white transition-colors">
+                <div className="text-[#8f8f8f] text-sm font-normal truncate group-hover:text-[#0f1012] transition-colors">
                   {user.full_name}
                 </div>
-                <div className="text-[#6a6b6c] text-[10px] font-medium uppercase tracking-wider">
+                <div className="text-[#868788] text-[10px] font-normal uppercase tracking-wider">
                     {user.role.name}
                 </div>
               </div>
               
-              <button
+              <a
+                href="/logout"
+                role="button"
+                onPointerDown={handleLogout}
                 onClick={handleLogout}
-                className="size-8 flex items-center justify-center text-[#6a6b6c] hover:text-[#ff6363] hover:bg-[#452324]/30 rounded-lg transition-colors shrink-0"
+                className="size-8 flex items-center justify-center text-[#868788] hover:text-[#b71c1c] hover:bg-[#ffebee] rounded-lg transition-colors shrink-0"
+                aria-label="Sign out"
                 title="Sign out"
               >
-                <FiLogOut size={16} />
-              </button>
+                <FiLogOut size={16} strokeWidth={1.5} />
+              </a>
           </div>
         )}
       </div>

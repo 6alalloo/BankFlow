@@ -123,7 +123,7 @@ router.get("/", async (req: Request, res: Response) => {
       where,
       skip: pageQuery.skip,
       take: pageQuery.take,
-      orderBy: [{ due_at: "asc" }, { id: "desc" }],
+      orderBy: [{ id: "desc" }],
       include: {
         assigned_user: { select: { id: true, email: true, full_name: true } },
         assigned_team: true,

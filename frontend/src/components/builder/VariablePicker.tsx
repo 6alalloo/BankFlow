@@ -1,4 +1,3 @@
-
 // frontend/src/components/builder/VariablePicker.tsx
 // Component for picking variables from upstream nodes to insert into text fields
 
@@ -68,13 +67,13 @@ function getVariablesForNodeKind(kind: string, nodeId: number, nodeName: string)
 // Icon for each node kind
 function getNodeIcon(kind: string) {
     switch (kind.toLowerCase()) {
-        case "trigger": return <FiZap className="text-amber-400" />;
-        case "http": return <FiGlobe className="text-blue-400" />;
-        case "database": return <FiDatabase className="text-emerald-400" />;
-        case "email": return <FiMail className="text-purple-400" />;
-        case "datetime": return <FiClock className="text-cyan-400" />;
-        case "variable": return <FiBox className="text-orange-400" />;
-        default: return <FiCode className="text-zinc-400" />;
+        case "trigger": return <FiZap className="text-[#f57f17]" />;
+        case "http": return <FiGlobe className="text-[#0071e3]" />;
+        case "database": return <FiDatabase className="text-[#1b5e20]" />;
+        case "email": return <FiMail className="text-[#8f8f8f]" />;
+        case "datetime": return <FiClock className="text-[#868788]" />;
+        case "variable": return <FiBox className="text-[#8f8f8f]" />;
+        default: return <FiCode className="text-[#868788]" />;
     }
 }
 
@@ -104,7 +103,7 @@ export default function VariablePicker({ upstreamNodes, onInsert, disabled = fal
                 type="button"
                 onClick={() => setIsOpen(!isOpen)}
                 disabled={disabled}
-                className="px-2 py-1 text-xs font-medium text-cyan-400 border border-cyan-500/30 rounded bg-cyan-950/20 hover:bg-cyan-950/40 hover:border-cyan-500/50 transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-1"
+                className="px-2 py-1 text-xs font-medium text-[#0071e3] border border-[#0071e3]/30 rounded-[6px] bg-[#0071e3]/5 hover:bg-[#0071e3]/10 hover:border-[#0071e3]/50 transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-1"
                 title="Insert variable from upstream node"
             >
                 <FiBox size={12} />
@@ -113,23 +112,23 @@ export default function VariablePicker({ upstreamNodes, onInsert, disabled = fal
             </button>
 
             {isOpen && (
-                <div className="absolute z-50 mt-1 left-0 min-w-[280px] max-h-[320px] overflow-y-auto bg-[#0a0e1a] border border-white/10 rounded-lg shadow-2xl">
+                <div className="absolute z-50 mt-1 left-0 min-w-[280px] max-h-[320px] overflow-y-auto bg-[#fdfdfd] border border-[#0f1012]/[0.08] rounded-[10px] shadow-elevated">
                     {upstreamNodes.map((node) => (
-                        <div key={node.id} className="border-b border-white/5 last:border-b-0">
+                        <div key={node.id} className="border-b border-[#0f1012]/[0.06] last:border-b-0">
                             {/* Node Header */}
                             <button
                                 type="button"
                                 onClick={() => setExpandedNode(expandedNode === node.id ? null : node.id)}
-                                className="w-full px-3 py-2 flex items-center gap-2 text-left hover:bg-white/5 transition-colors"
+                                className="w-full px-3 py-2 flex items-center gap-2 text-left hover:bg-[#0f1012]/[0.02] transition-colors"
                             >
                                 {getNodeIcon(node.kind)}
-                                <span className="text-sm text-white font-medium truncate flex-1">
+                                <span className="text-sm text-[#0f1012] font-medium truncate flex-1">
                                     {node.name || node.kind}
                                 </span>
-                                <span className="text-[10px] text-zinc-500 uppercase">{node.kind}</span>
+                                <span className="text-[10px] text-[#868788] uppercase">{node.kind}</span>
                                 <FiChevronDown
                                     size={14}
-                                    className={`text-zinc-500 transition-transform ${expandedNode === node.id ? 'rotate-180' : ''}`}
+                                    className={`text-[#868788] transition-transform ${expandedNode === node.id ? 'rotate-180' : ''}`}
                                 />
                             </button>
 
@@ -144,13 +143,13 @@ export default function VariablePicker({ upstreamNodes, onInsert, disabled = fal
                                                 onInsert(variable.value);
                                                 setIsOpen(false);
                                             }}
-                                            className="w-full px-2 py-1.5 flex items-center gap-2 text-left rounded hover:bg-cyan-500/10 transition-colors group"
+                                            className="w-full px-2 py-1.5 flex items-center gap-2 text-left rounded-[6px] hover:bg-[#0071e3]/5 transition-colors group"
                                         >
-                                            <span className="text-xs text-cyan-400 group-hover:text-cyan-300">
+                                            <span className="text-xs text-[#0071e3] group-hover:text-[#0071e3]">
                                                 {variable.label}
                                             </span>
                                             {variable.description && (
-                                                <span className="text-[10px] text-zinc-500 ml-auto">
+                                                <span className="text-[10px] text-[#868788] ml-auto">
                                                     {variable.description}
                                                 </span>
                                             )}
@@ -162,7 +161,7 @@ export default function VariablePicker({ upstreamNodes, onInsert, disabled = fal
                     ))}
 
                     {/* Help Text */}
-                    <div className="px-3 py-2 text-[10px] text-zinc-500 bg-zinc-900/50">
+                    <div className="px-3 py-2 text-[10px] text-[#868788] bg-[#f2f2f4]">
                         Select a variable to insert into the field
                     </div>
                 </div>

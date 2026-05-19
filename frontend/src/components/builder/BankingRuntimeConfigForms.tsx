@@ -29,7 +29,7 @@ const FormField: React.FC<{
     children: React.ReactNode;
 }> = ({ label, children }) => (
     <div className="space-y-1">
-        <label className="flex items-center gap-1.5 text-[10px] font-semibold text-zinc-400 uppercase tracking-wide">
+        <label className="flex items-center gap-1.5 text-[10px] font-semibold text-[#868788] uppercase tracking-wide">
             {label}
         </label>
         {children}
@@ -46,7 +46,7 @@ const TextInput: React.FC<{
         value={value || ''}
         onChange={(e) => onChange(e.target.value)}
         placeholder={placeholder}
-        className="w-full bg-raycast-surface-2 border border-white/10 rounded-lg px-2.5 py-1.5 text-sm text-white focus:border-white/20 focus:outline-none transition-colors"
+        className="w-full bg-[#f2f2f4] border border-[#0f1012]/[0.08] rounded-[10px] px-2.5 py-1.5 text-sm text-[#0f1012] focus:border-[#0071e3]/40 focus:outline-none transition-colors"
     />
 );
 
@@ -60,7 +60,7 @@ const NumberInput: React.FC<{
         value={value ?? 0}
         onChange={(e) => onChange(parseInt(e.target.value) || 0)}
         min={min}
-        className="w-full bg-raycast-surface-2 border border-white/10 rounded-lg px-2.5 py-1.5 text-sm text-white focus:border-white/20 focus:outline-none transition-colors"
+        className="w-full bg-[#f2f2f4] border border-[#0f1012]/[0.08] rounded-[10px] px-2.5 py-1.5 text-sm text-[#0f1012] focus:border-[#0071e3]/40 focus:outline-none transition-colors"
     />
 );
 
@@ -73,7 +73,7 @@ const Select: React.FC<{
         <select
             value={value || options[0]?.value || ''}
             onChange={(e) => onChange(e.target.value)}
-            className="w-full bg-raycast-surface-2 border border-white/10 rounded-lg px-2.5 py-1.5 text-sm text-white focus:border-white/20 focus:outline-none transition-colors appearance-none cursor-pointer"
+            className="w-full bg-[#f2f2f4] border border-[#0f1012]/[0.08] rounded-[10px] px-2.5 py-1.5 text-sm text-[#0f1012] focus:border-[#0071e3]/40 focus:outline-none transition-colors appearance-none cursor-pointer"
         >
             {options.map((opt) => (
                 <option key={opt.value} value={opt.value}>
@@ -81,7 +81,7 @@ const Select: React.FC<{
                 </option>
             ))}
         </select>
-        <div className="absolute right-2.5 top-1/2 -translate-y-1/2 text-zinc-500 pointer-events-none">
+        <div className="absolute right-2.5 top-1/2 -translate-y-1/2 text-[#8f8f8f] pointer-events-none">
             <svg className="size-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
             </svg>
@@ -93,10 +93,10 @@ const InfoBox: React.FC<{
     children: React.ReactNode;
     variant?: 'info' | 'warning';
 }> = ({ children, variant = 'info' }) => (
-    <div className={`p-2 rounded-md border text-[10px] ${
+    <div className={`p-2 rounded-[6px] border text-[10px] ${
         variant === 'warning'
-            ? 'bg-raycast-surface-2 border-white/10 text-zinc-300'
-            : 'bg-raycast-surface-2 border-white/10 text-zinc-300'
+            ? 'bg-[#f2f2f4] border-[#0f1012]/[0.08] text-[#8f8f8f]'
+            : 'bg-[#f2f2f4] border-[#0f1012]/[0.08] text-[#8f8f8f]'
     }`}>
         {children}
     </div>
@@ -108,7 +108,7 @@ export const TaskConfigForm: React.FC<RuntimeConfigFormProps> = ({ node, localCo
             <strong>Blocking Case Task</strong>
             <p className="mt-1 opacity-80">The case runtime pauses here until this task is completed.</p>
         </InfoBox>
-        <div className="space-y-4 border-t border-white/5 pt-4">
+        <div className="space-y-4 border-t border-[#0f1012]/[0.08] pt-4">
             <FormField label="Task Title">
                 <TextInput
                     value={getString(localConfig, 'title', node.name)}
@@ -161,7 +161,7 @@ export const ApprovalConfigForm: React.FC<RuntimeConfigFormProps> = ({ node, loc
             <strong>Approval Gate</strong>
             <p className="mt-1 opacity-80">The case runtime pauses until the requested approval is approved or rejected.</p>
         </InfoBox>
-        <div className="space-y-4 border-t border-white/5 pt-4">
+        <div className="space-y-4 border-t border-[#0f1012]/[0.08] pt-4">
             <FormField label="Approval Label">
                 <TextInput
                     value={getString(localConfig, 'label', node.name)}
@@ -187,7 +187,7 @@ export const ApprovalConfigForm: React.FC<RuntimeConfigFormProps> = ({ node, loc
 export const RoutingConfigForm: React.FC<RuntimeConfigFormProps> = ({ localConfig, handleChange }) => (
     <div className="space-y-5">
         <InfoBox>Assign the case to a user or queue without creating a blocking task.</InfoBox>
-        <div className="grid grid-cols-2 gap-3 border-t border-white/5 pt-4">
+        <div className="grid grid-cols-2 gap-3 border-t border-[#0f1012]/[0.08] pt-4">
             <FormField label="Assigned User ID">
                 <NumberInput value={getNumber(localConfig, 'assignedUserId', 0)} onChange={(val) => handleChange('assignedUserId', val || null)} min={0} />
             </FormField>
@@ -210,7 +210,7 @@ export const SlaConfigForm: React.FC<RuntimeConfigFormProps> = ({ localConfig, h
 export const EscalationConfigForm: React.FC<RuntimeConfigFormProps> = ({ localConfig, handleChange }) => (
     <div className="space-y-5">
         <InfoBox variant="warning">Escalate the case and assign it to a target user or team.</InfoBox>
-        <div className="space-y-4 border-t border-white/5 pt-4">
+        <div className="space-y-4 border-t border-[#0f1012]/[0.08] pt-4">
             <FormField label="Reason">
                 <TextInput value={getString(localConfig, 'reason', 'Case escalated')} onChange={(val) => handleChange('reason', val)} />
             </FormField>

@@ -93,8 +93,8 @@ const FlowSplitLayout: React.FC<FlowSplitLayoutProps> = ({
 
     if (isLoading) {
         return (
-            <div className="flex items-center justify-center h-full text-[#9c9c9d]">
-                <div className="animate-spin size-5 border-2 border-white/20 border-t-white rounded-full mr-3"/>
+            <div className="flex items-center justify-center h-full text-[#8f8f8f]">
+                <div className="animate-spin size-5 border-2 border-[#0f1012]/20 border-t-[#0071e3] rounded-full mr-3"/>
                 Loading flows...
             </div>
         );
@@ -102,7 +102,7 @@ const FlowSplitLayout: React.FC<FlowSplitLayoutProps> = ({
 
     if (error) {
         return (
-            <div className="flex items-center justify-center h-full text-[#ff6363]">
+            <div className="flex items-center justify-center h-full text-[#b71c1c]">
                 Error: {error}
             </div>
         );
@@ -110,8 +110,8 @@ const FlowSplitLayout: React.FC<FlowSplitLayoutProps> = ({
 
     return (
         <>
-            <div className="flex flex-col 2xl:flex-row h-[calc(100vh-56px)] overflow-auto 2xl:overflow-hidden bg-[#040506] text-white">
-                <div className="w-full 2xl:w-[520px] flex-shrink-0 h-[360px] 2xl:h-full">
+            <div className="flex flex-col lg:flex-row h-full overflow-hidden bg-[#f2f2f4] text-[#0f1012]">
+                <div className="w-full lg:w-[420px] xl:w-[480px] flex-shrink-0 h-[300px] lg:h-full border-b lg:border-b-0 lg:border-r border-[#0f1012]/[0.06]">
                     <FlowListSidebar 
                         flows={flows}
                         activeFlowId={selectedId}
@@ -126,7 +126,7 @@ const FlowSplitLayout: React.FC<FlowSplitLayoutProps> = ({
                     />
                 </div>
 
-                <div className="flex-1 h-[calc(100vh-424px)] min-h-[640px] 2xl:h-full min-w-0">
+                <div className="flex-1 h-full min-w-0 overflow-hidden">
                     <FlowDetailPanel
                         flow={selectedFlow}
                         onDelete={onDelete}

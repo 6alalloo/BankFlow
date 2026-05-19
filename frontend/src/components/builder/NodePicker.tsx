@@ -1,9 +1,7 @@
-import React, { useState } from 'react';
-import {
-    LuMail, LuGlobe, LuSplit, LuDatabase, LuClock, LuX, LuZap, LuInfo, LuTerminal, LuCalendar, LuBox,
-    LuClipboardCheck, LuFileCheck, LuGitBranch, LuRoute, LuShieldCheck, LuTriangleAlert, LuUserCheck
-} from 'react-icons/lu';
+import { useState, useEffect, useRef, useMemo } from 'react';
+import { LuX, LuSearch, LuCommand } from 'react-icons/lu';
 import { LazyMotion, domAnimation, m, AnimatePresence } from 'framer-motion';
+import { NODE_TYPES, type NodeTypeDef } from './nodePickerOptions';
 
 type NodePickerProps = {
     isOpen: boolean;
@@ -12,107 +10,138 @@ type NodePickerProps = {
     position?: { x: number; y: number } | null;
 };
 
-const NODE_TYPES = [
-    { kind: 'trigger', label: 'Trigger', icon: LuZap, description: "Starts the flow. Configure your case intake values here." },
-    { kind: 'review', label: 'Review Task', icon: LuClipboardCheck, description: "Creates a blocking operational review task." },
-    { kind: 'data_capture', label: 'Data Capture', icon: LuDatabase, description: "Creates a task to collect structured case data." },
-    { kind: 'document_collection', label: 'Documents', icon: LuFileCheck, description: "Creates a task for required case documents." },
-    { kind: 'approval', label: 'Approval', icon: LuShieldCheck, description: "Requests an approval before the case can continue." },
-    { kind: 'condition', label: 'Condition', icon: LuSplit, description: "Branches flow based on logic (If/Else)." },
-    { kind: 'routing', label: 'Route Case', icon: LuRoute, description: "Updates the case assignee or queue." },
-    { kind: 'sla', label: 'SLA Timer', icon: LuClock, description: "Sets the due date for the next blocking step." },
-    { kind: 'escalation', label: 'Escalation', icon: LuTriangleAlert, description: "Escalates the case to a user or team." },
-    { kind: 'status_update', label: 'Status Update', icon: LuGitBranch, description: "Updates case status or completes the runtime." },
-    { kind: 'email', label: 'Send Email', icon: LuMail, description: "Records or requests an email notification." },
-    { kind: 'http', label: 'HTTP Request', icon: LuGlobe, description: "Records or requests an external API call." },
-    { kind: 'database', label: 'Database', icon: LuDatabase, description: "Records or requests a database operation." },
-    { kind: 'variable', label: 'Set Variable', icon: LuBox, description: "Store and manipulate data for use in later steps." },
-    { kind: 'wait', label: 'Delay / Wait', icon: LuClock, description: "Sets a due date for the next blocking step." },
-    { kind: 'datetime', label: 'Date / Time', icon: LuCalendar, description: "Format, calculate, or get current date/time." },
-    { kind: 'approval_support', label: 'Approval Prep', icon: LuUserCheck, description: "Creates a task to prepare an approval package." },
-    { kind: 'logger', label: 'Logger', icon: LuTerminal, description: "Writes an audit-style log entry for traceability." },
-];
+const CATEGORY_LABELS: Record<string, string> = {
+    case: 'Case Steps',
+    decision: 'Decisions',
+    utility: 'Utilities',
+};
 
-const NodePicker: React.FC<NodePickerProps> = ({ isOpen, onClose, onSelect, position }) => {
-    const [hoveredInfo, setHoveredInfo] = useState<{text: string, x: number, y: number} | null>(null);
+const CATEGORY_ORDER = ['case', 'decision', 'utility'];
+
+export default function NodePicker({ isOpen, onClose, onSelect, position }: NodePickerProps) {
+    const [query, setQuery] = useState('');
+    const inputRef = useRef<HTMLInputElement>(null);
+
+    useEffect(() => {
+        if (isOpen) {
+            setQuery('');
+            setTimeout(() => inputRef.current?.focus(), 50);
+        }
+    }, [isOpen]);
+
+    useEffect(() => {
+        if (!isOpen) return;
+        const handleKey = (e: KeyboardEvent) => {
+            if (e.key === 'Escape') onClose();
+        };
+        document.addEventListener('keydown', handleKey);
+        return () => document.removeEventListener('keydown', handleKey);
+    }, [isOpen, onClose]);
+
+    const filtered = useMemo(() => {
+        const q = query.toLowerCase().trim();
+        if (!q) return NODE_TYPES;
+        return NODE_TYPES.filter(
+            (t) =>
+                t.label.toLowerCase().includes(q) ||
+                t.kind.toLowerCase().includes(q) ||
+                t.description.toLowerCase().includes(q)
+        );
+    }, [query]);
+
+    const grouped = useMemo(() => {
+        const map: Record<string, NodeTypeDef[]> = {};
+        filtered.forEach((t) => {
+            if (!map[t.category]) map[t.category] = [];
+            map[t.category].push(t);
+        });
+        return CATEGORY_ORDER.filter((c) => map[c]?.length > 0).map((c) => ({
+            category: c,
+            label: CATEGORY_LABELS[c],
+            items: map[c],
+        }));
+    }, [filtered]);
 
     if (!isOpen) return null;
 
-    const style = position 
-        ? { position: 'absolute' as const, left: position.x, top: position.y, transform: 'translate(20px, -50%)' }
-        : {};
-
-    const containerClasses = position
-        ? "z-50 w-[300px] overflow-visible"
-        : "fixed inset-0 z-50 flex items-center justify-center bg-[#040506]/50 backdrop-blur-sm";
-
     const content = (
-        <m.div 
-            initial={{ opacity: 0, scale: 0.95, x: -10 }}
-            animate={{ opacity: 1, scale: 1, x: 0 }}
-            exit={{ opacity: 0, scale: 0.95, x: -10 }}
-            className="bg-[#111214] border border-white/[0.08] rounded-2xl shadow-2xl w-[420px] relative z-50" 
-            onClick={e => e.stopPropagation()}
-            style={position ? style : {}}
+        <m.div
+            initial={{ opacity: 0, scale: 0.96, y: 8 }}
+            animate={{ opacity: 1, scale: 1, y: 0 }}
+            exit={{ opacity: 0, scale: 0.96, y: 8 }}
+            transition={{ type: 'spring', damping: 25, stiffness: 300 }}
+            className="relative z-50 w-[520px] overflow-hidden rounded-[10px] border border-[#0f1012]/[0.08] bg-[#fdfdfd] shadow-elevated"
+            onClick={(e) => e.stopPropagation()}
         >
-            <div className="flex items-center justify-between p-3 border-b border-white/[0.08] bg-white/[0.02]">
-                <span className="text-xs font-semibold text-white uppercase tracking-wider">Add Step</span>
-                <button onClick={onClose} className="text-[#6a6b6c] hover:text-white transition-colors">
+            {/* Search Header */}
+            <div className="flex items-center gap-3 border-b border-[#0f1012]/[0.06] px-4 py-3">
+                <LuSearch className="size-4 text-[#868788]" />
+                <input
+                    ref={inputRef}
+                    type="text"
+                    value={query}
+                    onChange={(e) => setQuery(e.target.value)}
+                    placeholder="Search nodes..."
+                    className="flex-1 bg-transparent text-sm text-[#0f1012] outline-none placeholder:text-[#868788]"
+                />
+                <div className="flex items-center gap-1 rounded-[6px] border border-[#0f1012]/[0.08] bg-[#f2f2f4] px-1.5 py-0.5 text-[10px] text-[#868788]">
+                    <LuCommand className="size-3" />
+                    <span>K</span>
+                </div>
+                <button onClick={onClose} className="text-[#868788] transition-colors hover:text-[#0f1012]">
                     <LuX size={16} />
                 </button>
             </div>
-            
-            <div className="p-3 grid grid-cols-2 gap-1.5 max-h-[360px] overflow-y-auto custom-scrollbar">
-                {NODE_TYPES.map(t => (
-                    <div key={t.kind} className="group relative flex items-center p-2 rounded-lg hover:bg-white/[0.03] transition-all">
-                        <button
-                            type="button"
-                            aria-label={`Add ${t.label} Step`}
-                            onClick={() => onSelect(t.kind)}
-                            className="flex items-center gap-3 flex-1 text-left"
-                        >
-                            <div className="p-1.5 rounded-md bg-white/[0.05] group-hover:bg-white/[0.08] transition-colors text-[#9c9c9d]">
-                                <t.icon className="size-4" />
-                            </div>
-                            <span className="text-sm font-medium text-[#9c9c9d] group-hover:text-white truncate transition-colors">{t.label}</span>
-                        </button>
 
-                        <div 
-                            className="relative ml-1 p-1"
-                            onMouseEnter={(e) => {
-                                const rect = e.currentTarget.getBoundingClientRect();
-                                setHoveredInfo({
-                                    text: t.description,
-                                    x: rect.left - 10,
-                                    y: rect.top + (rect.height / 2)
-                                });
-                            }}
-                            onMouseLeave={() => setHoveredInfo(null)}
-                        >
-                            <LuInfo className="size-3 text-[#6a6b6c] hover:text-white cursor-help transition-colors" />
+            {/* Results */}
+            <div className="max-h-[400px] overflow-y-auto p-2 custom-scrollbar">
+                {grouped.length === 0 ? (
+                    <div className="py-8 text-center text-sm text-[#868788]">No nodes match "{query}"</div>
+                ) : (
+                    grouped.map((group) => (
+                        <div key={group.category} className="mb-2">
+                            <div className="px-2 py-1.5 text-[9px] font-semibold uppercase tracking-wider text-[#868788]">
+                                {group.label}
+                            </div>
+                            <div className="space-y-0.5">
+                                {group.items.map((item) => (
+                                    <button
+                                        key={item.kind}
+                                        type="button"
+                                        onClick={() => onSelect(item.kind)}
+                                        className="group flex w-full items-center gap-3 rounded-[8px] border border-transparent px-2.5 py-2 text-left transition hover:border-[#0f1012]/[0.06] hover:bg-[#0f1012]/[0.03]"
+                                    >
+                                        <div
+                                            className="flex size-7 items-center justify-center rounded-[6px] border border-white/10 shadow-sm"
+                                            style={{ backgroundColor: item.accent }}
+                                        >
+                                            <item.icon className="size-3.5 text-white" />
+                                        </div>
+                                        <div className="min-w-0 flex-1">
+                                            <div className="text-sm font-medium text-[#0f1012]">{item.label}</div>
+                                            <div className="truncate text-[11px] text-[#868788]">{item.description}</div>
+                                        </div>
+                                        <span className="text-[10px] text-[#868788] opacity-0 transition-opacity group-hover:opacity-100">
+                                            Select
+                                        </span>
+                                    </button>
+                                ))}
+                            </div>
                         </div>
-                    </div>
-                ))}
+                    ))
+                )}
             </div>
 
-            <AnimatePresence>
-                {hoveredInfo && (
-                    <m.div 
-                        initial={{ opacity: 0, x: 10 }}
-                        animate={{ opacity: 1, x: 0 }}
-                        exit={{ opacity: 0 }}
-                        className="fixed z-50 w-48 p-3 bg-[#1b1c1e] border border-white/[0.08] rounded-lg shadow-xl pointer-events-none"
-                        style={{ 
-                            left: hoveredInfo.x, 
-                            top: hoveredInfo.y, 
-                            transform: 'translate(-100%, -50%)'
-                        }}
-                    >
-                         <div className="absolute top-1/2 -right-1.5 -translate-y-1/2 size-3 bg-[#1b1c1e] border-r border-t border-white/[0.08] rotate-45 transform"></div>
-                         <p className="text-xs text-[#9c9c9d] leading-relaxed">{hoveredInfo.text}</p>
-                    </m.div>
-                )}
-            </AnimatePresence>
+            {/* Footer hint */}
+            <div className="flex items-center justify-between border-t border-[#0f1012]/[0.06] bg-[#0f1012]/[0.02] px-3 py-2 text-[10px] text-[#868788]">
+                <span>{filtered.length} node type{filtered.length !== 1 ? 's' : ''}</span>
+                <span className="flex items-center gap-1">
+                    <kbd className="rounded-[4px] border border-[#0f1012]/[0.08] bg-[#f2f2f4] px-1 py-0.5 font-mono text-[9px]">↑↓</kbd>
+                    to navigate
+                    <kbd className="ml-1 rounded-[4px] border border-[#0f1012]/[0.08] bg-[#f2f2f4] px-1 py-0.5 font-mono text-[9px]">Enter</kbd>
+                    to select
+                </span>
+            </div>
         </m.div>
     );
 
@@ -120,14 +149,22 @@ const NodePicker: React.FC<NodePickerProps> = ({ isOpen, onClose, onSelect, posi
         <LazyMotion features={domAnimation}>
             <AnimatePresence>
                 {position ? (
-                    <div className="absolute top-0 left-0 w-full h-full pointer-events-none z-50">
-                         <div className="pointer-events-auto">
+                    <div className="pointer-events-none absolute left-0 top-0 z-50 h-full w-full">
+                        <div
+                            className="pointer-events-auto"
+                            style={{ position: 'absolute', left: position.x, top: position.y, transform: 'translate(20px, -50%)' }}
+                        >
                             {content}
-                         </div>
-                         <button type="button" aria-label="Close node picker" className="absolute inset-0 z-40" onClick={onClose} />
+                        </div>
+                        <button
+                            type="button"
+                            aria-label="Close node picker"
+                            className="absolute inset-0 z-40"
+                            onClick={onClose}
+                        />
                     </div>
                 ) : (
-                    <div className={containerClasses}>
+                    <div className="fixed inset-0 z-50 flex items-center justify-center bg-[#0f1012]/20 backdrop-blur-sm">
                         <button type="button" aria-label="Close node picker" className="absolute inset-0" onClick={onClose} />
                         {content}
                     </div>
@@ -135,6 +172,4 @@ const NodePicker: React.FC<NodePickerProps> = ({ isOpen, onClose, onSelect, posi
             </AnimatePresence>
         </LazyMotion>
     );
-};
-
-export default NodePicker;
+}

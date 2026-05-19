@@ -3,16 +3,17 @@ import { cva, type VariantProps } from "class-variance-authority";
 import { cn } from "../../lib/utils";
 
 const badgeVariants = cva(
-  "inline-flex items-center rounded-md px-2 py-0.5 text-xs font-medium tracking-wide transition-colors",
+  "inline-flex items-center rounded-[10px] px-2.5 py-0.5 text-xs font-normal tracking-tight transition-colors",
   {
     variants: {
       variant: {
-        default: "bg-[#1b1c1e] text-white border border-white/[0.08]",
-        secondary: "bg-[#07080a] text-[#9c9c9d] border border-white/[0.08]",
-        outline: "border border-white/[0.18] text-white bg-transparent",
-        ember: "bg-[#452324] text-[#ff6363] border border-[#ff6363]/20",
-        mint: "bg-[#0d2b1a] text-[#59d499] border border-[#59d499]/20",
-        sky: "bg-[#0a1f33] text-[#56c2ff] border border-[#56c2ff]/20",
+        default: "bg-[#f2f2f4] text-[#0f1012] border border-[#0f1012]/[0.08]",
+        secondary: "bg-[#fdfdfd] text-[#8f8f8f] border border-[#0f1012]/[0.08]",
+        outline: "border border-[#0f1012]/[0.14] text-[#0f1012] bg-transparent",
+        future: "bg-[#0071e3]/10 text-[#0071e3] border border-[#0071e3]/15",
+        success: "bg-[#e8f5e9] text-[#1b5e20] border border-[#1b5e20]/15",
+        danger: "bg-[#ffebee] text-[#b71c1c] border border-[#b71c1c]/15",
+        warning: "bg-[#fff8e1] text-[#f57f17] border border-[#f57f17]/15",
       },
     },
     defaultVariants: {

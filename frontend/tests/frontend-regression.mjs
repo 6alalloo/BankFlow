@@ -72,7 +72,7 @@ expectIncludes("case detail page", caseDetailPage, [
   "closeCase(caseDetail.id",
   "cancelCase(caseDetail.id",
   "getTaskOutputFields(task.task_type)",
-  "Additional output JSON",
+  "Additional output",
 ]);
 
 expectIncludes("cases list page", casesListPage, [

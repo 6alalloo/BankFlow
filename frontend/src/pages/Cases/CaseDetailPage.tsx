@@ -10,7 +10,44 @@ import { Button } from "../../components/ui/Button";
 import { buildObjectFromFields, formatDocumentType, getRequiredDocumentTypes, getTaskOutputFields } from "../../utils/caseForms";
 import { useAuth } from "../../contexts/useAuth";
 import { CaseHeader, CaseSummaryGrid } from "./CaseOverview";
-import { formatDate, formatJson, formatLabel, statusBadgeVariant } from "./caseDetailFormatters";
+import { formatDate, formatLabel, statusBadgeVariant } from "./caseDetailFormatters";
+
+function renderCaseDataValue(value: unknown): React.ReactNode {
+  if (value === null || value === undefined) {
+    return <span className="text-[#868788] italic">—</span>;
+  }
+  if (typeof value === "string") {
+    return <span className="text-[#0f1012] break-words">{value}</span>;
+  }
+  if (typeof value === "number" || typeof value === "boolean") {
+    return <span className="text-[#0f1012]">{String(value)}</span>;
+  }
+  if (Array.isArray(value)) {
+    if (value.length === 0) return <span className="text-[#868788] italic">Empty list</span>;
+    return (
+      <ul className="list-disc pl-4 space-y-1">
+        {value.map((item, i) => (
+          <li key={i}>{renderCaseDataValue(item)}</li>
+        ))}
+      </ul>
+    );
+  }
+  if (typeof value === "object") {
+    const entries = Object.entries(value as Record<string, unknown>);
+    if (entries.length === 0) return <span className="text-[#868788] italic">Empty</span>;
+    return (
+      <div className="space-y-2">
+        {entries.map(([k, v]) => (
+          <div key={k}>
+            <div className="text-[#868788] text-[10px] uppercase tracking-wider mb-0.5">{k.replace(/[_-]/g, " ")}</div>
+            <div className="text-[#0f1012]">{renderCaseDataValue(v)}</div>
+          </div>
+        ))}
+      </div>
+    );
+  }
+  return <span className="text-[#0f1012]">{String(value)}</span>;
+}
 
 const CaseDetailPage: React.FC = () => {
   const { id } = useParams();
@@ -112,7 +149,7 @@ const CaseDetailPage: React.FC = () => {
       if (rawOutput) {
         const parsed = JSON.parse(rawOutput) as unknown;
         if (!parsed || typeof parsed !== "object" || Array.isArray(parsed)) {
-          throw new Error("Task output must be a JSON object.");
+          throw new Error("Task output must be a valid object.");
         }
         output = { ...output, ...(parsed as Record<string, unknown>) };
       }
@@ -272,7 +309,7 @@ const CaseDetailPage: React.FC = () => {
                           onChange={(event) => setTaskOutputById((prev) => ({ ...prev, [task.id]: event.target.value }))}
                           className="md:col-span-2 bg-[#0f1012]/[0.04] border border-[#0f1012]/[0.08] rounded-[10px] px-3 py-2 text-sm text-[#020201] placeholder:text-[#868788] focus:outline-none focus:border-[#0f1012]/[0.18] focus:ring-1 focus:ring-[#0071e3]/20 transition-all resize-none"
                           rows={2}
-                          placeholder='Additional output JSON, e.g. {"finding":"clear"}'
+                          placeholder='Additional output, e.g. {"finding":"clear"}'
                         />
                       </div>
                       <Button
@@ -297,95 +334,6 @@ const CaseDetailPage: React.FC = () => {
                 </div>
               ))}
             </div>
-          </section>
-
-          <section>
-            <h2 className="text-sm font-medium text-[#0f1012] uppercase tracking-wider mb-3">Approvals</h2>
-            <div className="space-y-3">
-              {caseDetail.approvals.length === 0 ? (
-                <div className="border border-[#0f1012]/[0.08] rounded-[10px] p-4 text-[#868788] bg-[#fdfdfd]">No approvals requested.</div>
-              ) : caseDetail.approvals.map((approval) => (
-                <div key={approval.id} className="border border-[#0f1012]/[0.08] rounded-[10px] p-4 bg-[#fdfdfd]">
-                  <div className="flex justify-between gap-3">
-                    <div className="min-w-0">
-                      <div className="text-[#0f1012] font-medium text-sm">Approval #{approval.id}</div>
-                      <div className="text-[#868788] text-xs">{approval.flow_node_key || "approval node"}</div>
-                    </div>
-                    <Badge variant={statusBadgeVariant(approval.status)}>{formatLabel(approval.status)}</Badge>
-                  </div>
-                  <div className="text-[#8f8f8f] text-xs mt-2">Requested: {formatDate(approval.requested_at)}</div>
-                  {approval.decision_reason && <div className="text-[#868788] text-xs mt-1">Reason: {approval.decision_reason}</div>}
-                  {!isAuditor && approval.status === "requested" && (
-                    <div className="mt-3 border-t border-[#0f1012]/[0.08] pt-3">
-                      <textarea
-                        value={approvalReasonById[approval.id] ?? ""}
-                        onChange={(event) => setApprovalReasonById((prev) => ({ ...prev, [approval.id]: event.target.value }))}
-                        className="w-full bg-[#0f1012]/[0.04] border border-[#0f1012]/[0.08] rounded-[10px] px-3 py-2 text-sm text-[#020201] placeholder:text-[#868788] focus:outline-none focus:border-[#0f1012]/[0.18] focus:ring-1 focus:ring-[#0071e3]/20 transition-all resize-none"
-                        rows={2}
-                        placeholder="Decision reason"
-                      />
-                      <div className="flex gap-2 mt-2">
-                        <Button
-                          variant="primary"
-                          size="sm"
-                          disabled={busyAction === `approval-approve-${approval.id}`}
-                          onClick={() => void runAction(`approval-approve-${approval.id}`, async () => {
-                            await approveApproval(approval.id, approvalReasonById[approval.id]);
-                            await refreshAfterAction("Approval approved.");
-                          })}
-                        >
-                          Approve
-                        </Button>
-                        <Button
-                          variant="danger"
-                          size="sm"
-                          disabled={busyAction === `approval-reject-${approval.id}`}
-                          onClick={() => void runAction(`approval-reject-${approval.id}`, async () => {
-                            await rejectApproval(approval.id, approvalReasonById[approval.id]);
-                            await refreshAfterAction("Approval rejected.");
-                          })}
-                        >
-                          Reject
-                        </Button>
-                      </div>
-                    </div>
-                  )}
-                </div>
-              ))}
-            </div>
-          </section>
-
-          <section>
-            <h2 className="text-sm font-medium text-[#0f1012] uppercase tracking-wider mb-3">Timeline</h2>
-            <div className="space-y-3">
-              {caseDetail.events.length === 0 ? (
-                <div className="border border-[#0f1012]/[0.08] rounded-[10px] p-4 text-[#868788] bg-[#fdfdfd]">No events recorded.</div>
-              ) : caseDetail.events.map((event) => (
-                <div key={event.id} className="border border-[#0f1012]/[0.08] rounded-[10px] p-4 bg-[#fdfdfd]">
-                  <div className="flex items-start gap-3">
-                    <div className="text-[#8f8f8f] mt-0.5 shrink-0">
-                      {event.event_type.includes("resolved") || event.event_type.includes("completed") ? <FiCheckCircle /> : <FiClock />}
-                    </div>
-                    <div className="flex-1 min-w-0">
-                      <div className="flex justify-between gap-3">
-                        <div className="text-[#0f1012] font-medium text-sm">{event.summary}</div>
-                        <div className="text-[#868788] text-xs whitespace-nowrap">{formatDate(event.created_at)}</div>
-                      </div>
-                      <div className="text-[#868788] text-xs">{event.event_type} {event.flow_node_key ? `// ${event.flow_node_key}` : ""}</div>
-                    </div>
-                  </div>
-                </div>
-              ))}
-            </div>
-          </section>
-        </div>
-
-        <div className="xl:col-span-3 space-y-6">
-          <section>
-            <h2 className="text-sm font-medium text-[#0f1012] uppercase tracking-wider mb-3">Case Data</h2>
-            <pre className="border border-[#0f1012]/[0.08] rounded-[10px] p-4 bg-[#fdfdfd] text-[#8f8f8f] text-xs overflow-auto custom-scrollbar" style={{ maxHeight: 360 }}>
-              {formatJson(caseDetail.case_data_json)}
-            </pre>
           </section>
 
           <section>
@@ -486,6 +434,95 @@ const CaseDetailPage: React.FC = () => {
                   >
                     <FiDownload size={16} />
                   </button>
+                </div>
+              ))}
+            </div>
+          </section>
+
+          <section>
+            <h2 className="text-sm font-medium text-[#0f1012] uppercase tracking-wider mb-3">Timeline</h2>
+            <div className="space-y-3">
+              {caseDetail.events.length === 0 ? (
+                <div className="border border-[#0f1012]/[0.08] rounded-[10px] p-4 text-[#868788] bg-[#fdfdfd]">No events recorded.</div>
+              ) : caseDetail.events.map((event) => (
+                <div key={event.id} className="border border-[#0f1012]/[0.08] rounded-[10px] p-4 bg-[#fdfdfd]">
+                  <div className="flex items-start gap-3">
+                    <div className="text-[#8f8f8f] mt-0.5 shrink-0">
+                      {event.event_type.includes("resolved") || event.event_type.includes("completed") ? <FiCheckCircle /> : <FiClock />}
+                    </div>
+                    <div className="flex-1 min-w-0">
+                      <div className="flex justify-between gap-3">
+                        <div className="text-[#0f1012] font-medium text-sm">{event.summary}</div>
+                        <div className="text-[#868788] text-xs whitespace-nowrap">{formatDate(event.created_at)}</div>
+                      </div>
+                      <div className="text-[#868788] text-xs">{event.event_type} {event.flow_node_key ? `// ${event.flow_node_key}` : ""}</div>
+                    </div>
+                  </div>
+                </div>
+              ))}
+            </div>
+          </section>
+        </div>
+
+        <div className="xl:col-span-3 space-y-6">
+          <section>
+            <h2 className="text-sm font-medium text-[#0f1012] uppercase tracking-wider mb-3">Case Data</h2>
+            <div className="border border-[#0f1012]/[0.08] rounded-[10px] p-4 bg-[#fdfdfd] text-xs overflow-auto custom-scrollbar" style={{ maxHeight: 360 }}>
+              {renderCaseDataValue(caseDetail.case_data_json)}
+            </div>
+          </section>
+
+          <section>
+            <h2 className="text-sm font-medium text-[#0f1012] uppercase tracking-wider mb-3">Approvals</h2>
+            <div className="space-y-3">
+              {caseDetail.approvals.length === 0 ? (
+                <div className="border border-[#0f1012]/[0.08] rounded-[10px] p-4 text-[#868788] bg-[#fdfdfd]">No approvals requested.</div>
+              ) : caseDetail.approvals.map((approval) => (
+                <div key={approval.id} className="border border-[#0f1012]/[0.08] rounded-[10px] p-4 bg-[#fdfdfd]">
+                  <div className="flex justify-between gap-3">
+                    <div className="min-w-0">
+                      <div className="text-[#0f1012] font-medium text-sm">Approval #{approval.id}</div>
+                      <div className="text-[#868788] text-xs">{approval.flow_node_key || "approval node"}</div>
+                    </div>
+                    <Badge variant={statusBadgeVariant(approval.status)}>{formatLabel(approval.status)}</Badge>
+                  </div>
+                  <div className="text-[#8f8f8f] text-xs mt-2">Requested: {formatDate(approval.requested_at)}</div>
+                  {approval.decision_reason && <div className="text-[#868788] text-xs mt-1">Reason: {approval.decision_reason}</div>}
+                  {!isAuditor && approval.status === "requested" && (
+                    <div className="mt-3 border-t border-[#0f1012]/[0.08] pt-3">
+                      <textarea
+                        value={approvalReasonById[approval.id] ?? ""}
+                        onChange={(event) => setApprovalReasonById((prev) => ({ ...prev, [approval.id]: event.target.value }))}
+                        className="w-full bg-[#0f1012]/[0.04] border border-[#0f1012]/[0.08] rounded-[10px] px-3 py-2 text-sm text-[#020201] placeholder:text-[#868788] focus:outline-none focus:border-[#0f1012]/[0.18] focus:ring-1 focus:ring-[#0071e3]/20 transition-all resize-none"
+                        rows={2}
+                        placeholder="Decision reason"
+                      />
+                      <div className="flex gap-2 mt-2">
+                        <Button
+                          variant="primary"
+                          size="sm"
+                          disabled={busyAction === `approval-approve-${approval.id}`}
+                          onClick={() => void runAction(`approval-approve-${approval.id}`, async () => {
+                            await approveApproval(approval.id, approvalReasonById[approval.id]);
+                            await refreshAfterAction("Approval approved.");
+                          })}
+                        >
+                          Approve
+                        </Button>
+                        <Button
+                          variant="danger"
+                          size="sm"
+                          disabled={busyAction === `approval-reject-${approval.id}`}
+                          onClick={() => void runAction(`approval-reject-${approval.id}`, async () => {
+                            await rejectApproval(approval.id, approvalReasonById[approval.id]);
+                            await refreshAfterAction("Approval rejected.");
+                          })}
+                        >
+                          Reject
+                        </Button>
+                      </div>
+                    </div>
+                  )}
                 </div>
               ))}
             </div>

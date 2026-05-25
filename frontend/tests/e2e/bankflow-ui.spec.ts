@@ -219,7 +219,7 @@ test("admin can run an AML case from intake to approval, note, and closure", asy
   await expect(page.getByText("Task claimed.")).toBeVisible();
 
   await page.getByPlaceholder("Decision label, e.g. approved").fill("approved");
-  await page.getByPlaceholder('Output JSON, e.g. {"finding":"clear"}').fill('{"finding":"clear"}');
+  await page.getByPlaceholder('Additional output, e.g. {"finding":"clear"}').fill('{"finding":"clear"}');
   await page.getByRole("button", { name: "Complete Task" }).click();
   await expect(page.getByText("Task completed.")).toBeVisible();
 
@@ -349,13 +349,13 @@ test("admin can satisfy payment document requirements and complete the workflow"
   await expect(page.getByText("payment-instruction.pdf", { exact: true })).toBeVisible();
   await expect(page.getByText("Payment Instruction uploaded")).toBeVisible();
 
-  await page.getByPlaceholder('Output JSON, e.g. {"finding":"clear"}').fill('{"documents":"received"}');
+  await page.getByPlaceholder('Additional output, e.g. {"finding":"clear"}').fill('{"documents":"received"}');
   await page.getByRole("button", { name: "Complete Task" }).click();
   await expect(page.getByText("Task completed.")).toBeVisible();
 
   await expect(caseTaskTitle(page, "Resolve payment exception")).toBeVisible();
   await page.getByPlaceholder("Decision label, e.g. approved").fill("resolved");
-  await page.getByPlaceholder('Output JSON, e.g. {"finding":"clear"}').fill('{"resolution":"credited"}');
+  await page.getByPlaceholder('Additional output, e.g. {"finding":"clear"}').fill('{"resolution":"credited"}');
   await page.getByRole("button", { name: "Complete Task" }).click();
   await expect(page.getByText("Task completed.")).toBeVisible();
   await expect(page.locator("body")).toContainText("resolved");

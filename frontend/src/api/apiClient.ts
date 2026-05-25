@@ -1,4 +1,4 @@
-import { getAuthToken } from '../contexts/AuthContext';
+import { getAuthToken } from "../contexts/authStorage";
 import { config } from '../config/appConfig';
 
 const API_BASE_URL = config.apiBaseUrl;
@@ -26,6 +26,44 @@ function getApiErrorMessage(errorData: unknown, fallback: string): string {
   return fallback;
 }
 
+export async function parseApiError(response: Response, fallback: string): Promise<string> {
+  const errorData = await response.json().catch(() => ({}));
+  return getApiErrorMessage(errorData, fallback);
+}
+
+export async function apiFetch(
+  endpoint: string,
+  options: ApiRequestOptions = {}
+): Promise<Response> {
+  const { skipAuth = false, headers = {}, ...rest } = options;
+  const token = getAuthToken();
+  const isFormBody = typeof FormData !== "undefined" && rest.body instanceof FormData;
+
+  const requestHeaders: HeadersInit = {
+    ...(isFormBody ? {} : { 'Content-Type': 'application/json' }),
+    ...headers,
+  };
+
+  if (token && !skipAuth) {
+    (requestHeaders as Record<string, string>)['Authorization'] = `Bearer ${token}`;
+  }
+
+  const url = endpoint.startsWith('http') ? endpoint : `${API_BASE_URL}${endpoint}`;
+  const response = await fetch(url, {
+    ...rest,
+    headers: requestHeaders,
+  });
+
+  if (response.status === 401) {
+    localStorage.removeItem('bankflow_token');
+    localStorage.removeItem('bankflow_user');
+    window.location.href = '/login';
+    throw new Error('Session expired. Please log in again.');
+  }
+
+  return response;
+}
+
 /**
  * Make an authenticated API request
  * Automatically adds Authorization header with Bearer token
@@ -34,40 +72,10 @@ export async function apiRequest<T>(
   endpoint: string,
   options: ApiRequestOptions = {}
 ): Promise<T> {
-  const { skipAuth = false, headers = {}, ...rest } = options;
-
-  const token = getAuthToken();
-
-  const requestHeaders: HeadersInit = {
-    'Content-Type': 'application/json',
-    ...headers,
-  };
-
-  // Add auth header if we have a token and skipAuth is false
-  if (token && !skipAuth) {
-    (requestHeaders as Record<string, string>)['Authorization'] = `Bearer ${token}`;
-  }
-
-  const url = endpoint.startsWith('http') ? endpoint : `${API_BASE_URL}${endpoint}`;
-
-  const response = await fetch(url, {
-    ...rest,
-    headers: requestHeaders,
-  });
-
-  // Handle 401 Unauthorized - redirect to login
-  if (response.status === 401) {
-    // Clear stored auth data
-    localStorage.removeItem('bankflow_token');
-    localStorage.removeItem('bankflow_user');
-    // Redirect to login
-    window.location.href = '/login';
-    throw new Error('Session expired. Please log in again.');
-  }
+  const response = await apiFetch(endpoint, options);
 
   if (!response.ok) {
-    const errorData = await response.json().catch(() => ({}));
-    throw new Error(getApiErrorMessage(errorData, `Request failed with status ${response.status}`));
+    throw new Error(await parseApiError(response, `Request failed with status ${response.status}`));
   }
 
   // Handle 204 No Content

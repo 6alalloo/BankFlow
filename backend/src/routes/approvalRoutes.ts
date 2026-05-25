@@ -6,13 +6,24 @@ import { toInputJson } from "../lib/json";
 import { canDecideApproval, canViewAllOperationalQueues, getUserTeamIds } from "../services/authorizationService";
 import { logAuditEvent } from "../services/auditService";
 import { pageMeta, parseBoolean, parseDate, parseNumber, parsePageQuery } from "../lib/query";
+import { asBodyObject, optionalBodyObject, readIntegerParam, readOptionalInteger, readOptionalString } from "../lib/validation";
 import { Prisma } from "@prisma/client";
 
 const router = Router();
 
 router.use(authenticate);
 
-const toApprovalResponse = (approval: any) => ({
+type ApprovalUserSummary = Pick<Prisma.usersGetPayload<{}>, "id" | "email" | "full_name">;
+type ApprovalCaseSummary = Pick<Prisma.casesGetPayload<{}>, "id" | "case_reference" | "title" | "status">;
+type ApprovalResponseSource = Prisma.case_approvalsGetPayload<{}> & {
+  cases?: ApprovalCaseSummary | null;
+  requested_from_user?: ApprovalUserSummary | null;
+  requested_from_role?: Prisma.rolesGetPayload<{}> | null;
+  requested_from_team?: Prisma.teamsGetPayload<{}> | null;
+  decided_by_user?: ApprovalUserSummary | null;
+};
+
+const toApprovalResponse = (approval: ApprovalResponseSource) => ({
   id: approval.id,
   case_id: approval.case_id,
   task_id: approval.task_id,
@@ -102,35 +113,21 @@ router.get("/", async (req: Request, res: Response) => {
 });
 
 router.patch("/:id/assign", async (req: Request, res: Response) => {
-  const id = Number(req.params.id);
-  if (!Number.isInteger(id)) {
-    res.status(400).json({ error: "Invalid approval id" });
-    return;
-  }
+  const id = readIntegerParam(req, "id", "approval id");
   if (!req.user || (req.user.role !== "Admin" && req.user.role !== "Supervisor")) {
     res.status(403).json({ error: "Only admins and supervisors can reassign approvals" });
     return;
   }
 
-  const requestedFromUserId = req.body?.requestedFromUserId ?? req.body?.requested_from_user_id;
-  const requestedFromTeamId = req.body?.requestedFromTeamId ?? req.body?.requested_from_team_id;
-  const requestedFromRoleId = req.body?.requestedFromRoleId ?? req.body?.requested_from_role_id;
+  const body = asBodyObject(req);
+  const requestedFromUserId = readOptionalInteger(body.requestedFromUserId ?? body.requested_from_user_id, "requestedFromUserId");
+  const requestedFromTeamId = readOptionalInteger(body.requestedFromTeamId ?? body.requested_from_team_id, "requestedFromTeamId");
+  const requestedFromRoleId = readOptionalInteger(body.requestedFromRoleId ?? body.requested_from_role_id, "requestedFromRoleId");
   const hasTarget =
     requestedFromUserId !== undefined || requestedFromTeamId !== undefined || requestedFromRoleId !== undefined;
   if (!hasTarget) {
     res.status(400).json({ error: "At least one approval target must be provided" });
     return;
-  }
-
-  for (const [field, value] of [
-    ["requestedFromUserId", requestedFromUserId],
-    ["requestedFromTeamId", requestedFromTeamId],
-    ["requestedFromRoleId", requestedFromRoleId],
-  ] as const) {
-    if (value !== undefined && value !== null && !Number.isInteger(Number(value))) {
-      res.status(400).json({ error: `${field} must be an integer or null` });
-      return;
-    }
   }
 
   const existing = await prisma.case_approvals.findUnique({ where: { id } });
@@ -146,13 +143,13 @@ router.patch("/:id/assign", async (req: Request, res: Response) => {
   const [user, team, role] = await Promise.all([
     requestedFromUserId === undefined || requestedFromUserId === null
       ? Promise.resolve(null)
-      : prisma.users.findUnique({ where: { id: Number(requestedFromUserId) }, select: { id: true } }),
+      : prisma.users.findUnique({ where: { id: requestedFromUserId }, select: { id: true } }),
     requestedFromTeamId === undefined || requestedFromTeamId === null
       ? Promise.resolve(null)
-      : prisma.teams.findUnique({ where: { id: Number(requestedFromTeamId), is_active: true }, select: { id: true } }),
+      : prisma.teams.findUnique({ where: { id: requestedFromTeamId, is_active: true }, select: { id: true } }),
     requestedFromRoleId === undefined || requestedFromRoleId === null
       ? Promise.resolve(null)
-      : prisma.roles.findUnique({ where: { id: Number(requestedFromRoleId) }, select: { id: true } }),
+      : prisma.roles.findUnique({ where: { id: requestedFromRoleId }, select: { id: true } }),
   ]);
   if (requestedFromUserId !== undefined && requestedFromUserId !== null && !user) {
     res.status(404).json({ error: "Requested user not found" });
@@ -172,11 +169,11 @@ router.patch("/:id/assign", async (req: Request, res: Response) => {
       where: { id },
       data: {
         requested_from_user_id:
-          requestedFromUserId === undefined ? existing.requested_from_user_id : requestedFromUserId === null ? null : Number(requestedFromUserId),
+          requestedFromUserId === undefined ? existing.requested_from_user_id : requestedFromUserId,
         requested_from_team_id:
-          requestedFromTeamId === undefined ? existing.requested_from_team_id : requestedFromTeamId === null ? null : Number(requestedFromTeamId),
+          requestedFromTeamId === undefined ? existing.requested_from_team_id : requestedFromTeamId,
         requested_from_role_id:
-          requestedFromRoleId === undefined ? existing.requested_from_role_id : requestedFromRoleId === null ? null : Number(requestedFromRoleId),
+          requestedFromRoleId === undefined ? existing.requested_from_role_id : requestedFromRoleId,
       },
       include: {
         cases: { select: { id: true, case_reference: true, title: true, status: true } },
@@ -266,17 +263,10 @@ async function decideApproval(
 }
 
 router.post("/:id/approve", async (req: Request, res: Response) => {
-  const id = Number(req.params.id);
-  if (!Number.isInteger(id)) {
-    res.status(400).json({ error: "Invalid approval id" });
-    return;
-  }
-  if (req.body?.reason !== undefined && typeof req.body.reason !== "string") {
-    res.status(400).json({ error: "reason must be a string when provided" });
-    return;
-  }
+  const id = readIntegerParam(req, "id", "approval id");
+  const reason = readOptionalString(optionalBodyObject(req), "reason");
 
-  const approval = await decideApproval(id, "approved", req.user ? { userId: req.user.userId, role: req.user.role } : undefined, req.body?.reason);
+  const approval = await decideApproval(id, "approved", req.user ? { userId: req.user.userId, role: req.user.role } : undefined, reason);
   if (!approval) {
     res.status(404).json({ error: "Approval not found" });
     return;
@@ -318,17 +308,10 @@ router.post("/:id/approve", async (req: Request, res: Response) => {
 });
 
 router.post("/:id/reject", async (req: Request, res: Response) => {
-  const id = Number(req.params.id);
-  if (!Number.isInteger(id)) {
-    res.status(400).json({ error: "Invalid approval id" });
-    return;
-  }
-  if (req.body?.reason !== undefined && typeof req.body.reason !== "string") {
-    res.status(400).json({ error: "reason must be a string when provided" });
-    return;
-  }
+  const id = readIntegerParam(req, "id", "approval id");
+  const reason = readOptionalString(optionalBodyObject(req), "reason");
 
-  const approval = await decideApproval(id, "rejected", req.user ? { userId: req.user.userId, role: req.user.role } : undefined, req.body?.reason);
+  const approval = await decideApproval(id, "rejected", req.user ? { userId: req.user.userId, role: req.user.role } : undefined, reason);
   if (!approval) {
     res.status(404).json({ error: "Approval not found" });
     return;

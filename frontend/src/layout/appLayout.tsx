@@ -1,7 +1,7 @@
 // src/layout/appLayout.tsx
 import React from "react";
 import Sidebar from "./sidebar";
-import { useAuth } from "../contexts/AuthContext";
+import { useAuth } from "../contexts/useAuth";
 
 type AppLayoutProps = {
   children: React.ReactNode;

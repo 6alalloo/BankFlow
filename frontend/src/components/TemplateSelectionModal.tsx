@@ -90,7 +90,7 @@ const TemplateSelectionModal: React.FC<TemplateSelectionModalProps> = ({
                                             <div className="absolute inset-0 bg-[#f2f2f4]/90 rounded-[10px] flex items-center justify-center z-10">
                                                 <div className="flex items-center gap-3 text-[#0f1012]">
                                                     <div className="size-5 border-2 border-[#0f1012]/30 border-t-[#0f1012] rounded-full animate-spin" />
-                                                    <span className="text-sm font-medium">Creating flow...</span>
+                                                    <span className="text-sm font-medium">Creating flow&hellip;</span>
                                                 </div>
                                             </div>
                                         )}

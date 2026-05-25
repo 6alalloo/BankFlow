@@ -95,7 +95,7 @@ const FlowSplitLayout: React.FC<FlowSplitLayoutProps> = ({
         return (
             <div className="flex items-center justify-center h-full text-[#8f8f8f]">
                 <div className="animate-spin size-5 border-2 border-[#0f1012]/20 border-t-[#0071e3] rounded-full mr-3"/>
-                Loading flows...
+                Loading flows&hellip;
             </div>
         );
     }

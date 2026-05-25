@@ -1,43 +1,16 @@
-import React, { useCallback, useEffect, useMemo, useState } from "react";
+import React, { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { Link, useParams } from "react-router-dom";
-import { FiAlertTriangle, FiArrowLeft, FiCheckCircle, FiClock, FiDownload, FiFileText, FiGitBranch, FiShield, FiUpload, FiUser } from "react-icons/fi";
+import { FiAlertTriangle, FiArrowLeft, FiCheckCircle, FiClock, FiDownload, FiFileText, FiUpload } from "react-icons/fi";
 import { addCaseNote, cancelCase, closeCase, fetchCaseById, resolveEscalation, type CaseDetail } from "../../api/cases";
 import { approveApproval, rejectApproval } from "../../api/approvals";
 import { claimTask, completeTask } from "../../api/tasks";
 import { downloadCaseDocument, uploadCaseDocument } from "../../api/files";
-import { Button, Badge, type BadgeVariant } from "../../components/ui";
-import { buildObjectFromFields, getTaskOutputFields } from "../../utils/caseForms";
-import { useAuth } from "../../contexts/AuthContext";
-
-const formatDate = (value?: string | null) => {
-  if (!value) return "Not set";
-  const parsed = new Date(value);
-  if (Number.isNaN(parsed.getTime())) return "Invalid date";
-  return parsed.toLocaleString();
-};
-
-function formatLabel(raw: string): string {
-  if (!raw) return "";
-  const spaced = raw.replace(/[_\-.]+/g, " ");
-  const camelSpaced = spaced.replace(/([a-z])([A-Z])/g, "$1 $2");
-  return camelSpaced
-    .split(" ")
-    .map((word) => word.charAt(0).toUpperCase() + word.slice(1).toLowerCase())
-    .join(" ");
-}
-
-const formatJson = (value: unknown) => {
-  if (value === null || value === undefined) return "{}";
-  if (typeof value === "string") return value;
-  return JSON.stringify(value, null, 2);
-};
-
-const statusBadgeVariant = (status: string): BadgeVariant => {
-  if (["resolved", "closed", "completed", "approved"].includes(status)) return "success";
-  if (["critical", "rejected", "cancelled", "overdue", "escalated"].includes(status)) return "danger";
-  if (["pending_action", "pending_approval", "requested", "claimed", "assigned"].includes(status)) return "future";
-  return "secondary";
-};
+import { Badge } from "../../components/ui/Badge";
+import { Button } from "../../components/ui/Button";
+import { buildObjectFromFields, formatDocumentType, getRequiredDocumentTypes, getTaskOutputFields } from "../../utils/caseForms";
+import { useAuth } from "../../contexts/useAuth";
+import { CaseHeader, CaseSummaryGrid } from "./CaseOverview";
+import { formatDate, formatJson, formatLabel, statusBadgeVariant } from "./caseDetailFormatters";
 
 const CaseDetailPage: React.FC = () => {
   const { id } = useParams();
@@ -56,7 +29,7 @@ const CaseDetailPage: React.FC = () => {
   const [noteText, setNoteText] = useState("");
   const [documentType, setDocumentType] = useState("");
   const [selectedTaskId, setSelectedTaskId] = useState<string>("");
-  const [selectedFile, setSelectedFile] = useState<File | null>(null);
+  const selectedFileRef = useRef<File | null>(null);
 
   const loadCase = useCallback(async () => {
     if (!Number.isInteger(caseId)) {
@@ -87,6 +60,29 @@ const CaseDetailPage: React.FC = () => {
   const roleName = user?.role?.name;
   const isAuditor = roleName === "Auditor";
   const canManageCase = roleName === "Admin" || roleName === "Supervisor";
+  const documentRequirementsByTaskId = useMemo(() => {
+    const rows = new Map<number, { required: string[]; uploaded: string[]; missing: string[]; uploadedCount: number }>();
+    if (!caseDetail) return rows;
+
+    caseDetail.tasks.forEach((task) => {
+      const required = getRequiredDocumentTypes(task.input_json);
+      const taskDocuments = caseDetail.documents.filter((document) => document.task_id === task.id);
+      const uploaded = taskDocuments
+        .map((document) => document.document_type)
+        .filter((documentType): documentType is string => Boolean(documentType));
+      const uploadedSet = new Set(uploaded);
+      rows.set(task.id, {
+        required,
+        uploaded,
+        missing: required.filter((documentType) => !uploadedSet.has(documentType)),
+        uploadedCount: taskDocuments.length,
+      });
+    });
+
+    return rows;
+  }, [caseDetail]);
+  const selectedDocumentTaskId = selectedTaskId ? Number(selectedTaskId) : null;
+  const selectedDocumentRequirements = selectedDocumentTaskId ? documentRequirementsByTaskId.get(selectedDocumentTaskId) : null;
 
   const refreshAfterAction = async (message: string) => {
     setActionSuccess(message);
@@ -130,6 +126,7 @@ const CaseDetailPage: React.FC = () => {
 
   const handleUploadDocument = () => {
     void runAction("document-upload", async () => {
+      const selectedFile = selectedFileRef.current;
       if (!selectedFile || !caseDetail) throw new Error("Choose a file before uploading.");
       await uploadCaseDocument({
         caseId: caseDetail.id,
@@ -137,7 +134,7 @@ const CaseDetailPage: React.FC = () => {
         taskId: selectedTaskId ? Number(selectedTaskId) : null,
         documentType: documentType.trim() || null,
       });
-      setSelectedFile(null);
+      selectedFileRef.current = null;
       setDocumentType("");
       setSelectedTaskId("");
       await refreshAfterAction("Document uploaded.");
@@ -148,7 +145,7 @@ const CaseDetailPage: React.FC = () => {
     return (
       <div className="p-6 text-[#8f8f8f]">
         <div className="animate-spin size-5 border-2 border-[#0f1012]/20 border-t-[#0071e3] rounded-full inline-block mr-2" />
-        Loading case...
+        Loading case&hellip;
       </div>
     );
   }
@@ -170,17 +167,7 @@ const CaseDetailPage: React.FC = () => {
         <FiArrowLeft /> Cases
       </Link>
 
-      <div className="flex flex-wrap items-start justify-between gap-4 mb-6">
-        <div>
-          <div className="flex flex-wrap gap-2 mb-3">
-            <Badge variant={statusBadgeVariant(caseDetail.status)}>{formatLabel(caseDetail.status)}</Badge>
-            <Badge variant={statusBadgeVariant(caseDetail.priority)}>{formatLabel(caseDetail.priority)}</Badge>
-            {caseDetail.flow && <Badge variant="secondary">{caseDetail.flow.name}</Badge>}
-          </div>
-          <h1 className="text-xl font-medium text-[#0f1012] mb-1 tabular-nums">{caseDetail.case_reference}</h1>
-          <p className="text-[#8f8f8f] mb-0">{caseDetail.title || formatLabel(caseDetail.case_type)}</p>
-        </div>
-      </div>
+      <CaseHeader caseDetail={caseDetail} />
 
       {(actionError || actionSuccess) && (
         <div className={`mb-4 p-4 rounded-[10px] text-sm ${actionError ? "bg-[#ffebee] border border-[#b71c1c]/20 text-[#b71c1c]" : "bg-[#e8f5e9] border border-[#1b5e20]/20 text-[#1b5e20]"}`}>
@@ -188,24 +175,7 @@ const CaseDetailPage: React.FC = () => {
         </div>
       )}
 
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-3 mb-6">
-        <div className="border border-[#0f1012]/[0.06] rounded-[10px] p-3 bg-[#fdfdfd] shadow-card">
-          <div className="text-[#868788] text-[10px] uppercase mb-2 tracking-wider">Owner</div>
-          <div className="flex items-center gap-2 text-[#0f1012] text-sm"><FiUser className="text-[#868788]" strokeWidth={1.5} /> {currentOwner}</div>
-        </div>
-        <div className="border border-[#0f1012]/[0.06] rounded-[10px] p-3 bg-[#fdfdfd] shadow-card">
-          <div className="text-[#868788] text-[10px] uppercase mb-2 tracking-wider">Opened</div>
-          <div className="flex items-center gap-2 text-[#0f1012] text-sm"><FiClock className="text-[#868788]" strokeWidth={1.5} /> {formatDate(caseDetail.opened_at)}</div>
-        </div>
-        <div className="border border-[#0f1012]/[0.06] rounded-[10px] p-3 bg-[#fdfdfd] shadow-card">
-          <div className="text-[#868788] text-[10px] uppercase mb-2 tracking-wider">Current Node</div>
-          <div className="flex items-center gap-2 text-[#0f1012] text-sm"><FiGitBranch className="text-[#868788]" strokeWidth={1.5} /> {caseDetail.current_node_key || "None"}</div>
-        </div>
-        <div className="border border-[#0f1012]/[0.06] rounded-[10px] p-3 bg-[#fdfdfd] shadow-card">
-          <div className="text-[#868788] text-[10px] uppercase mb-2 tracking-wider">Intake</div>
-          <div className="flex items-center gap-2 text-[#0f1012] text-sm"><FiShield className="text-[#868788]" strokeWidth={1.5} /> {caseDetail.intake_source || "manual"}</div>
-        </div>
-      </div>
+      <CaseSummaryGrid caseDetail={caseDetail} currentOwner={currentOwner} />
 
       <div className="grid grid-cols-1 xl:grid-cols-7 gap-6">
         <div className="xl:col-span-4 space-y-6">
@@ -216,6 +186,13 @@ const CaseDetailPage: React.FC = () => {
                 <div className="border border-[#0f1012]/[0.08] rounded-[10px] p-4 text-[#868788] bg-[#fdfdfd]">No tasks for this case yet.</div>
               ) : caseDetail.tasks.map((task) => (
                 <div key={task.id} className="border border-[#0f1012]/[0.08] rounded-[10px] p-4 bg-[#fdfdfd]">
+                  {(() => {
+                    const documentRequirements = documentRequirementsByTaskId.get(task.id);
+                    const missingRequiredDocuments = documentRequirements?.missing ?? [];
+                    const isDocumentCollection = task.task_type === "document_collection";
+                    const isMissingAnyEvidence = isDocumentCollection && (documentRequirements?.required.length ? missingRequiredDocuments.length > 0 : (documentRequirements?.uploadedCount ?? 0) === 0);
+                    return (
+                      <>
                   <div className="flex justify-between gap-3">
                     <div className="min-w-0">
                       <div className="text-[#0f1012] font-medium text-sm">{task.title}</div>
@@ -224,6 +201,32 @@ const CaseDetailPage: React.FC = () => {
                     <Badge variant={statusBadgeVariant(task.status)}>{formatLabel(task.status)}</Badge>
                   </div>
                   <div className="text-[#8f8f8f] text-xs mt-2">Due: {formatDate(task.due_at)}</div>
+                  {isDocumentCollection && documentRequirements && (
+                    <div className="mt-3 rounded-[10px] border border-[#0f1012]/[0.06] bg-[#0f1012]/[0.02] p-3">
+                      <div className="text-[10px] uppercase tracking-wider text-[#868788]">Required evidence</div>
+                      {documentRequirements.required.length > 0 ? (
+                        <div className="mt-2 flex flex-wrap gap-2">
+                          {documentRequirements.required.map((documentType) => {
+                            const uploaded = documentRequirements.uploaded.includes(documentType);
+                            return (
+                              <span
+                                key={documentType}
+                                className={`rounded-[10px] border px-2 py-1 text-xs ${
+                                  uploaded
+                                    ? "border-[#1b5e20]/20 bg-[#e8f5e9] text-[#1b5e20]"
+                                    : "border-[#b71c1c]/15 bg-[#ffebee] text-[#b71c1c]"
+                                }`}
+                              >
+                                {formatDocumentType(documentType)} {uploaded ? "uploaded" : "missing"}
+                              </span>
+                            );
+                          })}
+                        </div>
+                      ) : (
+                        <div className="mt-2 text-xs text-[#8f8f8f]">Attach at least one supporting document before completing this task.</div>
+                      )}
+                    </div>
+                  )}
                   {!isAuditor && ["pending", "assigned"].includes(task.status) && task.claim_policy === "claim_required" && (
                     <Button
                       variant="secondary"
@@ -235,7 +238,7 @@ const CaseDetailPage: React.FC = () => {
                         await refreshAfterAction("Task claimed.");
                       })}
                     >
-                      {busyAction === `claim-${task.id}` ? "Claiming..." : "Claim"}
+                      {busyAction === `claim-${task.id}` ? "Claiming\u2026" : "Claim"}
                     </Button>
                   )}
                   {!isAuditor && ["pending", "assigned", "claimed", "overdue"].includes(task.status) && (
@@ -276,13 +279,21 @@ const CaseDetailPage: React.FC = () => {
                         variant="primary"
                         size="sm"
                         className="mt-2"
-                        disabled={busyAction === `task-${task.id}`}
+                        disabled={busyAction === `task-${task.id}` || isMissingAnyEvidence}
                         onClick={() => handleCompleteTask(task.id)}
                       >
-                        {busyAction === `task-${task.id}` ? "Completing..." : "Complete Task"}
+                        {busyAction === `task-${task.id}` ? "Completing\u2026" : "Complete Task"}
                       </Button>
+                      {isMissingAnyEvidence && (
+                        <div className="mt-2 text-xs text-[#b71c1c]">
+                          Upload {missingRequiredDocuments.length > 0 ? missingRequiredDocuments.map(formatDocumentType).join(", ") : "supporting evidence"} before completing.
+                        </div>
+                      )}
                     </div>
                   )}
+                      </>
+                    );
+                  })()}
                 </div>
               ))}
             </div>
@@ -412,11 +423,37 @@ const CaseDetailPage: React.FC = () => {
                       id="document-file"
                       type="file"
                       accept=".pdf,.doc,.docx,application/pdf,application/msword,application/vnd.openxmlformats-officedocument.wordprocessingml.document"
-                      onChange={(event) => setSelectedFile(event.target.files?.[0] ?? null)}
+                      onChange={(event) => {
+                        selectedFileRef.current = event.target.files?.[0] ?? null;
+                      }}
                       className="w-full bg-[#0f1012]/[0.04] border border-[#0f1012]/[0.08] rounded-[10px] px-3 py-2 text-sm text-[#020201] file:bg-transparent file:border-0 file:text-sm file:font-medium file:text-[#8f8f8f] focus:outline-none focus:border-[#0f1012]/[0.18] focus:ring-1 focus:ring-[#0071e3]/20 transition-all"
                     />
                   </div>
                 </div>
+                {selectedDocumentRequirements && selectedDocumentRequirements.required.length > 0 && (
+                  <div className="mt-3 rounded-[10px] border border-[#0f1012]/[0.06] bg-[#0f1012]/[0.02] p-3">
+                    <div className="text-[10px] uppercase tracking-wider text-[#868788]">Required for selected task</div>
+                    <div className="mt-2 flex flex-wrap gap-2">
+                      {selectedDocumentRequirements.required.map((documentType) => {
+                        const uploaded = selectedDocumentRequirements.uploaded.includes(documentType);
+                        return (
+                          <button
+                            key={documentType}
+                            type="button"
+                            onClick={() => setDocumentType(documentType)}
+                            className={`rounded-[10px] border px-2 py-1 text-xs transition-colors ${
+                              uploaded
+                                ? "border-[#1b5e20]/20 bg-[#e8f5e9] text-[#1b5e20]"
+                                : "border-[#0f1012]/[0.08] bg-[#fdfdfd] text-[#0f1012] hover:border-[#0f1012]/[0.18]"
+                            }`}
+                          >
+                            {formatDocumentType(documentType)} {uploaded ? "uploaded" : "use type"}
+                          </button>
+                        );
+                      })}
+                    </div>
+                  </div>
+                )}
                 <Button
                   variant="secondary"
                   size="sm"
@@ -424,7 +461,7 @@ const CaseDetailPage: React.FC = () => {
                   disabled={busyAction === "document-upload"}
                   onClick={handleUploadDocument}
                 >
-                  <FiUpload className="size-3.5" /> {busyAction === "document-upload" ? "Uploading..." : "Upload Document"}
+                  <FiUpload className="size-3.5" /> {busyAction === "document-upload" ? "Uploading\u2026" : "Upload Document"}
                 </Button>
               </div>
             )}

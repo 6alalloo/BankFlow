@@ -43,6 +43,7 @@ DATABASE_URL=postgresql://bankflow:bankflow_dev@localhost:5433/bankflow
 - roles: Admin, Designer, Operator, Supervisor, Approver, Auditor
 - users and credentials:
   - `admin@bankflow.local` / `admin123`
+  - `designer@bankflow.local` / `designer123`
   - `operator@bankflow.local` / `operator123`
   - `supervisor@bankflow.local` / `supervisor123`
   - `approver@bankflow.local` / `approver123`
@@ -50,9 +51,14 @@ DATABASE_URL=postgresql://bankflow:bankflow_dev@localhost:5433/bankflow
 - teams:
   - AML Review Queue
   - Payments Operations
+  - KYC Remediation
+  - Treasury Control
 - published demo flows:
   - AML Alert Review
   - Payment Exception Review
+  - High-Value Payment Release
+- allow-listed integration domains for sanctions, SWIFT, KYC, and treasury systems
+- realistic operational cases with related tasks, approvals, documents, escalations, timeline events, and audit activity
 
 ## Stable Verification Gates
 

@@ -104,7 +104,7 @@ async function login(page: Page, email = "admin@bankflow.local", password = "adm
   await page.getByLabel("Email Address").fill(email);
   await page.getByLabel("Password").fill(password);
   await page.getByRole("button", { name: "Sign In" }).click();
-  await expect(page).toHaveURL(/\/$/);
+  await expect(page).toHaveURL(/\/dashboard$/);
   await expect(page.getByRole("link", { name: "BankFlow Case Orchestration" })).toBeVisible();
   await expect(page.getByRole("link", { name: "Cases" })).toBeVisible();
 }
@@ -120,6 +120,7 @@ async function createCaseFromFlow(page: Page, flow: FlowSummary, title: string, 
   await expect(page.getByRole("heading", { name: "New Case" })).toBeVisible();
   await page.getByLabel("Published Flow").selectOption(String(flow.id));
   await page.getByPlaceholder("Optional case title").fill(title);
+  await page.getByText("Advanced JSON", { exact: true }).click();
   await page.getByLabel("Case Data JSON").fill(caseData);
   await page.getByRole("button", { name: "Create Case" }).click();
 
@@ -129,6 +130,75 @@ async function createCaseFromFlow(page: Page, flow: FlowSummary, title: string, 
   await expect(page.getByRole("heading", { name: "Documents" })).toBeVisible();
   await expect(page.getByRole("heading", { name: "Case Controls" })).toBeVisible();
 }
+
+async function createCaseFromGuidedFields(page: Page, flow: FlowSummary, title: string, fields: Record<string, string>) {
+  await page.getByRole("link", { name: "Cases" }).click();
+  await expect(page).toHaveURL(/\/cases$/);
+  await expect(page.getByRole("heading", { name: "Cases" })).toBeVisible();
+
+  await page.getByRole("button", { name: "New Case" }).click();
+  await expect(page.getByRole("heading", { name: "New Case" })).toBeVisible();
+  await page.getByLabel("Published Flow").selectOption(String(flow.id));
+  await page.getByPlaceholder("Optional case title").fill(title);
+  for (const [label, value] of Object.entries(fields)) {
+    await page.getByLabel(label, { exact: true }).fill(value);
+  }
+  await page.getByRole("button", { name: "Create Case" }).click();
+
+  await expect(page).toHaveURL(/\/cases\/\d+$/);
+  await expect(page.getByRole("heading", { name: "Tasks" })).toBeVisible();
+  await expect(page.getByRole("heading", { name: "Documents" })).toBeVisible();
+}
+
+async function uploadDocument(page: Page, documentType: string, filePath: string, taskLabel?: string) {
+  if (taskLabel) {
+    await page.getByLabel("Task").selectOption({ label: taskLabel });
+  }
+  await page.getByLabel("Document Type").fill(documentType);
+  await page.locator("#document-file").setInputFiles(filePath);
+  await page.getByRole("button", { name: "Upload Document" }).click();
+  await expect(page.getByText("Document uploaded.")).toBeVisible();
+}
+
+function approvalRowForCase(page: Page, caseReference: string) {
+  return page
+    .locator("[data-testid^='approval-row-']")
+    .filter({ has: page.getByRole("button", { name: caseReference }) })
+    .first();
+}
+
+function caseTaskTitle(page: Page, title: string) {
+  return page
+    .locator("section")
+    .filter({ has: page.getByRole("heading", { name: "Tasks" }) })
+    .getByText(title, { exact: true })
+    .first();
+}
+
+test("create-case validation errors stay visible inside the modal", async ({ page, request }) => {
+  const runtimeIssues = captureRuntimeIssues(page);
+  const flow = await fetchPublishedFlow(request, "High-Value Payment Release");
+
+  await login(page);
+  await page.getByRole("link", { name: "Cases" }).click();
+  await expect(page).toHaveURL(/\/cases$/);
+  await expect(page.getByRole("heading", { name: "Cases" })).toBeVisible();
+  await expect(page.getByRole("heading", { name: "Overdue Work" })).toBeVisible();
+  await page.getByRole("button", { name: "New Case" }).click();
+  await expect(page.getByRole("heading", { name: "New Case" })).toBeVisible();
+
+  await page.getByRole("button", { name: "Create Case" }).click();
+  await expect(page.getByText("Choose a published flow.")).toBeVisible();
+
+  await page.getByLabel("Published Flow").selectOption(String(flow.id));
+  await expect(page.getByLabel("Amount BHD", { exact: true })).toBeVisible();
+  await page.getByText("Advanced JSON", { exact: true }).click();
+  await page.getByLabel("Additional Case Data JSON").fill("[1]");
+  await page.getByRole("button", { name: "Create Case" }).click();
+  await expect(page.getByText("Case data must be a JSON object.")).toBeVisible();
+
+  expect(runtimeIssues).toEqual([]);
+});
 
 test("admin can run an AML case from intake to approval, note, and closure", async ({ page, request }) => {
   const runtimeIssues = captureRuntimeIssues(page);
@@ -144,7 +214,7 @@ test("admin can run an AML case from intake to approval, note, and closure", asy
     '{\n  "customer": "Acme Imports",\n  "risk": { "score": 92 }\n}'
   );
 
-  await expect(page.locator("div.text-white.font-medium.text-sm").filter({ hasText: /^Review AML alert$/ })).toBeVisible();
+  await expect(caseTaskTitle(page, "Review AML alert")).toBeVisible();
   await page.getByRole("button", { name: "Claim" }).click();
   await expect(page.getByText("Task claimed.")).toBeVisible();
 
@@ -194,7 +264,7 @@ test("operator can claim and complete assigned work from My Tasks", async ({ pag
   const row = page.getByTestId(`task-row-${reviewTask.id}`);
   await expect(row).toBeVisible();
   await row.getByRole("button", { name: "Claim" }).click();
-  await expect(page.locator("body")).toContainText("claimed");
+  await expect(row).toContainText("Claimed");
   await row.getByRole("button", { name: "Open Case" }).click();
 
   await expect(page).toHaveURL(/\/cases\/\d+$/);
@@ -202,7 +272,7 @@ test("operator can claim and complete assigned work from My Tasks", async ({ pag
   await page.getByRole("textbox", { name: "Review Notes" }).fill("Operator completed AML review from My Tasks.");
   await page.getByRole("button", { name: "Complete Task" }).click();
   await expect(page.getByText("Task completed.")).toBeVisible();
-  await expect(page.locator("body")).toContainText("pending approval");
+  await expect(page.locator("body")).toContainText("Pending Approval");
 
   expect(runtimeIssues).toEqual([]);
 });
@@ -237,7 +307,7 @@ test("supervisor can decide an approval from the Approvals Inbox", async ({ page
   await expect(page).toHaveURL(/\/approvals$/);
   await expect(page.getByRole("heading", { name: "Approvals Inbox" })).toBeVisible();
 
-  const row = page.locator("div.rounded-2xl").filter({ hasText: createdCase.case_reference }).first();
+  const row = approvalRowForCase(page, createdCase.case_reference);
   await expect(row).toBeVisible();
   await row.getByPlaceholder("Record the basis for this decision").fill("Supervisor approved from approvals inbox.");
   await row.getByRole("button", { name: "Approve" }).click();
@@ -268,19 +338,22 @@ test("admin can satisfy payment document requirements and complete the workflow"
     '{\n  "paymentId": "PAY-1001",\n  "amount": 12850,\n  "currency": "BHD"\n}'
   );
 
-  await expect(page.locator("div.text-white.font-medium.text-sm").filter({ hasText: /^Collect payment evidence$/ })).toBeVisible();
+  await expect(caseTaskTitle(page, "Collect payment evidence")).toBeVisible();
+  await expect(page.getByText("Payment Instruction missing")).toBeVisible();
+  await expect(page.getByRole("button", { name: "Complete Task" })).toBeDisabled();
   await page.getByLabel("Task").selectOption({ label: "Collect payment evidence" });
   await page.getByLabel("Document Type").fill("payment_instruction");
   await page.locator("#document-file").setInputFiles(fixturePath);
   await page.getByRole("button", { name: "Upload Document" }).click();
   await expect(page.getByText("Document uploaded.")).toBeVisible();
   await expect(page.getByText("payment-instruction.pdf", { exact: true })).toBeVisible();
+  await expect(page.getByText("Payment Instruction uploaded")).toBeVisible();
 
   await page.getByPlaceholder('Output JSON, e.g. {"finding":"clear"}').fill('{"documents":"received"}');
   await page.getByRole("button", { name: "Complete Task" }).click();
   await expect(page.getByText("Task completed.")).toBeVisible();
 
-  await expect(page.locator("div.text-white.font-medium.text-sm").filter({ hasText: /^Resolve payment exception$/ })).toBeVisible();
+  await expect(caseTaskTitle(page, "Resolve payment exception")).toBeVisible();
   await page.getByPlaceholder("Decision label, e.g. approved").fill("resolved");
   await page.getByPlaceholder('Output JSON, e.g. {"finding":"clear"}').fill('{"resolution":"credited"}');
   await page.getByRole("button", { name: "Complete Task" }).click();
@@ -291,7 +364,132 @@ test("admin can satisfy payment document requirements and complete the workflow"
   expect(runtimeIssues).toEqual([]);
 });
 
-test("auditor can inspect cases while unauthorized operator cannot access protected case documents", async ({ page, request }) => {
+test("admin can complete a high-value payment release through treasury approval", async ({ page, request }, testInfo: TestInfo) => {
+  const runtimeIssues = captureRuntimeIssues(page);
+  const flow = await fetchPublishedFlow(request, "High-Value Payment Release");
+  const fixturePaths = ["payment_instruction", "sanctions_screen", "customer_mandate"].map((documentType) => {
+    const fixturePath = testInfo.outputPath(`${documentType}.pdf`);
+    mkdirSync(dirname(fixturePath), { recursive: true });
+    writeFileSync(
+      fixturePath,
+      "%PDF-1.4\n1 0 obj\n<< /Type /Catalog >>\nendobj\ntrailer\n<< /Root 1 0 R >>\n%%EOF\n",
+      "utf8"
+    );
+    return { documentType, fixturePath };
+  });
+
+  await login(page);
+  await createCaseFromGuidedFields(
+    page,
+    flow,
+    `High Value Release UI Journey ${Date.now()}`,
+    {
+      "Payment ID": "HV-2201",
+      Beneficiary: "Alba Industrial Services",
+      "Amount BHD": "250000",
+      Currency: "BHD",
+    }
+  );
+
+  await expect(caseTaskTitle(page, "Collect payment instruction, sanctions screen, and customer mandate")).toBeVisible();
+  await expect(page.getByText("Payment Instruction missing")).toBeVisible();
+  await expect(page.getByText("Sanctions Screen missing")).toBeVisible();
+  await expect(page.getByText("Customer Mandate missing")).toBeVisible();
+  for (const fixture of fixturePaths) {
+    await uploadDocument(page, fixture.documentType, fixture.fixturePath, "Collect payment instruction, sanctions screen, and customer mandate");
+  }
+  await expect(page.getByText("Payment Instruction uploaded")).toBeVisible();
+  await expect(page.getByText("Sanctions Screen uploaded")).toBeVisible();
+  await expect(page.getByText("Customer Mandate uploaded")).toBeVisible();
+  await page.getByRole("textbox", { name: "Document Status" }).fill("received");
+  await page.getByRole("textbox", { name: "Notes" }).fill("All release evidence uploaded.");
+  await page.getByRole("button", { name: "Complete Task" }).click();
+  await expect(page.getByText("Task completed.")).toBeVisible();
+
+  await expect(caseTaskTitle(page, "Validate funding, beneficiary, and correspondent route")).toBeVisible();
+  await page.getByRole("button", { name: "Claim" }).click();
+  await expect(page.getByText("Task claimed.")).toBeVisible();
+  await page.getByRole("textbox", { name: "Finding", exact: true }).fill("clear");
+  await page.getByRole("textbox", { name: "Review Notes" }).fill("Treasury validation completed.");
+  await page.getByRole("button", { name: "Complete Task" }).click();
+  await expect(page.getByText("Task completed.")).toBeVisible();
+
+  await expect(page.getByText("Approval #")).toBeVisible();
+  await page.getByPlaceholder("Decision reason").fill("Senior treasury approval completed.");
+  await page.getByRole("button", { name: "Approve" }).click();
+  await expect(page.getByText("Approval approved.")).toBeVisible();
+  await expect(page.locator("body")).toContainText("Resolved");
+  await expect(page.locator("body")).toContainText("Case status updated to resolved");
+
+  expect(runtimeIssues).toEqual([]);
+});
+
+test("admin can reject a high-value release into rework escalation", async ({ page, request }, testInfo: TestInfo) => {
+  const runtimeIssues = captureRuntimeIssues(page);
+  const flow = await fetchPublishedFlow(request, "High-Value Payment Release");
+  const fixturePaths = ["payment_instruction", "sanctions_screen", "customer_mandate"].map((documentType) => {
+    const fixturePath = testInfo.outputPath(`reject-${documentType}.pdf`);
+    mkdirSync(dirname(fixturePath), { recursive: true });
+    writeFileSync(
+      fixturePath,
+      "%PDF-1.4\n1 0 obj\n<< /Type /Catalog >>\nendobj\ntrailer\n<< /Root 1 0 R >>\n%%EOF\n",
+      "utf8"
+    );
+    return { documentType, fixturePath };
+  });
+
+  await login(page);
+  await createCaseFromGuidedFields(
+    page,
+    flow,
+    `High Value Rework UI Journey ${Date.now()}`,
+    {
+      "Payment ID": "HV-REWORK-1",
+      Beneficiary: "Northern Gulf Equipment",
+      "Amount BHD": "325000",
+      Currency: "BHD",
+    }
+  );
+
+  for (const fixture of fixturePaths) {
+    await uploadDocument(page, fixture.documentType, fixture.fixturePath, "Collect payment instruction, sanctions screen, and customer mandate");
+  }
+  await page.getByRole("textbox", { name: "Document Status" }).fill("received");
+  await page.getByRole("textbox", { name: "Notes" }).fill("Evidence package ready for treasury review.");
+  await page.getByRole("button", { name: "Complete Task" }).click();
+  await expect(page.getByText("Task completed.")).toBeVisible();
+
+  await page.getByRole("button", { name: "Claim" }).click();
+  await expect(page.getByText("Task claimed.")).toBeVisible();
+  await page.getByRole("textbox", { name: "Finding", exact: true }).fill("exception");
+  await page.getByRole("textbox", { name: "Review Notes" }).fill("Route needs senior decision.");
+  await page.getByRole("button", { name: "Complete Task" }).click();
+  await expect(page.getByText("Task completed.")).toBeVisible();
+
+  await page.getByPlaceholder("Decision reason").fill("Beneficiary mandate does not match the release package.");
+  await page.getByRole("button", { name: "Reject" }).click();
+  await expect(page.getByText("Approval rejected.")).toBeVisible();
+  await expect(page.locator("body")).toContainText("Escalated");
+  await expect(page.locator("body")).toContainText("Senior approver rejected payment release");
+
+  expect(runtimeIssues).toEqual([]);
+});
+
+test("admin can process SLA work and review escalated queue", async ({ page }) => {
+  const runtimeIssues = captureRuntimeIssues(page);
+
+  await login(page);
+  await page.getByRole("link", { name: "Cases" }).click();
+  await expect(page.getByRole("button", { name: "Open Work" })).toBeVisible();
+  await page.getByRole("button", { name: "Process SLA" }).click();
+  await expect(page.getByRole("button", { name: "Process SLA" })).toBeEnabled();
+  await page.getByRole("button", { name: "Escalated", exact: true }).click();
+  await expect(page.locator("body")).toContainText("Escalated");
+
+  expect(runtimeIssues).toEqual([]);
+});
+
+test("auditor can inspect cases while unauthorized approver cannot access protected case documents", async ({ page, request }) => {
   const runtimeIssues = captureRuntimeIssues(page);
   await ensureAuditorUser(request);
 
@@ -336,12 +534,12 @@ test("auditor can inspect cases while unauthorized operator cannot access protec
   });
   expect(closeResponse.status()).toBe(403);
 
-  const operator = await loginApi(request, "operator@bankflow.local", "operator123");
-  const operatorHeaders = { Authorization: `Bearer ${operator.token}` };
-  const operatorCaseResponse = await request.get(`${apiBaseUrl}/cases/${createdCase.id}`, { headers: operatorHeaders });
-  expect(operatorCaseResponse.status()).toBe(403);
-  const operatorDocumentResponse = await request.get(`${apiBaseUrl}/files/documents/${documentId}`, { headers: operatorHeaders });
-  expect(operatorDocumentResponse.status()).toBe(403);
+  const approver = await loginApi(request, "approver@bankflow.local", "approver123");
+  const approverHeaders = { Authorization: `Bearer ${approver.token}` };
+  const approverCaseResponse = await request.get(`${apiBaseUrl}/cases/${createdCase.id}`, { headers: approverHeaders });
+  expect(approverCaseResponse.status()).toBe(403);
+  const approverDocumentResponse = await request.get(`${apiBaseUrl}/files/documents/${documentId}`, { headers: approverHeaders });
+  expect(approverDocumentResponse.status()).toBe(403);
 
   expect(runtimeIssues).toEqual([]);
 });

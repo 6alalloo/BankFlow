@@ -1,6 +1,5 @@
 import React, { useCallback, useEffect, useRef, useState } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
-import * as dagre from 'dagre';
 import { FiCheck } from 'react-icons/fi';
 import {
     LuLayoutTemplate,
@@ -41,22 +40,26 @@ import ReactFlow, {
     useEdgesState,
     type Connection,
     type Edge,
-    type EdgeProps,
     ReactFlowProvider,
     useReactFlow,
-    getBezierPath,
-    BaseEdge,
     type Node as RFNode,
 } from 'reactflow';
-import 'reactflow/dist/style.css';
 
-import PremiumNode from '../../components/builder/PremiumNode';
-import GhostNode from '../../components/builder/GhostNode';
 import ConfigPanel from '../../components/builder/ConfigPanel';
 import NodePicker from '../../components/builder/NodePicker';
 import { NODE_TYPE_MAP } from '../../components/builder/nodePickerOptions';
 import { templates, type FlowTemplate } from '../../data/templates';
 import { DEFAULT_NODE_CONFIGS, type NodeKind } from '../../types/nodeConfigs';
+import {
+    SNAP_GRID,
+    edgeTypes,
+    getFromNodeId,
+    getLayoutedElements,
+    getToNodeId,
+    nodeTypesMap,
+    snap,
+    type FlowNodeData,
+} from './flowBuilderGraph';
 
 type BuilderState = {
     flowId: number | null;
@@ -64,201 +67,6 @@ type BuilderState = {
     nodes: FlowGraphNode[];
     edges: FlowGraphEdge[];
 };
-
-const SNAP_GRID = 20;
-
-const snap = (val: number) => Math.round(val / SNAP_GRID) * SNAP_GRID;
-
-const CustomEdge = ({
-    id,
-    sourceX,
-    sourceY,
-    targetX,
-    targetY,
-    sourcePosition,
-    targetPosition,
-    style = EMPTY_EDGE_STYLE,
-    markerEnd,
-    label,
-    data,
-}: EdgeProps) => {
-    const [edgePath, labelX, labelY] = getBezierPath({
-        sourceX,
-        sourceY,
-        sourcePosition,
-        targetX,
-        targetY,
-        targetPosition,
-    });
-
-    return (
-        <>
-            <BaseEdge id={id} path={edgePath} markerEnd={markerEnd} style={style} />
-            {label && (
-                <foreignObject
-                    x={labelX - 30}
-                    y={labelY - 14}
-                    width={60}
-                    height={28}
-                    style={{ overflow: 'visible', pointerEvents: 'none' }}
-                >
-                    <div className="flex h-full items-center justify-center">
-                        <span
-                            className="rounded-[6px] border border-[#0f1012]/[0.08] bg-[#fdfdfd] px-2 py-0.5 text-[11px] font-medium text-[#0f1012] shadow-sm"
-                        >
-                            {label}
-                        </span>
-                    </div>
-                </foreignObject>
-            )}
-            <circle r="3" fill="#c7c7cc">
-                <animateMotion dur="3s" repeatCount="indefinite" path={edgePath} />
-            </circle>
-            {data?.onDelete && (
-                <foreignObject
-                    x={labelX - 10}
-                    y={labelY - 10}
-                    width={20}
-                    height={20}
-                    style={{ overflow: 'visible' }}
-                >
-                    <button
-                        onClick={() => data.onDelete(String(id))}
-                        className="nodrag nopan flex size-5 items-center justify-center rounded-full border border-[#0f1012]/[0.08] bg-[#fdfdfd] text-[10px] text-[#868788] opacity-0 shadow-sm transition-opacity hover:border-[#b71c1c]/30 hover:bg-[#ffebee] hover:text-[#b71c1c]"
-                        style={{ pointerEvents: 'auto' }}
-                        title="Delete connection"
-                    >
-                        ×
-                    </button>
-                </foreignObject>
-            )}
-        </>
-    );
-};
-
-const SuggestedEdge = ({
-    sourceX,
-    sourceY,
-    targetX,
-    targetY,
-    sourcePosition,
-    targetPosition,
-    data,
-}: EdgeProps) => {
-    const [edgePath, labelX, labelY] = getBezierPath({
-        sourceX,
-        sourceY,
-        sourcePosition,
-        targetX,
-        targetY,
-        targetPosition,
-    });
-
-    const connectSuggestedEdge = () => {
-        if (data?.onConnect) {
-            data.onConnect();
-        }
-    };
-
-    return (
-        <>
-            <path
-                d={edgePath}
-                fill="none"
-                stroke="transparent"
-                strokeWidth={20}
-                style={{ cursor: 'pointer' }}
-                onClick={connectSuggestedEdge}
-            />
-            <path
-                d={edgePath}
-                fill="none"
-                stroke="#c7c7cc"
-                strokeWidth={2}
-                strokeDasharray="8,4"
-                style={{ opacity: 0.6, pointerEvents: 'none' }}
-            />
-            <foreignObject
-                x={labelX - 12}
-                y={labelY - 12}
-                width={24}
-                height={24}
-                style={{ overflow: 'visible', cursor: 'pointer' }}
-                onClick={connectSuggestedEdge}
-            >
-                <div
-                    className="flex size-6 items-center justify-center rounded-full border-2 border-[#0f1012]/[0.12] bg-[#fdfdfd] text-base font-medium text-[#868788] shadow-sm transition-colors hover:border-[#0f1012]/[0.24] hover:bg-[#0f1012] hover:text-white"
-                    title="Click to connect these nodes"
-                >
-                    +
-                </div>
-            </foreignObject>
-        </>
-    );
-};
-
-const nodeTypesMap = {
-    bankflow: PremiumNode,
-    ghost: GhostNode,
-};
-
-const edgeTypes = {
-    custom: CustomEdge,
-    suggested: SuggestedEdge,
-};
-
-const EMPTY_EDGE_STYLE: React.CSSProperties = {};
-
-export type FlowNodeData = {
-    backendId?: number;
-    name?: string | null;
-    kind: string;
-    config?: Record<string, unknown>;
-    onAdd?: (event: React.MouseEvent) => void;
-    onAddAfter?: () => void;
-};
-
-const nodeWidth = 240;
-const nodeHeight = 100;
-
-const getLayoutedElements = (nodes: RFNode<FlowNodeData>[], edges: Edge[]) => {
-    const dagreGraph = new dagre.graphlib.Graph();
-    dagreGraph.setDefaultEdgeLabel(() => ({}));
-    dagreGraph.setGraph({ rankdir: 'LR', nodesep: 50, ranksep: 100 });
-
-    nodes.forEach((node) => {
-        dagreGraph.setNode(node.id, { width: nodeWidth, height: nodeHeight });
-    });
-
-    edges.forEach((edge) => {
-        dagreGraph.setEdge(edge.source, edge.target);
-    });
-
-    dagre.layout(dagreGraph);
-
-    const newNodes = nodes.map((node) => {
-        const nodeWithPosition = dagreGraph.node(node.id);
-        return {
-            ...node,
-            position: {
-                x: snap((nodeWithPosition?.x ?? 100) - nodeWidth / 2 + 100),
-                y: snap((nodeWithPosition?.y ?? 100) - nodeHeight / 2 + 100),
-            },
-        };
-    });
-
-    return { nodes: newNodes, edges };
-};
-
-function getFromNodeId(edge: FlowGraphEdge): number {
-    const e = edge as Partial<{ fromNodeId: number; from_node_id: number }>;
-    return e.fromNodeId ?? e.from_node_id ?? 0;
-}
-
-function getToNodeId(edge: FlowGraphEdge): number {
-    const e = edge as Partial<{ toNodeId: number; to_node_id: number }>;
-    return e.toNodeId ?? e.to_node_id ?? 0;
-}
 
 const FlowBuilderContent: React.FC = () => {
     const params = useParams<{ id?: string }>();
@@ -278,7 +86,7 @@ const FlowBuilderContent: React.FC = () => {
     const [rfNodes, setRfNodes, onNodesChange] = useNodesState<FlowNodeData>([]);
     const [rfEdges, setRfEdges, onEdgesChange] = useEdgesState<FlowGraphEdge>([]);
     const [nodePickerOpen, setNodePickerOpen] = useState(false);
-    const [pickerParentId, setPickerParentId] = useState<number | null>(null);
+    const pickerParentIdRef = useRef<number | null>(null);
     const [pickerPosition, setPickerPosition] = useState<{ x: number; y: number } | null>(null);
 
     const [loading, setLoading] = useState<boolean>(true);
@@ -360,7 +168,7 @@ const FlowBuilderContent: React.FC = () => {
                     kind: n.kind,
                     config: n.config || {},
                     onAddAfter: () => {
-                        setPickerParentId(n.id);
+                        pickerParentIdRef.current = n.id;
                         setPickerPosition(null);
                         setNodePickerOpen(true);
                     },
@@ -376,7 +184,7 @@ const FlowBuilderContent: React.FC = () => {
                         kind: 'ghost',
                         onAdd: (e: React.MouseEvent) => {
                             if (e) setPickerPosition({ x: e.clientX + 20, y: e.clientY });
-                            setPickerParentId(null);
+                            pickerParentIdRef.current = null;
                             setNodePickerOpen(true);
                         },
                     },
@@ -397,7 +205,7 @@ const FlowBuilderContent: React.FC = () => {
                     kind: 'ghost',
                     onAdd: (e: React.MouseEvent) => {
                         if (e) setPickerPosition({ x: e.clientX + 20, y: e.clientY });
-                        setPickerParentId(leaf.id);
+                        pickerParentIdRef.current = leaf.id;
                         setNodePickerOpen(true);
                     },
                 },
@@ -427,7 +235,7 @@ const FlowBuilderContent: React.FC = () => {
                 setRfEdges(allEdges);
             }
         },
-        [setRfNodes, setRfEdges, mapToReactFlowEdge, setPickerParentId, setPickerPosition, setNodePickerOpen]
+        [setRfNodes, setRfEdges, mapToReactFlowEdge, setPickerPosition, setNodePickerOpen]
     );
 
     useEffect(() => {
@@ -685,8 +493,8 @@ const FlowBuilderContent: React.FC = () => {
                 const projected = project({ x: pickerPosition.x, y: pickerPosition.y });
                 posX = snap(projected.x);
                 posY = snap(projected.y);
-            } else if (pickerParentId) {
-                const parent = state.nodes.find((n) => n.id === pickerParentId);
+            } else if (pickerParentIdRef.current) {
+                const parent = state.nodes.find((n) => n.id === pickerParentIdRef.current);
                 if (parent) {
                     posX = snap(parent.pos_x + 300);
                     posY = snap(parent.pos_y);
@@ -700,6 +508,7 @@ const FlowBuilderContent: React.FC = () => {
                 config: DEFAULT_NODE_CONFIGS[kind as NodeKind] ?? {},
             });
 
+            const pickerParentId = pickerParentIdRef.current;
             if (pickerParentId) {
                 await createFlowEdge(state.flowId, {
                     fromNodeId: pickerParentId,
@@ -724,13 +533,13 @@ const FlowBuilderContent: React.FC = () => {
     };
 
     const openPalette = () => {
-        setPickerParentId(null);
+        pickerParentIdRef.current = null;
         setPickerPosition(null);
         setNodePickerOpen(true);
     };
 
     const handlePaletteSelect = async (kind: string) => {
-        setPickerParentId(null);
+        pickerParentIdRef.current = null;
         setPickerPosition(null);
         await handleNodeSelect(kind);
     };
@@ -765,7 +574,7 @@ const FlowBuilderContent: React.FC = () => {
     if (loading) {
         return (
             <div className="flex h-[100dvh] w-full items-center justify-center bg-[#f2f2f4]">
-                <div className="text-lg text-[#8f8f8f]">Loading flow builder...</div>
+                <div className="text-lg text-[#8f8f8f]">Loading flow builder&hellip;</div>
             </div>
         );
     }
@@ -816,7 +625,7 @@ const FlowBuilderContent: React.FC = () => {
                             {isSaving ? (
                                 <span className="flex items-center gap-1.5 text-[11px] text-[#8f8f8f]">
                                     <div className="size-2 animate-pulse rounded-full bg-[#8f8f8f]" />
-                                    Saving...
+                                    Saving&hellip;
                                 </span>
                             ) : (
                                 <span className="flex items-center gap-1.5 text-[11px] text-[#868788]">
@@ -1068,7 +877,7 @@ const FlowBuilderContent: React.FC = () => {
                         {isSaving ? (
                             <span className="flex items-center gap-1.5 text-[11px] text-[#8f8f8f]">
                                 <div className="size-1.5 animate-pulse rounded-full bg-[#8f8f8f]" />
-                                Saving...
+                                Saving&hellip;
                             </span>
                         ) : (
                             <span className="flex items-center gap-1 text-[11px] text-[#868788]">

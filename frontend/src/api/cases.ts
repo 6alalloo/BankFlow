@@ -1,16 +1,4 @@
-import { getAuthToken } from "../contexts/AuthContext";
-import { config } from "../config/appConfig";
-
-const API_BASE_URL = config.apiBaseUrl;
-
-function getAuthHeaders(): Record<string, string> {
-  const token = getAuthToken();
-  const headers: Record<string, string> = {
-    "Content-Type": "application/json",
-  };
-  if (token) headers.Authorization = `Bearer ${token}`;
-  return headers;
-}
+import { apiGet, apiPost } from "./apiClient";
 
 export type CaseSummary = {
   id: number;
@@ -122,17 +110,6 @@ export type CreateCasePayload = {
   caseData?: Record<string, unknown>;
 };
 
-async function parseError(response: Response, fallback: string): Promise<string> {
-  try {
-    const json = (await response.json()) as { error?: string | { message?: string; requestId?: string }; message?: string };
-    if (typeof json.error === "string") return json.error;
-    if (json.error?.message) return json.error.requestId ? `${json.error.message} (${json.error.requestId})` : json.error.message;
-    return json.message || fallback;
-  } catch {
-    return fallback;
-  }
-}
-
 export type CasesQuery = {
   status?: string;
   priority?: string;
@@ -154,108 +131,42 @@ const toQueryString = (query: CasesQuery = {}) => {
 };
 
 export async function fetchCases(query: CasesQuery = {}): Promise<CaseSummary[]> {
-  const response = await fetch(`${API_BASE_URL}/cases${toQueryString(query)}`, {
-    headers: getAuthHeaders(),
-  });
-
-  if (!response.ok) {
-    throw new Error(`Failed to fetch cases (status ${response.status})`);
-  }
-
-  const json = (await response.json()) as { data?: CaseSummary[] };
+  const json = await apiGet<{ data?: CaseSummary[] }>(`/cases${toQueryString(query)}`);
   return json.data ?? [];
 }
 
 export async function closeCase(id: number, reason?: string): Promise<CaseDetail> {
-  const response = await fetch(`${API_BASE_URL}/cases/${id}/close`, {
-    method: "POST",
-    headers: getAuthHeaders(),
-    body: JSON.stringify({ reason }),
-  });
-
-  if (!response.ok) {
-    throw new Error(await parseError(response, `Failed to close case (status ${response.status})`));
-  }
-
-  const json = (await response.json()) as { data?: CaseDetail };
+  const json = await apiPost<{ data?: CaseDetail }>(`/cases/${id}/close`, { reason });
   if (!json.data) throw new Error("Unexpected close case response shape");
   return json.data;
 }
 
 export async function cancelCase(id: number, reason?: string): Promise<CaseDetail> {
-  const response = await fetch(`${API_BASE_URL}/cases/${id}/cancel`, {
-    method: "POST",
-    headers: getAuthHeaders(),
-    body: JSON.stringify({ reason }),
-  });
-
-  if (!response.ok) {
-    throw new Error(await parseError(response, `Failed to cancel case (status ${response.status})`));
-  }
-
-  const json = (await response.json()) as { data?: CaseDetail };
+  const json = await apiPost<{ data?: CaseDetail }>(`/cases/${id}/cancel`, { reason });
   if (!json.data) throw new Error("Unexpected cancel case response shape");
   return json.data;
 }
 
 export async function addCaseNote(id: number, note: string): Promise<CaseEvent> {
-  const response = await fetch(`${API_BASE_URL}/cases/${id}/notes`, {
-    method: "POST",
-    headers: getAuthHeaders(),
-    body: JSON.stringify({ note }),
-  });
-
-  if (!response.ok) {
-    throw new Error(await parseError(response, `Failed to add note (status ${response.status})`));
-  }
-
-  const json = (await response.json()) as { data?: CaseEvent };
+  const json = await apiPost<{ data?: CaseEvent }>(`/cases/${id}/notes`, { note });
   if (!json.data) throw new Error("Unexpected note response shape");
   return json.data;
 }
 
 export async function resolveEscalation(caseId: number, escalationId: number, reason?: string): Promise<CaseEscalation> {
-  const response = await fetch(`${API_BASE_URL}/cases/${caseId}/escalations/${escalationId}/resolve`, {
-    method: "POST",
-    headers: getAuthHeaders(),
-    body: JSON.stringify({ reason }),
-  });
-
-  if (!response.ok) {
-    throw new Error(await parseError(response, `Failed to resolve escalation (status ${response.status})`));
-  }
-
-  const json = (await response.json()) as { data?: CaseEscalation };
+  const json = await apiPost<{ data?: CaseEscalation }>(`/cases/${caseId}/escalations/${escalationId}/resolve`, { reason });
   if (!json.data) throw new Error("Unexpected escalation response shape");
   return json.data;
 }
 
 export async function fetchCaseById(id: number): Promise<CaseDetail> {
-  const response = await fetch(`${API_BASE_URL}/cases/${id}`, {
-    headers: getAuthHeaders(),
-  });
-
-  if (!response.ok) {
-    throw new Error(await parseError(response, `Failed to fetch case (status ${response.status})`));
-  }
-
-  const json = (await response.json()) as { data?: CaseDetail };
+  const json = await apiGet<{ data?: CaseDetail }>(`/cases/${id}`);
   if (!json.data) throw new Error("Unexpected case detail response shape");
   return json.data;
 }
 
 export async function createCase(payload: CreateCasePayload): Promise<CaseDetail> {
-  const response = await fetch(`${API_BASE_URL}/cases`, {
-    method: "POST",
-    headers: getAuthHeaders(),
-    body: JSON.stringify(payload),
-  });
-
-  if (!response.ok) {
-    throw new Error(await parseError(response, `Failed to create case (status ${response.status})`));
-  }
-
-  const json = (await response.json()) as { data?: CaseDetail };
+  const json = await apiPost<{ data?: CaseDetail }>("/cases", payload);
   if (!json.data) throw new Error("Unexpected create case response shape");
   return json.data;
 }

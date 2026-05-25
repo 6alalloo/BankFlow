@@ -3,7 +3,8 @@ import { useNavigate } from "react-router-dom";
 import { FiAlertTriangle, FiBriefcase, FiCheckCircle, FiClock, FiRefreshCw, FiUserCheck } from "react-icons/fi";
 import { claimTask, fetchTasks, processOverdueWork, type TasksQuery } from "../../api/tasks";
 import type { CaseTask } from "../../api/cases";
-import { Badge, Button, type BadgeVariant } from "../../components/ui";
+import { Badge, type BadgeVariant } from "../../components/ui/Badge";
+import { Button } from "../../components/ui/Button";
 
 const filters: Array<{ key: string; label: string; query: TasksQuery }> = [
   { key: "active", label: "Active", query: {} },
@@ -96,7 +97,7 @@ const TasksWorkbenchPage: React.FC = () => {
         </div>
         <Button variant="secondary" size="sm" onClick={handleSlaSweep} disabled={busy === "sla"}>
           <FiRefreshCw className={`size-3.5 ${busy === "sla" ? "animate-spin" : ""}`} strokeWidth={1.5} />
-          {busy === "sla" ? "Checking..." : "Process SLA"}
+          {busy === "sla" ? "Checking\u2026" : "Process SLA"}
         </Button>
       </div>
 
@@ -124,7 +125,7 @@ const TasksWorkbenchPage: React.FC = () => {
       </div>
 
       {loading ? (
-        <div className="rounded-[10px] border border-[#0f1012]/[0.06] bg-[#fdfdfd] p-6 text-sm shadow-card">Loading tasks...</div>
+        <div className="rounded-[10px] border border-[#0f1012]/[0.06] bg-[#fdfdfd] p-6 text-sm shadow-card">Loading tasks&hellip;</div>
       ) : tasks.length === 0 ? (
         <div className="rounded-[10px] border border-[#0f1012]/[0.06] bg-[#fdfdfd] p-8 text-center shadow-card">
           <FiCheckCircle className="mx-auto mb-3 text-[#1b5e20]" size={24} strokeWidth={1.5} />

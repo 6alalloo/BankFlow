@@ -6,6 +6,18 @@ import {
 import { AppError, isAppError, ErrorCodes } from '../types/errors';
 import logger from '../lib/logger';
 
+type ErrorDetails = Record<string, unknown>;
+
+interface ApiErrorResponse {
+  error: {
+    code: string;
+    message: string;
+    requestId: string;
+    details?: ErrorDetails;
+    stack?: string;
+  };
+}
+
 /**
  * Global Error Handler Middleware
  *
@@ -20,22 +32,20 @@ export function errorHandler(
   error: Error | AppError,
   req: Request,
   res: Response,
-  next: NextFunction
+  _next: NextFunction
 ): void {
-  // Extract request ID for error tracking
-  const requestId = (req as any).requestId || 'unknown';
-
-  // Default error response
+  const requestId = req.requestId || 'unknown';
   let statusCode = 500;
   let errorCode: string = ErrorCodes.INTERNAL_ERROR;
   let message = 'An unexpected error occurred';
-  let details: any = undefined;
+  let details: ErrorDetails | undefined;
 
   // Handle AppError (custom application errors)
   if (isAppError(error)) {
     statusCode = error.statusCode;
     errorCode = error.errorCode;
     message = error.message;
+    details = error.details;
 
     // Log operational errors at appropriate level
     if (error.isOperational) {
@@ -179,7 +189,7 @@ export function errorHandler(
   }
 
   // Send error response
-  const errorResponse: any = {
+  const errorResponse: ApiErrorResponse = {
     error: {
       code: errorCode,
       message,
@@ -204,8 +214,8 @@ export function errorHandler(
  * 404 Not Found Handler
  * Catches requests to undefined routes
  */
-export function notFoundHandler(req: Request, res: Response, next: NextFunction): void {
-  const requestId = (req as any).requestId || 'unknown';
+export function notFoundHandler(req: Request, res: Response, _next: NextFunction): void {
+  const requestId = req.requestId || 'unknown';
 
   logger.warn('Route not found', {
     requestId,

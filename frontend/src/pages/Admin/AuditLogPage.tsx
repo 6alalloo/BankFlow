@@ -1,5 +1,5 @@
-import { useState, useEffect, useCallback, type KeyboardEvent } from "react";
-import { useAuth } from "../../contexts/AuthContext";
+import { useState, useEffect, useCallback } from "react";
+import { useAuth } from "../../contexts/useAuth";
 import { apiGet, apiDelete } from "../../api/apiClient";
 import { 
     FiShield, 
@@ -91,14 +91,6 @@ export default function AuditLogPage() {
     setExpandedLogs(prev => 
       prev.includes(id) ? prev.filter(p => p !== id) : [...prev, id]
     );
-  };
-
-  const handleExpandableKeyDown = (event: KeyboardEvent<HTMLDivElement>, id: number, hasDetails: boolean) => {
-    if (!hasDetails) return;
-    if (event.key === "Enter" || event.key === " ") {
-      event.preventDefault();
-      toggleExpand(id);
-    }
   };
 
   const handleExportCSV = () => {
@@ -412,7 +404,7 @@ export default function AuditLogPage() {
                             {isPurging ? (
                                 <>
                                     <FiLoader className="animate-spin" />
-                                    Purging...
+                                    Purging&hellip;
                                 </>
                             ) : (
                                 <>
@@ -431,7 +423,7 @@ export default function AuditLogPage() {
         {loading ? (
             <div className="flex flex-col items-center justify-center py-20 text-[#868788] gap-4">
                 <FiActivity className="animate-spin text-3xl opacity-50" />
-                <p className="text-xs uppercase tracking-widest">Decrypting Audit Trail...</p>
+                <p className="text-xs uppercase tracking-widest">Decrypting Audit Trail&hellip;</p>
             </div>
         ) : logs.length === 0 ? (
             <div className="flex flex-col items-center justify-center py-24 text-[#868788] opacity-60">
@@ -456,11 +448,11 @@ export default function AuditLogPage() {
                                     : 'bg-[#fdfdfd] border-l-[#0f1012]/[0.10] border-y border-r border-y-[#0f1012]/[0.04] border-r-[#0f1012]/[0.04] hover:border-l-[#0f1012]/[0.30] hover:bg-[#fdfdfd]'}
                             `}
                         >
-                            <div className={`flex items-center gap-4 px-4 py-3 ${hasDetails ? 'cursor-pointer' : 'cursor-default'}`}
+                            <button
+                                 type="button"
+                                 className={`flex w-full items-center gap-4 px-4 py-3 text-left ${hasDetails ? 'cursor-pointer' : 'cursor-default'}`}
                                  onClick={hasDetails ? () => toggleExpand(log.id) : undefined}
-                                 onKeyDown={(event) => handleExpandableKeyDown(event, log.id, hasDetails)}
-                                 role={hasDetails ? "button" : undefined}
-                                 tabIndex={hasDetails ? 0 : undefined}
+                                 aria-expanded={hasDetails ? isExpanded : undefined}
                             >
                                 <div className={`size-8 flex items-center justify-center border ${actionStyles} transition-colors rounded-[6px]`}>
                                     {getActionIcon(log.action)}
@@ -504,7 +496,7 @@ export default function AuditLogPage() {
                                         </div>
                                     )}
                                 </div>
-                            </div>
+                            </button>
 
                             {isExpanded && hasDetails && (
                                 <div className="border-t border-[#0f1012]/[0.08] bg-[#fdfdfd] px-6 py-4">

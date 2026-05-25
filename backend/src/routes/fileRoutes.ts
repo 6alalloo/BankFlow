@@ -66,7 +66,7 @@ router.post("/upload", upload.single("file"), (req: Request, res: Response) => {
   } catch (err) {
     logger.error("File upload error", {
       service: "fileRoutes",
-      requestId: (req as any).requestId,
+      requestId: req.requestId,
       filename: req.file?.originalname,
       error: err instanceof Error ? err.message : String(err),
       stack: err instanceof Error ? err.stack : undefined
@@ -157,7 +157,7 @@ router.post("/cases/:caseId/upload", upload.single("file"), async (req: Request,
   } catch (err) {
     logger.error("Case document upload error", {
       service: "fileRoutes",
-      requestId: (req as any).requestId,
+      requestId: req.requestId,
       filename: req.file?.originalname,
       error: err instanceof Error ? err.message : String(err),
       stack: err instanceof Error ? err.stack : undefined,

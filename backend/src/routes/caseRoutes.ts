@@ -7,6 +7,18 @@ import { toInputJson } from "../lib/json";
 import { logAuditEvent } from "../services/auditService";
 import { pageMeta, parseDate, parseNumber, parsePageQuery } from "../lib/query";
 import { canViewAllOperationalQueues, canViewCase, getUserTeamIds } from "../services/authorizationService";
+import { toCaseDetail, toCaseSummary } from "../serializers/caseSerializers";
+import {
+  asBodyObject,
+  optionalBodyObject,
+  readIntegerParam,
+  readOptionalEnum,
+  readOptionalNullableString,
+  readOptionalObject,
+  readOptionalString,
+  readRequiredInteger,
+  readRequiredString,
+} from "../lib/validation";
 import { Prisma } from "@prisma/client";
 
 const router = Router();
@@ -18,47 +30,8 @@ const createCaseReference = () => {
   return `BF-${date}-${crypto.randomBytes(3).toString("hex").toUpperCase()}`;
 };
 
-const allowedCasePriorities = new Set(["low", "normal", "high", "critical"]);
-
-const toCaseSummary = (caseRecord: any) => ({
-  id: caseRecord.id,
-  case_reference: caseRecord.case_reference,
-  case_type: caseRecord.case_type,
-  title: caseRecord.title,
-  status: caseRecord.status,
-  priority: caseRecord.priority,
-  opened_at: caseRecord.opened_at,
-  resolved_at: caseRecord.resolved_at,
-  current_node_key: caseRecord.current_node_key,
-  current_task_id: caseRecord.current_task_id,
-  assignee_user: caseRecord.assignee_user ?? null,
-  assignee_team: caseRecord.assignee_team ?? null,
-  flow: caseRecord.case_flows ?? null,
-});
-
-const toCaseDetail = (caseRecord: any) => ({
-  ...toCaseSummary(caseRecord),
-  case_data_json: caseRecord.case_data_json,
-  outcome_json: caseRecord.outcome_json,
-  intake_source: caseRecord.intake_source,
-  created_by_user_id: caseRecord.created_by_user_id,
-  tasks: caseRecord.case_tasks ?? [],
-  approvals: caseRecord.case_approvals ?? [],
-  escalations: caseRecord.case_escalations ?? [],
-  documents: (caseRecord.case_documents ?? []).map((document: any) => ({
-    id: document.id,
-    case_id: document.case_id,
-    task_id: document.task_id,
-    flow_node_key: document.flow_node_key,
-    filename: document.filename,
-    mime_type: document.mime_type,
-    document_type: document.document_type,
-    metadata_json: document.metadata_json,
-    uploaded_by_user_id: document.uploaded_by_user_id,
-    uploaded_at: document.uploaded_at,
-  })),
-  events: caseRecord.case_events ?? [],
-});
+const allowedCasePriorities = new Set(["low", "normal", "high", "critical"] as const);
+type CasePriorityInput = (typeof allowedCasePriorities extends ReadonlySet<infer T> ? T : never);
 
 router.get("/", async (req: Request, res: Response) => {
   const pageQuery = parsePageQuery(req);
@@ -122,33 +95,20 @@ router.get("/", async (req: Request, res: Response) => {
 });
 
 router.post("/", async (req: Request, res: Response) => {
-  const { flowId, title, priority, intakeSource, caseData } = req.body as {
-    flowId?: number;
-    title?: string;
-    priority?: "low" | "normal" | "high" | "critical";
-    intakeSource?: string;
-    caseData?: Record<string, unknown>;
-  };
-
-  if (!flowId) {
-    res.status(400).json({ error: "flowId is required" });
-    return;
-  }
-  if (!Number.isInteger(Number(flowId))) {
-    res.status(400).json({ error: "flowId must be an integer" });
-    return;
-  }
-  if (priority && !allowedCasePriorities.has(priority)) {
-    res.status(400).json({ error: "priority must be one of: low, normal, high, critical" });
-    return;
-  }
-  if (caseData !== undefined && (typeof caseData !== "object" || Array.isArray(caseData) || caseData === null)) {
-    res.status(400).json({ error: "caseData must be an object" });
-    return;
-  }
+  const body = asBodyObject(req);
+  const flowId = readRequiredInteger(body, "flowId");
+  const title = readOptionalString(body, "title");
+  const priority = readOptionalEnum<CasePriorityInput>(
+    body,
+    "priority",
+    allowedCasePriorities,
+    "priority must be one of: low, normal, high, critical"
+  );
+  const intakeSource = readOptionalString(body, "intakeSource");
+  const caseData = readOptionalObject(body, "caseData");
 
   const flow = await prisma.case_flows.findUnique({
-    where: { id: Number(flowId) },
+    where: { id: flowId },
     include: { current_published_version: true },
   });
 
@@ -221,11 +181,7 @@ router.post("/", async (req: Request, res: Response) => {
 });
 
 const closeOrCancelCase = async (req: Request, res: Response, status: "closed" | "cancelled") => {
-  const id = Number(req.params.id);
-  if (!Number.isInteger(id)) {
-    res.status(400).json({ error: "Invalid case id" });
-    return;
-  }
+  const id = readIntegerParam(req, "id", "case id");
   if (!req.user || (req.user.role !== "Admin" && req.user.role !== "Supervisor")) {
     res.status(403).json({ error: "Only admins and supervisors can close or cancel cases" });
     return;
@@ -241,7 +197,8 @@ const closeOrCancelCase = async (req: Request, res: Response, status: "closed" |
     return;
   }
 
-  const reason = typeof req.body?.reason === "string" ? req.body.reason : null;
+  const body = optionalBodyObject(req);
+  const reason = readOptionalNullableString(body, "reason") ?? null;
   const caseRecord = await prisma.$transaction(async (tx) => {
     await tx.case_tasks.updateMany({
       where: { case_id: id, status: { in: ["pending", "assigned", "claimed", "overdue"] } },
@@ -308,12 +265,8 @@ router.post("/:id/cancel", async (req: Request, res: Response) => {
 });
 
 router.post("/:id/escalations/:escalationId/resolve", async (req: Request, res: Response) => {
-  const caseId = Number(req.params.id);
-  const escalationId = Number(req.params.escalationId);
-  if (!Number.isInteger(caseId) || !Number.isInteger(escalationId)) {
-    res.status(400).json({ error: "Invalid case or escalation id" });
-    return;
-  }
+  const caseId = readIntegerParam(req, "id", "case id");
+  const escalationId = readIntegerParam(req, "escalationId", "escalation id");
   if (!req.user || (req.user.role !== "Admin" && req.user.role !== "Supervisor")) {
     res.status(403).json({ error: "Only admins and supervisors can resolve escalations" });
     return;
@@ -331,7 +284,8 @@ router.post("/:id/escalations/:escalationId/resolve", async (req: Request, res: 
     return;
   }
 
-  const reason = typeof req.body?.reason === "string" ? req.body.reason : null;
+  const body = optionalBodyObject(req);
+  const reason = readOptionalNullableString(body, "reason") ?? null;
   const escalation = await prisma.$transaction(async (tx) => {
     const updated = await tx.case_escalations.update({
       where: { id: escalationId },
@@ -381,16 +335,9 @@ router.post("/:id/escalations/:escalationId/resolve", async (req: Request, res: 
 });
 
 router.post("/:id/notes", async (req: Request, res: Response) => {
-  const id = Number(req.params.id);
-  if (!Number.isInteger(id)) {
-    res.status(400).json({ error: "Invalid case id" });
-    return;
-  }
-  const note = typeof req.body?.note === "string" ? req.body.note.trim() : "";
-  if (!note) {
-    res.status(400).json({ error: "note is required" });
-    return;
-  }
+  const id = readIntegerParam(req, "id", "case id");
+  const body = asBodyObject(req);
+  const note = readRequiredString(body, "note");
 
   const caseRecord = await prisma.cases.findUnique({
     where: { id },
@@ -419,11 +366,7 @@ router.post("/:id/notes", async (req: Request, res: Response) => {
 });
 
 router.get("/:id", async (req: Request, res: Response) => {
-  const id = Number(req.params.id);
-  if (!Number.isInteger(id)) {
-    res.status(400).json({ error: "Invalid case id" });
-    return;
-  }
+  const id = readIntegerParam(req, "id", "case id");
 
   const caseRecord = await prisma.cases.findUnique({
     where: { id },

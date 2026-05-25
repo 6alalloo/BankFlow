@@ -1,4 +1,3 @@
-
 import { Router } from "express";
 import userRoutes from "./userRoutes";
 import roleRoutes from "./roleRoutes";
@@ -42,7 +41,6 @@ router.use("/dashboard", dashboardRoutes);
 
 // /api/files/... (File uploads)
 router.use("/files", fileRoutes);
-
 
 export default router;
 

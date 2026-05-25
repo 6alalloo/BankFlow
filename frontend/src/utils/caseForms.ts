@@ -5,6 +5,9 @@ export type CaseFormField = {
   type?: "text" | "number";
 };
 
+const asRecord = (value: unknown): Record<string, unknown> =>
+  value && typeof value === "object" && !Array.isArray(value) ? (value as Record<string, unknown>) : {};
+
 export const caseFieldsByType: Record<string, CaseFormField[]> = {
   aml_alert: [
     { key: "customer", label: "Customer", placeholder: "Customer or account name" },
@@ -14,6 +17,12 @@ export const caseFieldsByType: Record<string, CaseFormField[]> = {
   payment_exception: [
     { key: "paymentId", label: "Payment ID", placeholder: "PAY-1001" },
     { key: "amount", label: "Amount", placeholder: "12850", type: "number" },
+    { key: "currency", label: "Currency", placeholder: "BHD" },
+  ],
+  high_value_payment: [
+    { key: "paymentId", label: "Payment ID", placeholder: "HV-2201" },
+    { key: "beneficiary", label: "Beneficiary", placeholder: "Alba Industrial Services" },
+    { key: "amountBhd", label: "Amount BHD", placeholder: "250000", type: "number" },
     { key: "currency", label: "Currency", placeholder: "BHD" },
   ],
   general_case: [
@@ -84,4 +93,21 @@ export function buildObjectFromFields(fields: CaseFormField[], values: Record<st
     setNestedValue(output, field.key, coerceValue(value, field));
   });
   return output;
+}
+
+export function formatDocumentType(documentType: string) {
+  return documentType
+    .replace(/[_\-.]+/g, " ")
+    .split(" ")
+    .filter(Boolean)
+    .map((word) => word.charAt(0).toUpperCase() + word.slice(1).toLowerCase())
+    .join(" ");
+}
+
+export function getRequiredDocumentTypes(taskInput: unknown): string[] {
+  const input = asRecord(taskInput);
+  const nodeConfig = asRecord(input.nodeConfig);
+  const required = nodeConfig.requiredDocuments ?? nodeConfig.required_documents;
+  if (!Array.isArray(required)) return [];
+  return required.filter((documentType): documentType is string => typeof documentType === "string" && documentType.trim().length > 0);
 }

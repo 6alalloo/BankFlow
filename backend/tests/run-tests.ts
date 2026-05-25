@@ -1,10 +1,36 @@
 import assert from "node:assert/strict";
 import { validateDraftFlowGraph } from "../src/services/flowValidationService";
-import { evaluateCondition } from "../src/services/caseRuntimeService";
+import { evaluateCondition, getInitialTaskStatus } from "../src/services/caseRuntimeService";
 import { canPublishFlow, canAdminister, canViewAllOperationalQueues, canViewAudit } from "../src/services/authorizationService";
 import { parseBoolean, parseDate, parseNumber, parsePageQuery } from "../src/lib/query";
+import {
+  asBodyObject,
+  readIntegerParam,
+  readOptionalEnum,
+  readOptionalInteger,
+  readOptionalNumber,
+  readOptionalObject,
+  readRequiredInteger,
+  readRequiredString,
+} from "../src/lib/validation";
+import { AppError, ErrorCodes } from "../src/types/errors";
 
-const graph = (nodes: any[], edges: any[]) => ({ nodes, edges });
+type TestDraftNode = {
+  node_key: string;
+  kind: string;
+  name: string;
+  config_json: Record<string, unknown>;
+};
+
+type TestDraftEdge = {
+  edge_key: string;
+  from_node_key: string;
+  to_node_key: string;
+  label: string | null;
+  priority: number;
+};
+
+const graph = (nodes: TestDraftNode[], edges: TestDraftEdge[]) => ({ nodes, edges });
 
 const validBaseGraph = graph(
   [
@@ -250,6 +276,40 @@ const validBaseGraph = graph(
 }
 
 {
+  const request = { params: { id: "42" }, body: { name: "  Review flow  ", config: { risk: "high" }, posX: 12 } };
+  const body = asBodyObject(request as never);
+  assert.equal(readIntegerParam(request as never, "id", "flow id"), 42);
+  assert.equal(readRequiredString(body, "name"), "Review flow");
+  assert.equal(readRequiredInteger({ flowId: "12" }, "flowId"), 12);
+  assert.equal(readOptionalEnum(body, "priority", new Set(["low", "normal"])), undefined);
+  assert.equal(readOptionalEnum({ priority: "normal" }, "priority", new Set(["low", "normal"])), "normal");
+  assert.deepEqual(readOptionalObject(body, "config"), { risk: "high" });
+  assert.equal(readOptionalNumber(body, "posX"), 12);
+  assert.equal(readOptionalInteger("7", "assignedUserId"), 7);
+
+  assert.throws(
+    () => readRequiredInteger({}, "flowId"),
+    (error) => error instanceof AppError && error.errorCode === ErrorCodes.VALIDATION_ERROR
+  );
+  assert.throws(
+    () => readOptionalEnum({ priority: "urgent" }, "priority", new Set(["low", "normal"])),
+    (error) => error instanceof AppError && error.errorCode === ErrorCodes.VALIDATION_ERROR
+  );
+  assert.throws(
+    () => readIntegerParam({ params: { id: "0" } } as never, "id", "flow id"),
+    (error) => error instanceof AppError && error.errorCode === ErrorCodes.VALIDATION_ERROR
+  );
+  assert.throws(
+    () => asBodyObject({ body: [] } as never),
+    (error) => error instanceof AppError && error.errorCode === ErrorCodes.VALIDATION_ERROR
+  );
+}
+
+{
+  assert.equal(getInitialTaskStatus({ assignedTeamId: 1, claimPolicy: "claim_required" }), "assigned");
+  assert.equal(getInitialTaskStatus({ assignedUserId: 1, claimPolicy: "direct_assign" }), "assigned");
+  assert.equal(getInitialTaskStatus({ claimPolicy: "claim_required" }), "pending");
+
   assert.equal(
     evaluateCondition(
       { field: "risk.score", operator: "gte", value: 80, trueOutcome: "high", falseOutcome: "normal" },

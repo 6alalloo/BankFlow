@@ -1,5 +1,5 @@
 import { useState, useEffect, useCallback } from "react";
-import { useAuth } from "../../contexts/AuthContext";
+import { useAuth } from "../../contexts/useAuth";
 import { apiGet, apiPost, apiDelete } from "../../api/apiClient";
 import {
     FiShield,
@@ -252,13 +252,13 @@ export default function SecurityPage() {
                                                 onClick={() => handleDeleteDomain(domain.id)}
                                                 className="px-3 py-1.5 bg-[#b71c1c] text-white text-xs font-medium rounded-[6px] hover:bg-[#b71c1c]/90 transition-colors"
                                             >
-                                                Yes
+                                                Remove Domain
                                             </button>
                                             <button
                                                 onClick={() => setDeleteConfirm(null)}
                                                 className="px-3 py-1.5 bg-[#f2f2f4] text-[#0f1012] text-xs font-normal rounded-[6px] hover:bg-[#fdfdfd] transition-colors"
                                             >
-                                                No
+                                                Keep Domain
                                             </button>
                                         </div>
                                     ) : (

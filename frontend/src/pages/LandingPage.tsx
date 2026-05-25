@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { motion, useScroll, useTransform, useSpring, useMotionValue } from 'framer-motion';
+import { LazyMotion, domAnimation, m, useScroll, useTransform, useSpring, useMotionValue } from 'framer-motion';
 import {
     LuZap,
     LuShield,
@@ -14,6 +14,8 @@ import {
     LuTarget,
 } from 'react-icons/lu';
 import { Logo } from '../components/common/Logo';
+
+const CURRENT_YEAR = new Date().getFullYear();
 
 /* ------------------------------------------------------------------ */
 /*  Animated particle grid background (Canvas)                        */
@@ -112,7 +114,7 @@ function MockupCard({
     }, [y, delay]);
 
     return (
-        <motion.div
+        <m.div
             style={{ y: springY }}
             initial={{ opacity: 0, y: 40 }}
             animate={{ opacity: 1, y: 0 }}
@@ -120,7 +122,7 @@ function MockupCard({
             className={`rounded-[10px] border border-[#0f1012]/[0.08] bg-[#fdfdfd]/90 shadow-elevated backdrop-blur-xl ${className}`}
         >
             {children}
-        </motion.div>
+        </m.div>
     );
 }
 
@@ -137,7 +139,7 @@ function Section({
     delay?: number;
 }) {
     return (
-        <motion.div
+        <m.div
             initial={{ opacity: 0, y: 60 }}
             whileInView={{ opacity: 1, y: 0 }}
             viewport={{ once: true, margin: '-100px' }}
@@ -145,7 +147,7 @@ function Section({
             className={className}
         >
             {children}
-        </motion.div>
+        </m.div>
     );
 }
 
@@ -199,6 +201,7 @@ export default function LandingPage() {
     const heroY = useTransform(scrollYProgress, [0, 0.85], [0, -60]);
 
     return (
+        <LazyMotion features={domAnimation}>
         <div className="relative min-h-[100dvh] overflow-x-hidden bg-[#f2f2f4]">
             {/* Navigation */}
             <nav className="fixed left-0 right-0 top-0 z-50 border-b border-[#0f1012]/[0.06] bg-[#fdfdfd]/80 backdrop-blur-xl">
@@ -223,12 +226,12 @@ export default function LandingPage() {
                 <div className="pointer-events-none absolute -left-32 top-1/4 size-96 rounded-full bg-[#0071e3]/10 blur-3xl" />
                 <div className="pointer-events-none absolute -right-32 bottom-1/4 size-96 rounded-full bg-[#0071e3]/5 blur-3xl" />
 
-                <motion.div
+                <m.div
                     style={{ opacity: heroOpacity, y: heroY }}
                     className="relative z-10 mx-auto max-w-6xl px-6 text-center"
                 >
                     {/* Headline */}
-                    <motion.h1
+                    <m.h1
                         initial={{ opacity: 0, y: 30 }}
                         animate={{ opacity: 1, y: 0 }}
                         transition={{ duration: 0.8, delay: 0.1 }}
@@ -236,7 +239,7 @@ export default function LandingPage() {
                     >
                         Orchestrate{' '}
                         <span className="relative inline-block">
-                            <span className="bg-gradient-to-r from-[#0071e3] via-[#0071e3] to-[#0f1012] bg-clip-text text-transparent">
+                            <span className="text-[#0071e3]">
                                 banking operations
                             </span>
                             <svg
@@ -245,7 +248,7 @@ export default function LandingPage() {
                                 fill="none"
                                 xmlns="http://www.w3.org/2000/svg"
                             >
-                                <motion.path
+                                <m.path
                                     d="M2 8C100 2 300 2 398 8"
                                     stroke="#0071e3"
                                     strokeWidth="3"
@@ -257,10 +260,10 @@ export default function LandingPage() {
                             </svg>
                         </span>{' '}
                         at scale
-                    </motion.h1>
+                    </m.h1>
 
                     {/* Subtitle */}
-                    <motion.p
+                    <m.p
                         initial={{ opacity: 0, y: 30 }}
                         animate={{ opacity: 1, y: 0 }}
                         transition={{ duration: 0.8, delay: 0.25 }}
@@ -268,10 +271,10 @@ export default function LandingPage() {
                     >
                         Build intelligent case workflows, automate compliance checks, and route tasks across teams,
                         all in one unified platform designed for modern financial institutions.
-                    </motion.p>
+                    </m.p>
 
                     {/* CTAs */}
-                    <motion.div
+                    <m.div
                         initial={{ opacity: 0, y: 30 }}
                         animate={{ opacity: 1, y: 0 }}
                         transition={{ duration: 0.8, delay: 0.4 }}
@@ -290,7 +293,7 @@ export default function LandingPage() {
                         >
                             See How It Works
                         </button>
-                    </motion.div>
+                    </m.div>
 
                     {/* Floating mockups */}
                     <div className="relative mx-auto mt-20 max-w-5xl">
@@ -298,9 +301,9 @@ export default function LandingPage() {
                             {/* Flow builder mockup */}
                             <MockupCard delay={0.5} className="md:col-span-2 md:row-span-2 p-5">
                                 <div className="mb-4 flex items-center gap-2">
-                                    <div className="h-2 w-2 rounded-full bg-[#b71c1c]" />
-                                    <div className="h-2 w-2 rounded-full bg-[#f57f17]" />
-                                    <div className="h-2 w-2 rounded-full bg-[#1b5e20]" />
+                                    <div className="size-2 rounded-full bg-[#b71c1c]" />
+                                    <div className="size-2 rounded-full bg-[#f57f17]" />
+                                    <div className="size-2 rounded-full bg-[#1b5e20]" />
                                     <span className="ml-2 text-xs text-[#868788]">Flow Builder</span>
                                 </div>
                                 <div className="space-y-3">
@@ -373,7 +376,7 @@ export default function LandingPage() {
                             </MockupCard>
                         </div>
                     </div>
-                </motion.div>
+                </m.div>
             </section>
 
             {/* Stats Strip */}
@@ -384,8 +387,8 @@ export default function LandingPage() {
                         { value: 99, suffix: '%', label: 'SLA Compliance' },
                         { value: 12, suffix: 'h', label: 'Avg. Resolution' },
                         { value: 240, suffix: '+', label: 'Financial Clients' },
-                    ].map((stat, i) => (
-                        <Section key={i} className="text-center">
+                    ].map((stat) => (
+                        <Section key={stat.label} className="text-center">
                             <div className="text-3xl font-semibold text-[#0f1012] md:text-4xl">
                                 <Counter target={stat.value} suffix={stat.suffix} />
                             </div>
@@ -401,7 +404,7 @@ export default function LandingPage() {
                     <Section className="mb-16 text-center">
                         <h2 className="text-3xl font-semibold text-[#0f1012] md:text-4xl">
                             Everything you need to{' '}
-                            <span className="bg-gradient-to-r from-[#0071e3] to-[#0f1012] bg-clip-text text-transparent">
+                            <span className="text-[#0071e3]">
                                 run operations
                             </span>
                         </h2>
@@ -449,15 +452,15 @@ export default function LandingPage() {
                                 desc: 'Claims, approvals, and escalations. All in one shared workspace.',
                             },
                         ].map((feature, i) => (
-                            <Section key={i} delay={i * 0.1}>
-                                <motion.div
+                            <Section key={feature.title} delay={i * 0.1}>
+                                <m.div
                                     whileHover={{ y: -4, transition: { duration: 0.2 } }}
                                     className="group h-full rounded-[10px] border border-[#0f1012]/[0.08] bg-[#fdfdfd] p-6 shadow-card transition-shadow hover:shadow-elevated"
                                 >
                                     <feature.icon className="mb-4 size-7" style={{ color: feature.color }} strokeWidth={1.5} />
                                     <h3 className="text-base font-semibold text-[#0f1012]">{feature.title}</h3>
                                     <p className="mt-2 text-sm leading-relaxed text-[#868788]">{feature.desc}</p>
-                                </motion.div>
+                                </m.div>
                             </Section>
                         ))}
                     </div>
@@ -496,8 +499,8 @@ export default function LandingPage() {
                                 title: 'Resolve',
                                 desc: 'Track every step, meet every SLA, and close every case with a full audit trail.',
                             },
-                        ].map((item, i) => (
-                            <Section key={i}>
+                        ].map((item) => (
+                            <Section key={item.step}>
                                 <div className="relative">
                                     <div className="mb-4 text-5xl font-bold" style={{ color: '#4a9eff' }}>{item.step}</div>
                                     <h3 className="text-xl font-semibold">{item.title}</h3>
@@ -539,10 +542,11 @@ export default function LandingPage() {
                         <Logo style={{ height: '24px', width: 'auto' }} />
                     </div>
                     <p className="text-xs text-[#868788]">
-                        &copy; {new Date().getFullYear()} Bankflow. Built for financial operations teams.
+                        &copy; {CURRENT_YEAR} Bankflow. Built for financial operations teams.
                     </p>
                 </div>
             </footer>
         </div>
+        </LazyMotion>
     );
 }

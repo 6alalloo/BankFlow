@@ -12,6 +12,7 @@
     "db:migrate:deploy": "prisma migrate deploy",
     "db:generate": "prisma generate",
     "db:seed": "prisma db seed",
+    "db:demo:reset": "ts-node prisma/demo-reset.ts",
     "db:reset": "prisma migrate reset",
     "db:studio": "prisma studio"
   },
@@ -24,14 +25,12 @@
   "type": "commonjs",
   "dependencies": {
     "@prisma/client": "^6.15.0",
-    "axios": "^1.13.2",
     "bcryptjs": "^3.0.3",
     "cors": "^2.8.5",
     "dotenv": "^17.2.3",
     "express": "^5.1.0",
     "jsonwebtoken": "^9.0.3",
     "multer": "^2.0.2",
-    "undici": "^7.16.0",
     "winston": "^3.19.0"
   },
   "devDependencies": {

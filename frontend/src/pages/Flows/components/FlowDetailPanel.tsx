@@ -3,7 +3,8 @@ import { FiAlertTriangle, FiBriefcase, FiCheckCircle, FiCpu, FiCopy, FiLayers, F
 import { useNavigate } from 'react-router-dom';
 import { createCase } from '../../../api/cases';
 import { fetchFlowGraph, FlowPublishError, publishFlow, type FlowApi, type PublishIssue } from '../../../api/flows';
-import { Button, Badge } from '../../../components/ui';
+import { Badge } from '../../../components/ui/Badge';
+import { Button } from '../../../components/ui/Button';
 import { buildObjectFromFields, getCaseFields } from '../../../utils/caseForms';
 
 type FlowDetailPanelProps = {
@@ -121,7 +122,7 @@ const FlowDetailPanel: React.FC<FlowDetailPanelProps> = ({ flow, onDelete, onDup
         return 'UNASSIGNED';
     }, [flow]);
 
-    const nodeCountLabel = useMemo(() => `${nodeCount} NODES`, [nodeCount]);
+    const nodeCountLabel = `${nodeCount} NODES`;
     const lastConfigLabel = useMemo(() => formatLastConfig(flow?.updated_at), [flow?.updated_at]);
     const canCreateCase = flow?.status === 'published' && Boolean(flow.current_published_version);
     const caseFields = useMemo(() => getCaseFields(flow?.case_type), [flow?.case_type]);
@@ -305,7 +306,7 @@ const FlowDetailPanel: React.FC<FlowDetailPanelProps> = ({ flow, onDelete, onDup
                     disabled={isPublishing}
                 >
                     <FiSend className="size-3.5" />
-                    {isPublishing ? 'Publishing...' : 'Publish'}
+                    {isPublishing ? 'Publishing\u2026' : 'Publish'}
                 </Button>
                 <Button
                     variant="secondary"
@@ -410,7 +411,7 @@ const FlowDetailPanel: React.FC<FlowDetailPanelProps> = ({ flow, onDelete, onDup
                                     Cancel
                                 </Button>
                                 <Button variant="primary" onClick={handleCreateCase} disabled={isCreatingCase}>
-                                    {isCreatingCase ? 'Creating...' : 'Create Case'}
+                                    {isCreatingCase ? 'Creating\u2026' : 'Create Case'}
                                 </Button>
                             </div>
                         </div>

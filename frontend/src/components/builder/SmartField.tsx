@@ -1,6 +1,6 @@
 import React from 'react';
 import { LuZap, LuPenTool, LuChevronDown } from 'react-icons/lu';
-import { TRIGGER_VARIABLES } from './VariableGrid';
+import { TRIGGER_VARIABLES } from './triggerVariables';
 
 interface SmartFieldProps {
     value: string;

@@ -3,7 +3,8 @@ import { useNavigate } from "react-router-dom";
 import { FiCheckCircle, FiClock, FiShield, FiXCircle } from "react-icons/fi";
 import { approveApproval, fetchApprovals, rejectApproval, type ApprovalsQuery } from "../../api/approvals";
 import type { CaseApproval } from "../../api/cases";
-import { Badge, Button, type BadgeVariant } from "../../components/ui";
+import { Badge, type BadgeVariant } from "../../components/ui/Badge";
+import { Button } from "../../components/ui/Button";
 
 const filters: Array<{ key: string; label: string; query: ApprovalsQuery }> = [
   { key: "requested", label: "Pending", query: { status: "requested" } },
@@ -113,7 +114,7 @@ const ApprovalsInboxPage: React.FC = () => {
       </div>
 
       {loading ? (
-        <div className="rounded-[10px] border border-[#0f1012]/[0.06] bg-[#fdfdfd] p-6 text-sm shadow-card">Loading approvals...</div>
+        <div className="rounded-[10px] border border-[#0f1012]/[0.06] bg-[#fdfdfd] p-6 text-sm shadow-card">Loading approvals&hellip;</div>
       ) : approvals.length === 0 ? (
         <div className="rounded-[10px] border border-[#0f1012]/[0.06] bg-[#fdfdfd] p-8 text-center shadow-card">
           <FiShield className="mx-auto mb-3 text-[#0071e3]" size={24} strokeWidth={1.5} />
@@ -123,7 +124,11 @@ const ApprovalsInboxPage: React.FC = () => {
       ) : (
         <div className="space-y-3">
           {approvals.map((approval) => (
-            <div key={approval.id} className="rounded-[10px] border border-[#0f1012]/[0.06] bg-[#fdfdfd] p-5 shadow-card hover:shadow-elevated transition-all">
+            <div
+              key={approval.id}
+              data-testid={`approval-row-${approval.case_id}`}
+              className="rounded-[10px] border border-[#0f1012]/[0.06] bg-[#fdfdfd] p-5 shadow-card hover:shadow-elevated transition-all"
+            >
               <div className="flex flex-wrap items-start justify-between gap-4">
                 <div className="min-w-0">
                   <div className="mb-2 flex flex-wrap items-center gap-2">

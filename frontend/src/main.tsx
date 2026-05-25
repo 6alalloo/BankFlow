@@ -6,7 +6,7 @@ import "reactflow/dist/style.css";
 
 import "./index.css";
 
-import { AuthProvider } from "./contexts/AuthContext";
+import { AuthProvider } from "./contexts/AuthProvider";
 import App from "./App.tsx";
 
 createRoot(document.getElementById("root")!).render(

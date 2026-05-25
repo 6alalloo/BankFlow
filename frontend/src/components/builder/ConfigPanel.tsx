@@ -1,4 +1,4 @@
-import React, { useEffect, useState, useCallback } from 'react';
+import React, { useEffect, useState, useCallback, useEffectEvent } from 'react';
 import { LazyMotion, domAnimation, m } from 'framer-motion';
 import { LuX, LuTrash2, LuCheck } from 'react-icons/lu';
 import { fetchDatabaseTables, type DatabaseTable } from '../../api/flows';
@@ -73,39 +73,41 @@ const ConfigPanel: React.FC<ConfigPanelProps> = ({ isOpen, node, onClose, onUpda
         }
     }, [isOpen]);
 
+    const handlePanelKeyDown = useEffectEvent((e: KeyboardEvent) => {
+        if (e.key === 'Escape') {
+            if (showDeleteConfirm) {
+                setShowDeleteConfirm(false);
+            } else {
+                onClose();
+            }
+            e.preventDefault();
+        }
+
+        if ((e.ctrlKey || e.metaKey) && e.key === 's') {
+            e.preventDefault();
+            if (node) {
+                onUpdate(node.id, { config: localConfig });
+            }
+        }
+
+        if ((e.ctrlKey || e.metaKey) && e.key === 'Enter') {
+            e.preventDefault();
+            if (node) {
+                onUpdate(node.id, { config: localConfig });
+                onClose();
+            }
+        }
+    });
+
     // Keyboard navigation handler
     useEffect(() => {
         if (!isOpen) return;
 
-        const handleKeyDown = (e: KeyboardEvent) => {
-            if (e.key === 'Escape') {
-                if (showDeleteConfirm) {
-                    setShowDeleteConfirm(false);
-                } else {
-                    onClose();
-                }
-                e.preventDefault();
-            }
-
-            if ((e.ctrlKey || e.metaKey) && e.key === 's') {
-                e.preventDefault();
-                if (node) {
-                    onUpdate(node.id, { config: localConfig });
-                }
-            }
-
-            if ((e.ctrlKey || e.metaKey) && e.key === 'Enter') {
-                e.preventDefault();
-                if (node) {
-                    onUpdate(node.id, { config: localConfig });
-                    onClose();
-                }
-            }
-        };
+        const handleKeyDown = (e: KeyboardEvent) => handlePanelKeyDown(e);
 
         document.addEventListener('keydown', handleKeyDown);
         return () => document.removeEventListener('keydown', handleKeyDown);
-    }, [isOpen, showDeleteConfirm, node, localConfig, onClose, onUpdate]);
+    }, [isOpen]);
 
     const handleSave = useCallback(() => {
         if (node) {
@@ -128,22 +130,18 @@ const ConfigPanel: React.FC<ConfigPanelProps> = ({ isOpen, node, onClose, onUpda
 
     if (!isOpen || !node) return null;
 
-    // Render form based on node kind
-    const renderForm = () => {
-        if (bankingRuntimeNodeKinds.has(node.kind)) {
-            return <BankingRuntimeConfigForm node={node} localConfig={localConfig} handleChange={handleChange} />;
-        }
-
-        if (legacyUtilityNodeKinds.has(node.kind)) {
-            return <LegacyUtilityConfigForm node={node} localConfig={localConfig} databaseTables={databaseTables} handleChange={handleChange} />;
-        }
-
-        return (
+    let formContent: React.ReactNode;
+    if (bankingRuntimeNodeKinds.has(node.kind)) {
+        formContent = <BankingRuntimeConfigForm node={node} localConfig={localConfig} handleChange={handleChange} />;
+    } else if (legacyUtilityNodeKinds.has(node.kind)) {
+        formContent = <LegacyUtilityConfigForm node={node} localConfig={localConfig} databaseTables={databaseTables} handleChange={handleChange} />;
+    } else {
+        formContent = (
             <div className="p-4 rounded-[10px] bg-[#f2f2f4] border border-[#0f1012]/[0.08] text-[#8f8f8f] text-sm">
                 Configuration for <strong>{node.kind}</strong> is not yet available.
             </div>
         );
-    };
+    }
 
     return (
         <>
@@ -172,7 +170,7 @@ const ConfigPanel: React.FC<ConfigPanelProps> = ({ isOpen, node, onClose, onUpda
                 {/* Content (Form) */}
                 <div className="flex-1 overflow-y-auto p-5 space-y-6 custom-scrollbar">
                     {/* Node-specific forms */}
-                    {renderForm()}
+                    {formContent}
                 </div>
 
                 {/* Footer */}

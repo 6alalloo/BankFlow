@@ -1,7 +1,7 @@
 import { useState, type FormEvent } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { useAuth } from '../../contexts/AuthContext';
-import { Button } from '../../components/ui';
+import { useAuth } from "../../contexts/useAuth";
+import { Button } from '../../components/ui/Button';
 import { Logo } from '../../components/common/Logo';
 
 const LoginPage = () => {
@@ -12,7 +12,6 @@ const LoginPage = () => {
 
   const { login } = useAuth();
   const navigate = useNavigate();
-
   const handleSubmit = async (e: FormEvent) => {
     e.preventDefault();
     setError('');
@@ -52,13 +51,13 @@ const LoginPage = () => {
         </div>
 
         <div className="relative z-10 flex items-center gap-6">
-          <div className="flex -space-x-2">
-            {[1, 2, 3].map((i) => (
+          <div className="flex gap-x-0">
+            {['A', 'B', 'C'].map((initial) => (
               <div
-                key={i}
-                className="size-8 rounded-full border-2 border-[#fdfdfd] bg-[#f2f2f4] flex items-center justify-center text-[10px] font-medium text-[#0f1012]"
+                key={initial}
+                className="-ml-2 first:ml-0 size-8 rounded-full border-2 border-[#fdfdfd] bg-[#f2f2f4] flex items-center justify-center text-[10px] font-medium text-[#0f1012]"
               >
-                {String.fromCharCode(64 + i)}
+                {initial}
               </div>
             ))}
           </div>

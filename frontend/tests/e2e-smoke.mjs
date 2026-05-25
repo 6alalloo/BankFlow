@@ -169,15 +169,15 @@ async function verifySecurityBoundaries(authHeaders, flows) {
   });
   assert.equal(auditorClose.status, 403, "auditor should not be able to close cases");
 
-  const operator = await request("/auth/login", {
+  const approver = await request("/auth/login", {
     method: "POST",
-    body: JSON.stringify({ email: "operator@bankflow.local", password: "operator123" }),
+    body: JSON.stringify({ email: "approver@bankflow.local", password: "approver123" }),
   });
-  const operatorHeaders = { Authorization: `Bearer ${operator.token}` };
-  const operatorCase = await requestRaw(`/cases/${createdCase.data.id}`, { headers: operatorHeaders });
-  assert.equal(operatorCase.status, 403, "operator outside the assigned team should not view the protected case");
-  const operatorDocument = await requestRaw(`/files/documents/${uploaded.data.id}`, { headers: operatorHeaders });
-  assert.equal(operatorDocument.status, 403, "operator outside the assigned team should not view protected documents");
+  const approverHeaders = { Authorization: `Bearer ${approver.token}` };
+  const approverCase = await requestRaw(`/cases/${createdCase.data.id}`, { headers: approverHeaders });
+  assert.equal(approverCase.status, 403, "approver outside the assigned team should not view the protected case");
+  const approverDocument = await requestRaw(`/files/documents/${uploaded.data.id}`, { headers: approverHeaders });
+  assert.equal(approverDocument.status, 403, "approver outside the assigned team should not view protected documents");
 }
 
 async function main() {

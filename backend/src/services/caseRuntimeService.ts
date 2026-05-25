@@ -123,6 +123,9 @@ const parseTaskType = (kind: string, config: Record<string, unknown>) => {
   return allowed.has(configured) ? configured : "review";
 };
 
+export const getInitialTaskStatus = (config: Record<string, unknown>) =>
+  config.assignedUserId || config.assigned_user_id || config.assignedTeamId || config.assigned_team_id ? "assigned" : "pending";
+
 const getValueByPath = (source: Record<string, unknown>, path: string): unknown =>
   path.replace(/^\{\{\s*/, "").replace(/\s*\}\}$/, "").replace(/^trigger\./, "").split(".").reduce<unknown>((current, segment) => {
     if (current && typeof current === "object" && !Array.isArray(current)) {
@@ -207,7 +210,7 @@ async function createBlockingTask(tx: Prisma.TransactionClient, context: Runtime
       flow_node_key: nodeKey,
       task_type: parseTaskType(node.kind, config) as never,
       title: String(config.title ?? node.name ?? "Review case"),
-      status: config.assignedUserId || config.assigned_user_id ? "assigned" : "pending",
+      status: getInitialTaskStatus(config),
       assigned_user_id: Number(config.assignedUserId ?? config.assigned_user_id) || null,
       assigned_team_id: Number(config.assignedTeamId ?? config.assigned_team_id) || null,
       claim_policy: config.claimPolicy === "direct_assign" || config.claim_policy === "direct_assign" ? "direct_assign" : "claim_required",

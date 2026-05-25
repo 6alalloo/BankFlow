@@ -6,10 +6,15 @@ import { fetchTasks, processOverdueWork, type TasksQuery } from "../../api/tasks
 import { fetchApprovals } from "../../api/approvals";
 import type { CaseApproval, CaseTask } from "../../api/cases";
 import { fetchFlows, type FlowApi } from "../../api/flows";
-import { Button, Badge, Card, CardHeader, CardTitle, CardContent, type BadgeVariant } from "../../components/ui";
+import { Badge, type BadgeVariant } from "../../components/ui/Badge";
+import { Button } from "../../components/ui/Button";
+import { Card, CardContent, CardHeader, CardTitle } from "../../components/ui/Card";
 import { buildObjectFromFields, getCaseFields } from "../../utils/caseForms";
 
-const queueFilters: Array<{ key: string; label: string; query: { status?: string } }> = [
+const terminalStatuses = new Set(["resolved", "closed", "cancelled"]);
+
+const queueFilters: Array<{ key: string; label: string; query: { status?: string }; clientFilter?: (caseItem: CaseSummary) => boolean }> = [
+  { key: "active", label: "Open Work", query: {}, clientFilter: (caseItem) => !terminalStatuses.has(caseItem.status) },
   { key: "all", label: "All Cases", query: {} },
   { key: "pending_action", label: "Pending Action", query: { status: "pending_action" } },
   { key: "pending_approval", label: "Pending Approval", query: { status: "pending_approval" } },
@@ -60,7 +65,7 @@ const CasesListPage: React.FC = () => {
   const [tasks, setTasks] = useState<CaseTask[]>([]);
   const [approvals, setApprovals] = useState<CaseApproval[]>([]);
   const [flows, setFlows] = useState<FlowApi[]>([]);
-  const [activeFilter, setActiveFilter] = useState("all");
+  const [activeFilter, setActiveFilter] = useState("active");
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [refreshingSla, setRefreshingSla] = useState(false);
@@ -70,6 +75,7 @@ const CasesListPage: React.FC = () => {
   const [createPriority, setCreatePriority] = useState<"low" | "normal" | "high" | "critical">("normal");
   const [createData, setCreateData] = useState("{\n  \n}");
   const [createFieldValues, setCreateFieldValues] = useState<Record<string, string>>({});
+  const [createError, setCreateError] = useState<string | null>(null);
   const [creatingCase, setCreatingCase] = useState(false);
 
   const selectedFlow = useMemo(
@@ -91,7 +97,7 @@ const CasesListPage: React.FC = () => {
           fetchApprovals({ status: "requested" }),
           fetchFlows(),
         ]);
-        setCases(caseRows);
+        setCases(filter?.clientFilter ? caseRows.filter(filter.clientFilter) : caseRows);
         setTasks(taskRows);
         setApprovals(approvalRows);
         setFlows(flowRows.filter((flow) => flow.status === "published" && Boolean(flow.current_published_version)));
@@ -114,7 +120,8 @@ const CasesListPage: React.FC = () => {
         fetchCases(queueFilters.find((item) => item.key === activeFilter)?.query ?? {}),
       ]);
       setTasks(taskRows);
-      setCases(caseRows);
+      const filter = queueFilters.find((item) => item.key === activeFilter);
+      setCases(filter?.clientFilter ? caseRows.filter(filter.clientFilter) : caseRows);
     } catch (err) {
       setError(err instanceof Error ? err.message : "Failed to process overdue work");
     } finally {
@@ -125,9 +132,10 @@ const CasesListPage: React.FC = () => {
   const handleCreateCase = async () => {
     try {
       setCreatingCase(true);
-      setError(null);
+      setCreateError(null);
+      if (!createFlowId) throw new Error("Choose a published flow.");
       const flowId = Number(createFlowId);
-      if (!Number.isInteger(flowId)) throw new Error("Choose a published flow.");
+      if (!Number.isInteger(flowId) || flowId <= 0) throw new Error("Choose a published flow.");
 
       const trimmed = createData.trim();
       let caseData: Record<string, unknown> | undefined;
@@ -155,9 +163,10 @@ const CasesListPage: React.FC = () => {
       setCreatePriority("normal");
       setCreateData("{\n  \n}");
       setCreateFieldValues({});
+      setCreateError(null);
       navigate(`/cases/${created.id}`);
     } catch (err) {
-      setError(err instanceof Error ? err.message : "Failed to create case");
+      setCreateError(err instanceof Error ? err.message : "Failed to create case");
     } finally {
       setCreatingCase(false);
     }
@@ -178,7 +187,7 @@ const CasesListPage: React.FC = () => {
             disabled={refreshingSla}
           >
             <FiRefreshCw className={`size-3.5 ${refreshingSla ? 'animate-spin' : ''}`} strokeWidth={1.5} />
-            {refreshingSla ? "Checking..." : "Process SLA"}
+            {refreshingSla ? "Checking\u2026" : "Process SLA"}
           </Button>
           <Button
             variant="primary"
@@ -186,7 +195,10 @@ const CasesListPage: React.FC = () => {
             type="button"
             aria-haspopup="dialog"
             aria-expanded={isCreateOpen}
-            onClick={() => setIsCreateOpen(true)}
+            onClick={() => {
+              setCreateError(null);
+              setIsCreateOpen(true);
+            }}
           >
             <FiBriefcase className="size-3.5" strokeWidth={1.5} />
             New Case
@@ -194,7 +206,7 @@ const CasesListPage: React.FC = () => {
         </div>
       </div>
 
-      {loading && <div className="text-[#8f8f8f] text-sm">Loading cases...</div>}
+      {loading && <div className="text-[#8f8f8f] text-sm">Loading cases&hellip;</div>}
       {error && (
         <div className="mb-4 p-4 rounded-[10px] bg-[#ffebee] border border-[#b71c1c]/15 text-[#b71c1c] text-sm">
           {error}
@@ -342,9 +354,14 @@ const CasesListPage: React.FC = () => {
         <div className="fixed inset-0 z-50 flex items-center justify-center" role="dialog" aria-modal="true" aria-labelledby="new-case-title">
           <button type="button" aria-label="Close case dialog" className="absolute inset-0 bg-[#0f1012]/20 backdrop-blur-sm" onClick={() => setIsCreateOpen(false)} />
           <div className="relative z-10 w-full max-w-lg">
-            <div className="rounded-[10px] bg-[#fdfdfd] border border-[#0f1012]/[0.08] shadow-elevated p-6">
+            <div className="max-h-[calc(100dvh-3rem)] overflow-y-auto custom-scrollbar rounded-[10px] bg-[#fdfdfd] border border-[#0f1012]/[0.08] shadow-elevated p-6">
               <h2 id="new-case-title" className="text-lg font-medium text-[#0f1012] mb-1">New Case</h2>
               <p className="text-[#8f8f8f] text-sm mb-6">Start a live case from a published flow.</p>
+              {createError && (
+                <div className="mb-4 rounded-[10px] border border-[#b71c1c]/15 bg-[#ffebee] p-3 text-sm text-[#b71c1c]">
+                  {createError}
+                </div>
+              )}
               <div className="space-y-4">
                 <label>
                   <span className="text-[#868788] text-[10px] uppercase tracking-wider">Published Flow</span>
@@ -386,6 +403,7 @@ const CasesListPage: React.FC = () => {
                 </label>
                 <div>
                   <span className="text-[#868788] text-[10px] uppercase tracking-wider">Case Fields</span>
+                  <p className="mt-1 text-xs text-[#8f8f8f]">Fill the demo-ready fields for the selected flow. Advanced JSON is optional.</p>
                   <div className="mt-1.5 grid grid-cols-1 gap-3 md:grid-cols-2">
                     {caseFields.map((field) => (
                       <label key={field.key}>
@@ -401,22 +419,25 @@ const CasesListPage: React.FC = () => {
                     ))}
                   </div>
                 </div>
-                <label>
-                  <span className="text-[#868788] text-[10px] uppercase tracking-wider">Additional Case Data JSON</span>
-                  <textarea
-                    value={createData}
-                    onChange={(event) => setCreateData(event.target.value)}
-                    rows={6}
-                    className="mt-1.5 w-full bg-[#0f1012]/[0.04] border border-[#0f1012]/[0.08] rounded-[10px] px-3 py-2.5 text-sm text-[#020201] font-mono focus:outline-none focus:border-[#0f1012]/[0.18] focus:ring-1 focus:ring-[#0071e3]/20 transition-all resize-none"
-                  />
-                </label>
+                <details className="rounded-[10px] border border-[#0f1012]/[0.08] bg-[#0f1012]/[0.02] p-3">
+                  <summary className="cursor-pointer text-xs font-medium text-[#0f1012]">Advanced JSON</summary>
+                  <label className="mt-3 block">
+                    <span className="text-[#868788] text-[10px] uppercase tracking-wider">Additional Case Data JSON</span>
+                    <textarea
+                      value={createData}
+                      onChange={(event) => setCreateData(event.target.value)}
+                      rows={5}
+                      className="mt-1.5 w-full bg-[#fdfdfd] border border-[#0f1012]/[0.08] rounded-[10px] px-3 py-2.5 text-sm text-[#020201] font-mono focus:outline-none focus:border-[#0f1012]/[0.18] focus:ring-1 focus:ring-[#0071e3]/20 transition-all resize-none"
+                    />
+                  </label>
+                </details>
               </div>
               <div className="flex justify-end gap-3 mt-6">
                 <Button variant="ghost" onClick={() => setIsCreateOpen(false)} disabled={creatingCase}>
                   Cancel
                 </Button>
                 <Button variant="primary" onClick={handleCreateCase} disabled={creatingCase}>
-                  {creatingCase ? "Creating..." : "Create Case"}
+                  {creatingCase ? "Creating\u2026" : "Create Case"}
                 </Button>
               </div>
             </div>

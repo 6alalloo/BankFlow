@@ -1,4 +1,5 @@
 // backend/src/services/auditService.ts
+import { Prisma } from "@prisma/client";
 import prisma from "../lib/prisma";
 import logger from "../lib/logger";
 
@@ -7,7 +8,7 @@ export interface AuditLogParams {
   userId: number;
   targetType?: string; // e.g., "flow", "case"
   targetId?: number;
-  details?: Record<string, any>;
+  details?: Record<string, unknown>;
   ipAddress?: string;
   userAgent?: string;
 }
@@ -74,7 +75,7 @@ export async function getAuditLogs(params: GetAuditLogsParams = {}) {
     endDate,
   } = params;
 
-  const where: any = {};
+  const where: Prisma.audit_logsWhereInput = {};
 
   if (eventType) where.action = eventType;
   if (userId) where.actor_user_id = userId;

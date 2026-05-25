@@ -32,7 +32,17 @@ export const toDraftNodeResponse = (node: {
   posY: node.pos_y,
 });
 
-export const toCaseFlowResponse = (flow: any) => ({
+type FlowOwnerSummary = Pick<Prisma.usersGetPayload<{}>, "id" | "email" | "full_name">;
+type CaseFlowResponseSource = Prisma.case_flowsGetPayload<{}> & {
+  current_published_version?: Prisma.case_flow_versionsGetPayload<{}> | null;
+  owners?: FlowOwnerSummary | null;
+};
+type CaseFlowGraphSource = CaseFlowResponseSource & {
+  case_flow_draft_nodes: Prisma.case_flow_draft_nodesGetPayload<{}>[];
+  case_flow_draft_edges: Prisma.case_flow_draft_edgesGetPayload<{}>[];
+};
+
+export const toCaseFlowResponse = (flow: CaseFlowResponseSource) => ({
   id: flow.id,
   key: flow.key,
   name: flow.name,
@@ -52,14 +62,14 @@ export const toCaseFlowResponse = (flow: any) => ({
   is_active: flow.status === "published",
 });
 
-export const toCaseFlowGraphResponse = (flow: any) => {
+export const toCaseFlowGraphResponse = (flow: CaseFlowGraphSource) => {
   const nodeIdByKey = new Map(
     flow.case_flow_draft_nodes.map((node: { node_key: string; id: number }) => [node.node_key, node.id])
   );
 
   return {
     flow: toCaseFlowResponse(flow),
-    nodes: flow.case_flow_draft_nodes.map((node: any) => ({
+    nodes: flow.case_flow_draft_nodes.map((node) => ({
       id: node.id,
       flow_id: node.case_flow_id,
       node_key: node.node_key,
@@ -69,7 +79,7 @@ export const toCaseFlowGraphResponse = (flow: any) => {
       pos_y: node.pos_y,
       config: node.config_json,
     })),
-    edges: flow.case_flow_draft_edges.map((edge: any) => ({
+    edges: flow.case_flow_draft_edges.map((edge) => ({
       id: edge.id,
       flow_id: edge.case_flow_id,
       edge_key: edge.edge_key,

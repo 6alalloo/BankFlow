@@ -1,3 +1,4 @@
+import { Prisma } from "@prisma/client";
 import prisma from "../lib/prisma";
 import { hashPassword } from "./authService";
 
@@ -19,8 +20,7 @@ type UserFilters = {
 export async function getAllUsers(filters: UserFilters = {}) {
   const { isActive, roleName, query, skip, take } = filters;
 
-  // We'll collect conditions here and then AND them together.
-  const whereClauses: any[] = [];
+  const whereClauses: Prisma.usersWhereInput[] = [];
 
   if (typeof isActive === "boolean") {
     whereClauses.push({ is_active: isActive });

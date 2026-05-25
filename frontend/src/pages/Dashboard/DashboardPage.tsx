@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useState } from "react";
 import { useNavigate } from "react-router-dom";
-import { useAuth } from "../../contexts/AuthContext";
+import { useAuth } from "../../contexts/useAuth";
 import { fetchDashboardStats, fetchDashboardCharts, type DashboardStats, type ChartData } from "../../api/dashboard";
 import { fetchCases, type CaseSummary, type CaseApproval, type CaseTask } from "../../api/cases";
 import { fetchApprovals } from "../../api/approvals";
@@ -15,7 +15,6 @@ import {
   FiZap,
 } from "react-icons/fi";
 
-/* ── Mini Sparkline ── */
 function Sparkline({ data, color = "#10b981", height = 50 }: { data: { value: number }[]; color?: string; height?: number }) {
   if (data.length < 2) return <div style={{ height }} />;
   const max = Math.max(...data.map((d) => d.value), 1);
@@ -150,7 +149,7 @@ export default function DashboardPage() {
   }, [user]);
 
   const queues = useMemo(() => {
-    const types = new Set(cases.map((c) => c.case_type).filter(Boolean));
+    const types = new Set(cases.flatMap((c) => (c.case_type ? [c.case_type] : [])));
     const filtered = Array.from(types).filter((t) => !EXCLUDED_QUEUES.includes(t.toLowerCase()));
     return ["all", ...filtered.sort()];
   }, [cases]);
@@ -176,6 +175,7 @@ export default function DashboardPage() {
 
   const pendingApprovalCount = approvals.length;
   const slaBreaches = tasks.length;
+  const casesByStatus = stats.casesByStatus;
 
   const handleProcessOverdue = async () => {
     try {
@@ -197,7 +197,7 @@ export default function DashboardPage() {
     <div className="min-h-full bg-[#f3f4f6] overflow-auto custom-scrollbar">
       <div className="max-w-[1280px] mx-auto px-6 py-8">
 
-        {/* ── Header ── */}
+        {/* Header */}
         <div className="flex items-end justify-between mb-8">
           <div>
             <p className="text-sm text-gray-500 mb-1">
@@ -209,7 +209,7 @@ export default function DashboardPage() {
           </div>
         </div>
 
-        {/* ── Stats Row ── */}
+        {/* Stats Row */}
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-5 mb-5">
           {/* Hero: Open Cases */}
           <div className="lg:col-span-1 rounded-2xl bg-white p-6 shadow-sm border border-gray-200/60">
@@ -219,6 +219,20 @@ export default function DashboardPage() {
             </div>
             <div className="mt-4 mb-5">
               <Sparkline data={volumeChartData} color="#10b981" height={55} />
+            </div>
+            <div className="mb-5 grid grid-cols-3 gap-2 text-center">
+              <div className="rounded-xl bg-gray-50 p-2">
+                <div className="text-xs font-semibold tabular-nums text-gray-900">{casesByStatus.resolved}</div>
+                <div className="text-[10px] uppercase tracking-wide text-gray-500">Resolved</div>
+              </div>
+              <div className="rounded-xl bg-gray-50 p-2">
+                <div className="text-xs font-semibold tabular-nums text-gray-900">{casesByStatus.closed}</div>
+                <div className="text-[10px] uppercase tracking-wide text-gray-500">Closed</div>
+              </div>
+              <div className="rounded-xl bg-red-50 p-2">
+                <div className="text-xs font-semibold tabular-nums text-red-600">{casesByStatus.escalated}</div>
+                <div className="text-[10px] uppercase tracking-wide text-red-500">Escalated</div>
+              </div>
             </div>
             <div className="flex items-center gap-3">
               <button
@@ -273,7 +287,7 @@ export default function DashboardPage() {
           </div>
         </div>
 
-        {/* ── Quick Actions Bar ── */}
+        {/* Quick Actions Bar */}
         <div className="flex items-center gap-3 mb-5 overflow-x-auto custom-scrollbar pb-1">
           <button
             onClick={() => navigate("/cases")}
@@ -307,7 +321,7 @@ export default function DashboardPage() {
           )}
         </div>
 
-        {/* ── Main Content: Table ── */}
+        {/* Main Content: Table */}
         <div className="rounded-2xl bg-white shadow-sm border border-gray-200/60 overflow-hidden">
           {/* Table Header */}
           <div className="px-6 py-5 border-b border-gray-100 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
@@ -349,7 +363,7 @@ export default function DashboardPage() {
             {isLoading ? (
               <div className="flex items-center justify-center py-16 text-gray-400 gap-3">
                 <div className="size-5 border-2 border-gray-200 border-t-gray-900 rounded-full animate-spin" />
-                <span className="text-sm font-medium">Loading cases...</span>
+                <span className="text-sm font-medium">Loading cases&hellip;</span>
               </div>
             ) : filteredCases.length === 0 ? (
               <div className="flex flex-col items-center justify-center py-16 text-gray-400">
@@ -368,35 +382,35 @@ export default function DashboardPage() {
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-gray-50">
-                  {filteredCases.map((c) => (
+                  {filteredCases.map((item) => (
                     <tr
-                      key={c.id}
-                      onClick={() => navigate(`/cases/${c.id}`)}
+                      key={item.id}
+                      onClick={() => navigate(`/cases/${item.id}`)}
                       className="hover:bg-gray-50/80 transition-colors cursor-pointer group"
                     >
                       <td className="px-6 py-4">
                         <div>
-                          <p className="text-sm font-semibold text-gray-900">{c.case_reference}</p>
-                          <p className="text-xs text-gray-500 truncate max-w-[240px]">{c.title || c.case_type}</p>
+                          <p className="text-sm font-semibold text-gray-900">{item.case_reference}</p>
+                          <p className="text-xs text-gray-500 truncate max-w-[240px]">{item.title || item.case_type}</p>
                         </div>
                       </td>
-                      <td className="px-4 py-4">
-                        <span className="text-sm text-gray-600">{formatLabel(c.case_type)}</span>
+                      <td className="p-4">
+                        <span className="text-sm text-gray-600">{formatLabel(item.case_type)}</span>
                       </td>
-                      <td className="px-4 py-4">
-                        <span className="text-sm text-gray-700 capitalize">{statusLabel[c.status] || c.status}</span>
+                      <td className="p-4">
+                        <span className="text-sm text-gray-700 capitalize">{statusLabel[item.status] || item.status}</span>
                       </td>
-                      <td className="px-4 py-4">
+                      <td className="p-4">
                         <span className={`text-xs font-semibold uppercase tracking-wider ${
-                          c.priority === "critical" ? "text-red-600" :
-                          c.priority === "high" ? "text-amber-600" :
+                          item.priority === "critical" ? "text-red-600" :
+                          item.priority === "high" ? "text-amber-600" :
                           "text-gray-400"
                         }`}>
-                          {c.priority}
+                          {item.priority}
                         </span>
                       </td>
-                      <td className="px-4 py-4 text-right">
-                        <span className="text-sm text-gray-500 tabular-nums">{formatAge(c.opened_at)}</span>
+                      <td className="p-4 text-right">
+                        <span className="text-sm text-gray-500 tabular-nums">{formatAge(item.opened_at)}</span>
                       </td>
                       <td className="px-6 py-4 text-right">
                         <FiChevronRight className="inline-block text-gray-300 group-hover:text-gray-500 transition-colors" size={18} />

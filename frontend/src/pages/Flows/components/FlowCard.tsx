@@ -17,10 +17,11 @@ const formatTime = (value?: string | null) => {
 
 const FlowCard: React.FC<FlowCardProps> = ({ flow, isActive, onClick }) => {
     return (
-        <div
+        <button
+            type="button"
             onClick={onClick}
             className={`
-                group relative flex items-center gap-3 px-3 py-2.5 rounded-[10px] cursor-pointer transition-all duration-200
+                group relative flex w-full items-center gap-3 px-3 py-2.5 rounded-[10px] text-left cursor-pointer transition-all duration-200
                 ${isActive 
                     ? 'bg-[#0f1012]/[0.06] border border-[#0f1012]/[0.10] z-10' 
                     : 'bg-transparent border border-transparent hover:bg-[#0f1012]/[0.03] hover:border-[#0f1012]/[0.06]'
@@ -54,7 +55,7 @@ const FlowCard: React.FC<FlowCardProps> = ({ flow, isActive, onClick }) => {
                      <div className="h-px bg-[#0f1012]/[0.06] flex-1" />
                  </div>
             </div>
-        </div>
+        </button>
     );
 };
 

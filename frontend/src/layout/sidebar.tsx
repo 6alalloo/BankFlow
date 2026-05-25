@@ -1,10 +1,9 @@
 import { useState } from "react";
-import { flushSync } from "react-dom";
 import { NavLink, useNavigate, useLocation, Link } from "react-router-dom";
 import {
   FiGitBranch, FiBriefcase, FiZap, FiLogOut, FiUser, FiShield, FiBarChart2, FiUsers, FiCheckSquare
 } from "react-icons/fi";
-import { useAuth } from "../contexts/AuthContext";
+import { useAuth } from "../contexts/useAuth";
 import { createFlow, fetchFlows } from "../api/flows";
 
 const Sidebar = () => {
@@ -13,13 +12,13 @@ const Sidebar = () => {
   const location = useLocation();
   const [isCreating, setIsCreating] = useState(false);
 
-  const handleLogout = (event?: React.MouseEvent<HTMLAnchorElement> | React.PointerEvent<HTMLAnchorElement>) => {
+  const handleLogout = (event?: React.MouseEvent<HTMLButtonElement>) => {
     event?.preventDefault();
     event?.stopPropagation();
     window.localStorage.removeItem("bankflow_token");
     window.localStorage.removeItem("bankflow_user");
-    flushSync(() => logout());
-    navigate("/logout", { replace: true });
+    logout();
+    navigate("/login", { replace: true });
   };
 
   const handleBuilderClick = async (e: React.MouseEvent) => {
@@ -105,7 +104,7 @@ const Sidebar = () => {
         >
           {isBuilderActive && <span className="absolute left-0 top-1/2 -translate-y-1/2 w-[3px] h-5 bg-[#0071e3] rounded-r-full" />}
           <FiZap size={18} strokeWidth={1.5} className="shrink-0" />
-          <span className="text-sm tracking-tight">{isCreating ? "Loading..." : "Builder"}</span>
+          <span className="text-sm tracking-tight">{isCreating ? "Loading\u2026" : "Builder"}</span>
         </a>
 
         <NavLink
@@ -208,17 +207,15 @@ const Sidebar = () => {
                 </div>
               </div>
               
-              <a
-                href="/logout"
-                role="button"
-                onPointerDown={handleLogout}
+              <button
+                type="button"
                 onClick={handleLogout}
                 className="size-8 flex items-center justify-center text-[#868788] hover:text-[#b71c1c] hover:bg-[#ffebee] rounded-lg transition-colors shrink-0"
                 aria-label="Sign out"
                 title="Sign out"
               >
                 <FiLogOut size={16} strokeWidth={1.5} />
-              </a>
+              </button>
           </div>
         )}
       </div>

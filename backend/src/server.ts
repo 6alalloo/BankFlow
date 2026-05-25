@@ -10,10 +10,10 @@ import app from "./app";
 import { startSlaScheduler } from "./services/slaScheduler";
 
 app.listen(config.server.port, () => {
-logger.info('BankFlow backend started', {
+  logger.info("BankFlow backend started", {
     port: config.server.port,
     environment: config.server.nodeEnv,
-    nodeVersion: process.version
+    nodeVersion: process.version,
   });
   startSlaScheduler();
 });

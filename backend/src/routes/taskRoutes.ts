@@ -6,6 +6,7 @@ import { toInputJson } from "../lib/json";
 import { canClaimTask, canCompleteTask, canViewAllOperationalQueues, getUserTeamIds } from "../services/authorizationService";
 import { logAuditEvent } from "../services/auditService";
 import { pageMeta, parseBoolean, parseDate, parseNumber, parsePageQuery } from "../lib/query";
+import { asBodyObject, readIntegerParam, readOptionalInteger, readOptionalObject, readOptionalString } from "../lib/validation";
 import { Prisma } from "@prisma/client";
 import { processOverdueWork } from "../services/slaService";
 
@@ -29,7 +30,15 @@ const getRequiredDocumentTypes = (taskInput: unknown): string[] => {
   return required.filter((documentType): documentType is string => typeof documentType === "string" && documentType.trim().length > 0);
 };
 
-const toTaskResponse = (task: any) => ({
+type TaskUserSummary = Pick<Prisma.usersGetPayload<{}>, "id" | "email" | "full_name">;
+type TaskCaseSummary = Pick<Prisma.casesGetPayload<{}>, "id" | "case_reference" | "title" | "status" | "priority">;
+type TaskResponseSource = Prisma.case_tasksGetPayload<{}> & {
+  assigned_user?: TaskUserSummary | null;
+  assigned_team?: Prisma.teamsGetPayload<{}> | null;
+  cases?: TaskCaseSummary | null;
+};
+
+const toTaskResponse = (task: TaskResponseSource) => ({
   id: task.id,
   case_id: task.case_id,
   flow_node_key: task.flow_node_key,
@@ -137,11 +146,7 @@ router.get("/", async (req: Request, res: Response) => {
 });
 
 router.post("/:id/claim", async (req: Request, res: Response) => {
-  const id = Number(req.params.id);
-  if (!Number.isInteger(id)) {
-    res.status(400).json({ error: "Invalid task id" });
-    return;
-  }
+  const id = readIntegerParam(req, "id", "task id");
 
   const task = await prisma.$transaction(async (tx) => {
     const existing = await tx.case_tasks.findUnique({ where: { id } });
@@ -198,26 +203,15 @@ router.post("/:id/claim", async (req: Request, res: Response) => {
 });
 
 router.patch("/:id/assign", async (req: Request, res: Response) => {
-  const id = Number(req.params.id);
-  if (!Number.isInteger(id)) {
-    res.status(400).json({ error: "Invalid task id" });
-    return;
-  }
+  const id = readIntegerParam(req, "id", "task id");
   if (!req.user || (req.user.role !== "Admin" && req.user.role !== "Supervisor")) {
     res.status(403).json({ error: "Only admins and supervisors can reassign tasks" });
     return;
   }
 
-  const assignedUserId = req.body?.assignedUserId ?? req.body?.assigned_user_id;
-  const assignedTeamId = req.body?.assignedTeamId ?? req.body?.assigned_team_id;
-  if (assignedUserId !== undefined && assignedUserId !== null && !Number.isInteger(Number(assignedUserId))) {
-    res.status(400).json({ error: "assignedUserId must be an integer or null" });
-    return;
-  }
-  if (assignedTeamId !== undefined && assignedTeamId !== null && !Number.isInteger(Number(assignedTeamId))) {
-    res.status(400).json({ error: "assignedTeamId must be an integer or null" });
-    return;
-  }
+  const body = asBodyObject(req);
+  const assignedUserId = readOptionalInteger(body.assignedUserId ?? body.assigned_user_id, "assignedUserId");
+  const assignedTeamId = readOptionalInteger(body.assignedTeamId ?? body.assigned_team_id, "assignedTeamId");
 
   const existing = await prisma.case_tasks.findUnique({ where: { id } });
   if (!existing) {
@@ -232,10 +226,10 @@ router.patch("/:id/assign", async (req: Request, res: Response) => {
   const [user, team] = await Promise.all([
     assignedUserId === undefined || assignedUserId === null
       ? Promise.resolve(null)
-      : prisma.users.findUnique({ where: { id: Number(assignedUserId) }, select: { id: true } }),
+      : prisma.users.findUnique({ where: { id: assignedUserId }, select: { id: true } }),
     assignedTeamId === undefined || assignedTeamId === null
       ? Promise.resolve(null)
-      : prisma.teams.findUnique({ where: { id: Number(assignedTeamId), is_active: true }, select: { id: true } }),
+      : prisma.teams.findUnique({ where: { id: assignedTeamId, is_active: true }, select: { id: true } }),
   ]);
   if (assignedUserId !== undefined && assignedUserId !== null && !user) {
     res.status(404).json({ error: "Assigned user not found" });
@@ -250,8 +244,8 @@ router.patch("/:id/assign", async (req: Request, res: Response) => {
     const updated = await tx.case_tasks.update({
       where: { id },
       data: {
-        assigned_user_id: assignedUserId === undefined ? existing.assigned_user_id : assignedUserId === null ? null : Number(assignedUserId),
-        assigned_team_id: assignedTeamId === undefined ? existing.assigned_team_id : assignedTeamId === null ? null : Number(assignedTeamId),
+        assigned_user_id: assignedUserId === undefined ? existing.assigned_user_id : assignedUserId,
+        assigned_team_id: assignedTeamId === undefined ? existing.assigned_team_id : assignedTeamId,
         status: assignedUserId || assignedTeamId ? "assigned" : "pending",
       },
       include: {
@@ -299,19 +293,10 @@ router.patch("/:id/assign", async (req: Request, res: Response) => {
 });
 
 router.post("/:id/complete", async (req: Request, res: Response) => {
-  const id = Number(req.params.id);
-  if (!Number.isInteger(id)) {
-    res.status(400).json({ error: "Invalid task id" });
-    return;
-  }
-  if (req.body?.decision !== undefined && typeof req.body.decision !== "string") {
-    res.status(400).json({ error: "decision must be a string when provided" });
-    return;
-  }
-  if (req.body?.output !== undefined && (typeof req.body.output !== "object" || Array.isArray(req.body.output) || req.body.output === null)) {
-    res.status(400).json({ error: "output must be an object when provided" });
-    return;
-  }
+  const id = readIntegerParam(req, "id", "task id");
+  const body = asBodyObject(req);
+  const decision = readOptionalString(body, "decision");
+  const output = readOptionalObject(body, "output") ?? {};
 
   const result = await prisma.$transaction(async (tx) => {
     const existing = await tx.case_tasks.findUnique({
@@ -349,7 +334,6 @@ router.post("/:id/complete", async (req: Request, res: Response) => {
       }
     }
 
-    const output = req.body?.output || {};
     const caseData = asObject(existing.cases.case_data_json);
     const task = await tx.case_tasks.update({
       where: { id },
@@ -357,7 +341,7 @@ router.post("/:id/complete", async (req: Request, res: Response) => {
         status: "completed",
         completed_at: new Date(),
         completed_by_user_id: req.user?.userId ?? null,
-        decision: typeof req.body?.decision === "string" ? req.body.decision : null,
+        decision: decision ?? null,
         output_json: toInputJson(output),
         case_events: {
           create: {

@@ -4,6 +4,17 @@ import { canPublishFlow } from "../services/authorizationService";
 import { logAuditEvent } from "../services/auditService";
 import { parseNumber, parsePageQuery } from "../lib/query";
 import {
+  asBodyObject,
+  optionalBodyObject,
+  readIntegerParam,
+  readOptionalInteger,
+  readOptionalNullableString,
+  readOptionalNumber,
+  readOptionalObject,
+  readOptionalString,
+  readRequiredString,
+} from "../lib/validation";
+import {
   FlowPublishValidationError,
   createCaseFlow,
   createDraftEdge,
@@ -53,24 +64,17 @@ router.get("/", async (req: Request, res: Response) => {
 router.post("/", async (req: Request, res: Response) => {
   if (!requireFlowDesigner(req, res)) return;
 
-  const { key, name, description, caseType, case_type } = req.body as {
-    key?: string;
-    name?: string;
-    description?: string;
-    caseType?: string;
-    case_type?: string;
-  };
-
-  if (!name) {
-    res.status(400).json({ error: "name is required" });
-    return;
-  }
+  const body = optionalBodyObject(req);
+  const key = readOptionalString(body, "key");
+  const name = readRequiredString(body, "name");
+  const description = readOptionalString(body, "description");
+  const caseType = readOptionalString(body, "caseType") ?? readOptionalString(body, "case_type");
 
   const flow = await createCaseFlow({
     key,
     name,
     description,
-    caseType: caseType || case_type,
+    caseType,
     ownerUserId: req.user?.userId ?? null,
   });
 
@@ -90,19 +94,13 @@ router.post("/", async (req: Request, res: Response) => {
 router.patch("/:id", async (req: Request, res: Response) => {
   if (!requireFlowDesigner(req, res)) return;
 
-  const id = Number(req.params.id);
-  if (!Number.isInteger(id)) {
-    res.status(400).json({ error: "Invalid flow id" });
-    return;
-  }
-
-  const { name, description, caseType, case_type, status } = req.body as {
-    name?: string;
-    description?: string | null;
-    caseType?: string;
-    case_type?: string;
-    status?: "draft" | "published" | "archived";
-  };
+  const id = readIntegerParam(req, "id", "flow id");
+  const body = optionalBodyObject(req);
+  const name = readOptionalString(body, "name");
+  const description = readOptionalNullableString(body, "description");
+  const caseType = readOptionalString(body, "caseType");
+  const case_type = readOptionalString(body, "case_type");
+  const status = readOptionalString(body, "status") as "draft" | "published" | "archived" | undefined;
 
   const data: {
     name?: string;
@@ -145,11 +143,7 @@ router.patch("/:id", async (req: Request, res: Response) => {
 });
 
 router.get("/:id", async (req: Request, res: Response) => {
-  const id = Number(req.params.id);
-  if (!Number.isInteger(id)) {
-    res.status(400).json({ error: "Invalid flow id" });
-    return;
-  }
+  const id = readIntegerParam(req, "id", "flow id");
 
   const flow = await getCaseFlowDetail(id);
 
@@ -164,11 +158,7 @@ router.get("/:id", async (req: Request, res: Response) => {
 router.delete("/:id", async (req: Request, res: Response) => {
   if (!requireFlowDesigner(req, res)) return;
 
-  const id = Number(req.params.id);
-  if (!Number.isInteger(id)) {
-    res.status(400).json({ error: "Invalid flow id" });
-    return;
-  }
+  const id = readIntegerParam(req, "id", "flow id");
 
   const flow = await deleteCaseFlow(id);
   if (!flow) {
@@ -192,11 +182,7 @@ router.delete("/:id", async (req: Request, res: Response) => {
 router.post("/:id/duplicate", async (req: Request, res: Response) => {
   if (!requireFlowDesigner(req, res)) return;
 
-  const id = Number(req.params.id);
-  if (!Number.isInteger(id)) {
-    res.status(400).json({ error: "Invalid flow id" });
-    return;
-  }
+  const id = readIntegerParam(req, "id", "flow id");
 
   const copy = await duplicateCaseFlow({ flowId: id, ownerUserId: req.user?.userId ?? null });
   if (!copy) {
@@ -218,11 +204,7 @@ router.post("/:id/duplicate", async (req: Request, res: Response) => {
 });
 
 router.get("/:id/graph", async (req: Request, res: Response) => {
-  const id = Number(req.params.id);
-  if (!Number.isInteger(id)) {
-    res.status(400).json({ error: "Invalid flow id" });
-    return;
-  }
+  const id = readIntegerParam(req, "id", "flow id");
 
   const flow = await getCaseFlowGraph(id);
 
@@ -237,24 +219,13 @@ router.get("/:id/graph", async (req: Request, res: Response) => {
 router.post("/:id/nodes", async (req: Request, res: Response) => {
   if (!requireFlowDesigner(req, res)) return;
 
-  const caseFlowId = Number(req.params.id);
-  if (!Number.isInteger(caseFlowId)) {
-    res.status(400).json({ error: "Invalid flow id" });
-    return;
-  }
-
-  const { kind, name, config, posX, posY } = req.body as {
-    kind?: string;
-    name?: string;
-    config?: Record<string, unknown>;
-    posX?: number;
-    posY?: number;
-  };
-
-  if (!kind) {
-    res.status(400).json({ error: "kind is required" });
-    return;
-  }
+  const caseFlowId = readIntegerParam(req, "id", "flow id");
+  const body = asBodyObject(req);
+  const kind = readRequiredString(body, "kind");
+  const name = readOptionalString(body, "name");
+  const config = readOptionalObject(body, "config");
+  const posX = readOptionalNumber(body, "posX");
+  const posY = readOptionalNumber(body, "posY");
 
   const node = await createDraftNode(caseFlowId, { kind, name, config, posX, posY });
 
@@ -274,20 +245,14 @@ router.post("/:id/nodes", async (req: Request, res: Response) => {
 router.put("/:id/nodes/:nodeId", async (req: Request, res: Response) => {
   if (!requireFlowDesigner(req, res)) return;
 
-  const caseFlowId = Number(req.params.id);
-  const nodeId = Number(req.params.nodeId);
-  if (!Number.isInteger(caseFlowId) || !Number.isInteger(nodeId)) {
-    res.status(400).json({ error: "Invalid flow or node id" });
-    return;
-  }
-
-  const { kind, name, config, posX, posY } = req.body as {
-    kind?: string;
-    name?: string | null;
-    config?: Record<string, unknown>;
-    posX?: number;
-    posY?: number;
-  };
+  const caseFlowId = readIntegerParam(req, "id", "flow id");
+  const nodeId = readIntegerParam(req, "nodeId", "node id");
+  const body = asBodyObject(req);
+  const kind = readOptionalString(body, "kind");
+  const name = readOptionalNullableString(body, "name");
+  const config = readOptionalObject(body, "config");
+  const posX = readOptionalNumber(body, "posX");
+  const posY = readOptionalNumber(body, "posY");
 
   const node = await updateDraftNode(caseFlowId, nodeId, { kind, name, config, posX, posY });
   if (!node) {
@@ -311,16 +276,13 @@ router.put("/:id/nodes/:nodeId", async (req: Request, res: Response) => {
 router.patch("/:id/nodes/:nodeId/position", async (req: Request, res: Response) => {
   if (!requireFlowDesigner(req, res)) return;
 
-  const caseFlowId = Number(req.params.id);
-  const nodeId = Number(req.params.nodeId);
-  const { posX, posY } = req.body as { posX?: number; posY?: number };
-  if (
-    !Number.isInteger(caseFlowId) ||
-    !Number.isInteger(nodeId) ||
-    typeof posX !== "number" ||
-    typeof posY !== "number"
-  ) {
-    res.status(400).json({ error: "Invalid node position payload" });
+  const caseFlowId = readIntegerParam(req, "id", "flow id");
+  const nodeId = readIntegerParam(req, "nodeId", "node id");
+  const body = asBodyObject(req);
+  const posX = readOptionalNumber(body, "posX");
+  const posY = readOptionalNumber(body, "posY");
+  if (posX === undefined || posY === undefined) {
+    res.status(400).json({ error: "posX and posY are required" });
     return;
   }
 
@@ -346,12 +308,8 @@ router.patch("/:id/nodes/:nodeId/position", async (req: Request, res: Response) 
 router.delete("/:id/nodes/:nodeId", async (req: Request, res: Response) => {
   if (!requireFlowDesigner(req, res)) return;
 
-  const caseFlowId = Number(req.params.id);
-  const nodeId = Number(req.params.nodeId);
-  if (!Number.isInteger(caseFlowId) || !Number.isInteger(nodeId)) {
-    res.status(400).json({ error: "Invalid flow or node id" });
-    return;
-  }
+  const caseFlowId = readIntegerParam(req, "id", "flow id");
+  const nodeId = readIntegerParam(req, "nodeId", "node id");
 
   const node = await deleteDraftNode(caseFlowId, nodeId);
   if (!node) {
@@ -375,16 +333,15 @@ router.delete("/:id/nodes/:nodeId", async (req: Request, res: Response) => {
 router.post("/:id/edges", async (req: Request, res: Response) => {
   if (!requireFlowDesigner(req, res)) return;
 
-  const caseFlowId = Number(req.params.id);
-  const { fromNodeId, toNodeId, label, priority, condition } = req.body as {
-    fromNodeId?: number;
-    toNodeId?: number;
-    label?: string | null;
-    priority?: number | null;
-    condition?: Record<string, unknown>;
-  };
+  const caseFlowId = readIntegerParam(req, "id", "flow id");
+  const body = asBodyObject(req);
+  const fromNodeId = readOptionalInteger(body.fromNodeId, "fromNodeId");
+  const toNodeId = readOptionalInteger(body.toNodeId, "toNodeId");
+  const label = readOptionalNullableString(body, "label");
+  const priority = readOptionalInteger(body.priority, "priority");
+  const condition = readOptionalObject(body, "condition");
 
-  if (!Number.isInteger(caseFlowId) || !fromNodeId || !toNodeId) {
+  if (!fromNodeId || !toNodeId) {
     res.status(400).json({ error: "fromNodeId and toNodeId are required" });
     return;
   }
@@ -428,12 +385,8 @@ router.post("/:id/edges", async (req: Request, res: Response) => {
 router.delete("/:id/edges/:edgeId", async (req: Request, res: Response) => {
   if (!requireFlowDesigner(req, res)) return;
 
-  const caseFlowId = Number(req.params.id);
-  const edgeId = Number(req.params.edgeId);
-  if (!Number.isInteger(caseFlowId) || !Number.isInteger(edgeId)) {
-    res.status(400).json({ error: "Invalid flow or edge id" });
-    return;
-  }
+  const caseFlowId = readIntegerParam(req, "id", "flow id");
+  const edgeId = readIntegerParam(req, "edgeId", "edge id");
 
   const edge = await deleteDraftEdge(caseFlowId, edgeId);
   if (!edge) {
@@ -456,17 +409,14 @@ router.delete("/:id/edges/:edgeId", async (req: Request, res: Response) => {
 router.post("/:id/publish", async (req: Request, res: Response) => {
   if (!requireFlowDesigner(req, res)) return;
 
-  const id = Number(req.params.id);
-  if (!Number.isInteger(id)) {
-    res.status(400).json({ error: "Invalid flow id" });
-    return;
-  }
+  const id = readIntegerParam(req, "id", "flow id");
+  const body = optionalBodyObject(req);
 
   try {
     const version = await publishCaseFlow({
       flowId: id,
       publishedByUserId: req.user?.userId ?? null,
-      changeSummary: typeof req.body?.changeSummary === "string" ? req.body.changeSummary : null,
+      changeSummary: readOptionalString(body, "changeSummary") ?? null,
     });
 
     if (!version) {

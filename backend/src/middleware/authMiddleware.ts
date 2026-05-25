@@ -42,7 +42,7 @@ export function authenticate(req: Request, res: Response, next: NextFunction) {
   } catch (error) {
     logger.error('Authentication middleware error', {
       service: 'authMiddleware',
-      requestId: (req as any).requestId,
+      requestId: req.requestId,
       path: req.path,
       method: req.method,
       error: error instanceof Error ? error.message : String(error),
@@ -57,7 +57,7 @@ export function authenticate(req: Request, res: Response, next: NextFunction) {
  * Same as authenticate but doesn't fail if no token is provided
  * Useful for routes that have different behavior for authenticated users
  */
-export function optionalAuth(req: Request, res: Response, next: NextFunction) {
+export function optionalAuth(req: Request, _res: Response, next: NextFunction) {
   try {
     const authHeader = req.headers.authorization;
 

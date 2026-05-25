@@ -21,7 +21,7 @@ export async function getAuditLogs(req: Request, res: Response) {
       endDate,
     } = req.query;
 
-    const params: any = {};
+    const params: auditService.GetAuditLogsParams = {};
 
     if (limit) params.limit = parseInt(limit as string, 10);
     if (offset) params.offset = parseInt(offset as string, 10);
@@ -136,7 +136,7 @@ export async function purgeOldAuditLogs(req: Request, res: Response) {
     }
 
     // Log the purge action first (before deleting)
-    const userId = (req as any).user?.userId;
+    const userId = req.user?.userId;
     if (userId) {
       await auditService.logAuditEvent({
         eventType: "audit_logs_purged",

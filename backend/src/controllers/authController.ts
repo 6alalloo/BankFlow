@@ -2,11 +2,9 @@ import { Request, Response, NextFunction } from 'express';
 import { login, getUserById, verifyToken } from '../services/authService';
 import * as auditService from '../services/auditService';
 import { isRateLimited, getRemainingAttempts, getTimeUntilReset, resetRateLimit } from '../middleware/rateLimiter';
-import logger from '../lib/logger';
 import {
   createNotFoundError,
   createValidationError,
-  createUnauthorizedError,
   ErrorCodes,
   AppError,
 } from '../types/errors';
@@ -32,18 +30,23 @@ export async function loginHandler(req: Request, res: Response, next: NextFuncti
       const error = new AppError(
         `Rate limit exceeded. Try again in ${retryAfter} seconds.`,
         429,
-        ErrorCodes.UNAUTHORIZED
+        ErrorCodes.UNAUTHORIZED,
+        true,
+        { retryAfter }
       );
-      (error as any).retryAfter = retryAfter;
       throw error;
     }
 
     const result = await login(email, password);
     if (!result) {
       const remaining = getRemainingAttempts(clientIp, email);
-      const error = createUnauthorizedError('Invalid email or password');
-      (error as any).remainingAttempts = remaining;
-      throw error;
+      throw new AppError(
+        'Invalid email or password',
+        401,
+        ErrorCodes.UNAUTHORIZED,
+        true,
+        { remainingAttempts: remaining }
+      );
     }
 
     // Reset rate limit on successful login
@@ -78,10 +81,10 @@ export async function loginHandler(req: Request, res: Response, next: NextFuncti
 export async function getCurrentUser(req: Request, res: Response, next: NextFunction) {
   try {
     // The user is set by the auth middleware
-    const userId = (req as any).user?.userId;
+    const userId = req.user?.userId;
 
     if (!userId) {
-      throw createUnauthorizedError('Not authenticated');
+      throw new AppError('Not authenticated', 401, ErrorCodes.UNAUTHORIZED);
     }
 
     const user = await getUserById(userId);

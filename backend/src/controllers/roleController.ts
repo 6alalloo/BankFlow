@@ -6,7 +6,7 @@ import logger from "../lib/logger";
  * GET /api/roles
  * Returns all roles.
  */
-export async function getAllRoles(req: Request, res: Response) {
+export async function getAllRoles(_req: Request, res: Response) {
   try {
     const roles = await roleService.getAllRoles();
     return res.status(200).json({

@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef, useMemo } from 'react';
+import { useState, useEffect, useRef, useMemo, useEffectEvent } from 'react';
 import { LuX, LuSearch, LuCommand } from 'react-icons/lu';
 import { LazyMotion, domAnimation, m, AnimatePresence } from 'framer-motion';
 import { NODE_TYPES, type NodeTypeDef } from './nodePickerOptions';
@@ -19,24 +19,30 @@ const CATEGORY_LABELS: Record<string, string> = {
 const CATEGORY_ORDER = ['case', 'decision', 'utility'];
 
 export default function NodePicker({ isOpen, onClose, onSelect, position }: NodePickerProps) {
+    if (!isOpen) return null;
+
+    return <NodePickerContent onClose={onClose} onSelect={onSelect} position={position} />;
+}
+
+type NodePickerContentProps = Pick<NodePickerProps, 'onClose' | 'onSelect' | 'position'>;
+
+function NodePickerContent({ onClose, onSelect, position }: NodePickerContentProps) {
     const [query, setQuery] = useState('');
     const inputRef = useRef<HTMLInputElement>(null);
+    const handleClose = useEffectEvent(onClose);
 
     useEffect(() => {
-        if (isOpen) {
-            setQuery('');
-            setTimeout(() => inputRef.current?.focus(), 50);
-        }
-    }, [isOpen]);
+        const timer = setTimeout(() => inputRef.current?.focus(), 50);
+        return () => clearTimeout(timer);
+    }, []);
 
     useEffect(() => {
-        if (!isOpen) return;
         const handleKey = (e: KeyboardEvent) => {
-            if (e.key === 'Escape') onClose();
+            if (e.key === 'Escape') handleClose();
         };
         document.addEventListener('keydown', handleKey);
         return () => document.removeEventListener('keydown', handleKey);
-    }, [isOpen, onClose]);
+    }, []);
 
     const filtered = useMemo(() => {
         const q = query.toLowerCase().trim();
@@ -55,14 +61,17 @@ export default function NodePicker({ isOpen, onClose, onSelect, position }: Node
             if (!map[t.category]) map[t.category] = [];
             map[t.category].push(t);
         });
-        return CATEGORY_ORDER.filter((c) => map[c]?.length > 0).map((c) => ({
-            category: c,
-            label: CATEGORY_LABELS[c],
-            items: map[c],
-        }));
+        return CATEGORY_ORDER.reduce<Array<{ category: string; label: string; items: NodeTypeDef[] }>>((groups, c) => {
+            if (map[c]?.length > 0) {
+                groups.push({
+                    category: c,
+                    label: CATEGORY_LABELS[c],
+                    items: map[c],
+                });
+            }
+            return groups;
+        }, []);
     }, [filtered]);
-
-    if (!isOpen) return null;
 
     const content = (
         <m.div
@@ -81,7 +90,7 @@ export default function NodePicker({ isOpen, onClose, onSelect, position }: Node
                     type="text"
                     value={query}
                     onChange={(e) => setQuery(e.target.value)}
-                    placeholder="Search nodes..."
+                    placeholder="Search nodes"
                     className="flex-1 bg-transparent text-sm text-[#0f1012] outline-none placeholder:text-[#868788]"
                 />
                 <div className="flex items-center gap-1 rounded-[6px] border border-[#0f1012]/[0.08] bg-[#f2f2f4] px-1.5 py-0.5 text-[10px] text-[#868788]">

@@ -2,15 +2,15 @@ import { Request, Response } from "express";
 import * as userService from "../services/userService";
 import { logAuditEvent } from "../services/auditService";
 import logger from "../lib/logger";
-import { createValidationError, createForbiddenError, createNotFoundError } from "../types/errors";
+import { createValidationError, createForbiddenError, createNotFoundError, isAppError } from "../types/errors";
 import { pageMeta, parsePageQuery } from "../lib/query";
 
 /**
  * GET /api/users
  * Optional query params:
- * - ?active=true|false  → filter by is_active
- * - ?role=Admin         → filter by role name
- * - ?q=ali              → search in email OR full_name (case-insensitive)
+ * - ?active=true|false  -> filter by is_active
+ * - ?role=Admin         -> filter by role name
+ * - ?q=ali              -> search in email OR full_name (case-insensitive)
  */
 export async function getAllUsers(req: Request, res: Response) {
   try {
@@ -167,8 +167,8 @@ export async function createUser(req: Request, res: Response) {
     return res.status(201).json({
       data: user,
     });
-  } catch (error: any) {
-    if (error.statusCode) {
+  } catch (error) {
+    if (isAppError(error)) {
       return res.status(error.statusCode).json({
         message: error.message,
         errorCode: error.errorCode,
@@ -285,8 +285,8 @@ export async function updateUser(req: Request, res: Response) {
     return res.status(200).json({
       data: user,
     });
-  } catch (error: any) {
-    if (error.statusCode) {
+  } catch (error) {
+    if (isAppError(error)) {
       return res.status(error.statusCode).json({
         message: error.message,
         errorCode: error.errorCode,
@@ -366,8 +366,8 @@ export async function toggleUserStatus(req: Request, res: Response) {
     return res.status(200).json({
       data: user,
     });
-  } catch (error: any) {
-    if (error.statusCode) {
+  } catch (error) {
+    if (isAppError(error)) {
       return res.status(error.statusCode).json({
         message: error.message,
         errorCode: error.errorCode,
@@ -445,8 +445,8 @@ export async function changeUserPassword(req: Request, res: Response) {
     return res.status(200).json({
       message: "Password changed successfully",
     });
-  } catch (error: any) {
-    if (error.statusCode) {
+  } catch (error) {
+    if (isAppError(error)) {
       return res.status(error.statusCode).json({
         message: error.message,
         errorCode: error.errorCode,

@@ -1,19 +1,4 @@
-import { getAuthToken } from "../contexts/AuthContext";
-import { config } from "../config/appConfig";
-
-const API_BASE_URL = config.apiBaseUrl;
-
-// Helper to get auth headers for API calls
-function getAuthHeaders(): Record<string, string> {
-  const token = getAuthToken();
-  const headers: Record<string, string> = {
-    "Content-Type": "application/json",
-  };
-  if (token) {
-    headers["Authorization"] = `Bearer ${token}`;
-  }
-  return headers;
-}
+import { apiDelete, apiFetch, apiGet, apiPatch, apiPost, apiPut } from "./apiClient";
 
 
 /* ---------- Core API types ---------- */
@@ -252,20 +237,7 @@ function normalizeFlow(raw: RawFlowApi): FlowApi {
 
 // GET /api/flows
 export async function fetchFlows(): Promise<FlowApi[]> {
-  const res = await fetch(`${API_BASE_URL}/flows`, {
-    headers: getAuthHeaders(),
-  });
-
-  if (!res.ok) {
-    console.error(
-      "[fetchFlows] HTTP error:",
-      res.status,
-      res.statusText
-    );
-    throw new Error(`Failed to fetch flows (status ${res.status})`);
-  }
-
-  const data = (await res.json()) as FlowsListResponse;
+  const data = await apiGet<FlowsListResponse>("/flows");
 
   if (Array.isArray(data)) {
     return data.map(normalizeFlow);
@@ -289,18 +261,7 @@ type FlowByIdResponse = RawFlowApi | { data: RawFlowApi };
 
 // GET /api/flows/:id
 export async function fetchFlowById(id: number): Promise<FlowApi> {
-  const res = await fetch(`${API_BASE_URL}/flows/${id}`, { headers: getAuthHeaders() });
-
-  if (!res.ok) {
-    console.error(
-      "[fetchFlowById] HTTP error:",
-      res.status,
-      res.statusText
-    );
-    throw new Error(`Failed to fetch flow ${id} (status ${res.status})`);
-  }
-
-  const data = (await res.json()) as FlowByIdResponse;
+  const data = await apiGet<FlowByIdResponse>(`/flows/${id}`);
 
   if ("data" in data) {
     return normalizeFlow(data.data);
@@ -316,20 +277,7 @@ export async function fetchFlowGraph(
   nodes: FlowGraphNode[];
   edges: FlowGraphEdge[];
 }> {
-  const res = await fetch(`${API_BASE_URL}/flows/${id}/graph`, { headers: getAuthHeaders() });
-
-  if (!res.ok) {
-    console.error(
-      "[fetchFlowGraph] HTTP error:",
-      res.status,
-      res.statusText
-    );
-    throw new Error(
-      `Failed to fetch flow graph for ${id} (status ${res.status})`
-    );
-  }
-
-  const raw = (await res.json()) as FlowGraphResponse;
+  const raw = await apiGet<FlowGraphResponse>(`/flows/${id}/graph`);
 
   const payload: FlowGraphPayload = "data" in raw ? raw.data : raw;
 
@@ -394,53 +342,17 @@ export async function fetchFlowGraph(
 
 // POST /api/flows/:id/nodes
 export async function deleteFlow(id: number): Promise<void> {
-  const res = await fetch(`${API_BASE_URL}/flows/${id}`, {
-    method: "DELETE",
-    headers: getAuthHeaders(),
-  });
-  if (!res.ok) {
-    throw new Error(`Failed to delete flow: ${res.statusText}`);
-  }
+  await apiDelete(`/flows/${id}`);
 }
 
 export async function createFlowNode(
   flowId: number,
   payload: CreateFlowNodePayload
 ): Promise<FlowGraphNode> {
-  const res = await fetch(`${API_BASE_URL}/flows/${flowId}/nodes`, {
-    method: "POST",
-    headers: getAuthHeaders(),
-    body: JSON.stringify(payload),
-  });
-
-  if (!res.ok) {
-    let serverMessage = "";
-    try {
-      const text = await res.text();
-      if (text) {
-        try {
-          const parsed = JSON.parse(text) as { message?: string; error?: string };
-          serverMessage = parsed.message || parsed.error || text;
-        } catch {
-          serverMessage = text;
-        }
-      }
-    } catch {
-      serverMessage = "";
-    }
-    console.error(
-      "[createFlowNode] HTTP error:",
-      res.status,
-      res.statusText
-    );
-    throw new Error(
-      `Failed to create node for flow ${flowId} (status ${res.status})${serverMessage ? `: ${serverMessage}` : ""}`
-    );
-  }
-
-  const json = (await res.json()) as
+  const json = await apiPost<
     | FlowGraphNode
-    | { data: FlowGraphNode };
+    | { data: FlowGraphNode }
+  >(`/flows/${flowId}/nodes`, payload);
 
   if ("data" in json) return json.data;
   return json;
@@ -452,25 +364,10 @@ export async function updateFlowNodePosition(
   posX: number,
   posY: number
 ): Promise<FlowGraphNode> {
-  const res = await fetch(
-    `${API_BASE_URL}/flows/${flowId}/nodes/${nodeId}/position`,
-    {
-      method: "PATCH",
-      headers: getAuthHeaders(),
-      body: JSON.stringify({ posX, posY }),
-    }
+  const json = await apiPatch<UpdateNodePositionResponse>(
+    `/flows/${flowId}/nodes/${nodeId}/position`,
+    { posX, posY }
   );
-
-  if (!res.ok) {
-    console.error(
-      "[updateFlowNodePosition] HTTP error:",
-      res.status,
-      res.statusText
-    );
-    throw new Error(`Failed to update node position (status ${res.status})`);
-  }
-
-  const json = (await res.json()) as UpdateNodePositionResponse;
 
   const raw: FlowNodePositionDto =
     "data" in json ? json.data : (json as FlowNodePositionDto);
@@ -522,27 +419,10 @@ export async function updateFlowNode(
   nodeId: number,
   payload: UpdateFlowNodePayload
 ): Promise<FlowGraphNode> {
-  const res = await fetch(
-    `${API_BASE_URL}/flows/${flowId}/nodes/${nodeId}`,
-    {
-      method: "PUT",
-      headers: getAuthHeaders(),
-      body: JSON.stringify(payload),
-    }
+  const json = await apiPut<UpdateFlowNodeResponse>(
+    `/flows/${flowId}/nodes/${nodeId}`,
+    payload
   );
-
-  if (!res.ok) {
-    console.error(
-      "[updateFlowNode] HTTP error:",
-      res.status,
-      res.statusText
-    );
-    throw new Error(
-      `Failed to update node ${nodeId} for flow ${flowId} (status ${res.status})`
-    );
-  }
-
-  const json = (await res.json()) as UpdateFlowNodeResponse;
 
   const raw: FlowNodeUpdateDto =
     "data" in json ? json.data : (json as FlowNodeUpdateDto);
@@ -567,24 +447,7 @@ export async function createFlowEdge(
   flowId: number,
   payload: CreateFlowEdgePayload
 ): Promise<FlowGraphEdge> {
-  const res = await fetch(`${API_BASE_URL}/flows/${flowId}/edges`, {
-    method: "POST",
-    headers: getAuthHeaders(),
-    body: JSON.stringify(payload),
-  });
-
-  if (!res.ok) {
-    console.error(
-      "[createFlowEdge] HTTP error:",
-      res.status,
-      res.statusText
-    );
-    throw new Error(
-      `Failed to create edge for flow ${flowId} (status ${res.status})`
-    );
-  }
-
-  const json = (await res.json()) as FlowEdgeResponse;
+  const json = await apiPost<FlowEdgeResponse>(`/flows/${flowId}/edges`, payload);
 
   const raw: FlowEdgeDto =
     "data" in json ? json.data : (json as FlowEdgeDto);
@@ -607,25 +470,7 @@ export async function deleteFlowEdge(
   flowId: number,
   edgeId: number
 ): Promise<void> {
-  const res = await fetch(
-    `${API_BASE_URL}/flows/${flowId}/edges/${edgeId}`,
-    {
-      method: "DELETE",
-      headers: getAuthHeaders(),
-    }
-  );
-
-  // 204 is the happy path, 200 with body is also technically fine
-  if (!res.ok && res.status !== 204) {
-    console.error(
-      "[deleteFlowEdge] HTTP error:",
-      res.status,
-      res.statusText
-    );
-    throw new Error(
-      `Failed to delete edge ${edgeId} for flow ${flowId} (status ${res.status})`
-    );
-  }
+  await apiDelete(`/flows/${flowId}/edges/${edgeId}`);
 }
 
 export async function deleteFlowNode(
@@ -633,27 +478,10 @@ export async function deleteFlowNode(
   nodeId: number
 ): Promise<boolean> {
   try {
-    const res = await fetch(
-      `${API_BASE_URL}/flows/${flowId}/nodes/${nodeId}`,
-      {
-        method: "DELETE",
-        headers: getAuthHeaders(),
-      }
-    );
-
-    // Any 2xx (including 204) is a success
-    if (res.ok) {
-      return true;
-    }
-
-    console.error(
-      "[deleteFlowNode] HTTP error:",
-      res.status,
-      res.statusText
-    );
-    return false;
+    await apiDelete(`/flows/${flowId}/nodes/${nodeId}`);
+    return true;
   } catch (err) {
-    console.error("[deleteFlowNode] Network or fetch error:", err);
+    console.error("[deleteFlowNode] Failed to delete node:", err);
     return false;
   }
 }
@@ -673,18 +501,7 @@ export async function createFlow(payload: {
   ownerUserId?: number | null;
   defaultTrigger?: string | null;
 }): Promise<FlowApi> {
-  const res = await fetch(`${API_BASE_URL}/flows`, {
-    method: "POST",
-    headers: getAuthHeaders(),
-    body: JSON.stringify(payload),
-  });
-
-  if (!res.ok) {
-    console.error("[createFlow] HTTP error:", res.status, res.statusText);
-    throw new Error(`Failed to create flow (status ${res.status})`);
-  }
-
-  const json = (await res.json()) as CreateFlowResponse;
+  const json = await apiPost<CreateFlowResponse>("/flows", payload);
   return normalizeFlow("data" in json ? json.data : json);
 }
 
@@ -703,44 +520,22 @@ export async function updateFlow(
   id: number,
   payload: UpdateFlowPayload
 ): Promise<FlowApi> {
-  const res = await fetch(`${API_BASE_URL}/flows/${id}`, {
-    method: "PATCH",
-    headers: getAuthHeaders(),
-    body: JSON.stringify(payload),
-  });
-
-  if (!res.ok) {
-    console.error(`[updateFlow] HTTP error:`, res.status, res.statusText);
-    throw new Error(`Failed to update flow ${id} (status ${res.status})`);
-  }
-
-  const json = await res.json();
+  const json = await apiPatch<RawFlowApi | { data: RawFlowApi }>(`/flows/${id}`, payload);
   const data = "data" in json ? json.data : json;
   return normalizeFlow(data as RawFlowApi);
 }
 
 // POST /api/flows/:id/duplicate
 export async function duplicateFlow(id: number): Promise<FlowApi> {
-  const res = await fetch(`${API_BASE_URL}/flows/${id}/duplicate`, {
-    method: "POST",
-    headers: getAuthHeaders(),
-  });
-
-  if (!res.ok) {
-    console.error(`[duplicateFlow] HTTP error:`, res.status, res.statusText);
-    throw new Error(`Failed to duplicate flow ${id} (status ${res.status})`);
-  }
-
-  const json = await res.json();
+  const json = await apiPost<RawFlowApi | { data: RawFlowApi }>(`/flows/${id}/duplicate`);
   const data = "data" in json ? json.data : json;
   return normalizeFlow(data as RawFlowApi);
 }
 
 // POST /api/flows/:id/publish
 export async function publishFlow(id: number, changeSummary?: string): Promise<FlowApi> {
-  const res = await fetch(`${API_BASE_URL}/flows/${id}/publish`, {
+  const res = await apiFetch(`/flows/${id}/publish`, {
     method: "POST",
-    headers: getAuthHeaders(),
     body: JSON.stringify({ changeSummary }),
   });
 

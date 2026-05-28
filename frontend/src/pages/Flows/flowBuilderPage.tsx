@@ -94,6 +94,7 @@ const FlowBuilderContent: React.FC = () => {
     const [selectedNodeId, setSelectedNodeId] = useState<number | null>(null);
 
     const [isTemplateDropdownOpen, setIsTemplateDropdownOpen] = useState(false);
+    const [isEmptyTemplateOpen, setIsEmptyTemplateOpen] = useState(false);
     const [showTemplateConfirm, setShowTemplateConfirm] = useState<FlowTemplate | null>(null);
     const [isApplyingTemplate, setIsApplyingTemplate] = useState(false);
 
@@ -728,7 +729,7 @@ const FlowBuilderContent: React.FC = () => {
                 {/* Empty State Overlay */}
                 {realNodeCount === 0 && (
                     <div className="pointer-events-none absolute inset-0 z-10 flex items-center justify-center">
-                        <div className="pointer-events-auto flex flex-col items-center gap-5 rounded-[10px] border border-[#0f1012]/[0.08] bg-[#fdfdfd]/95 p-8 shadow-elevated backdrop-blur-md">
+                        <div className="pointer-events-auto flex flex-col items-center gap-5 rounded-[10px] border border-[#0f1012]/[0.08] bg-[#fdfdfd]/95 p-8 shadow-elevated backdrop-blur-md min-w-[320px]">
                             <div className="flex size-12 items-center justify-center rounded-[10px] bg-[#0071e3]/10 text-[#0071e3]">
                                 <LuZap className="size-6" />
                             </div>
@@ -736,6 +737,49 @@ const FlowBuilderContent: React.FC = () => {
                                 <h3 className="text-lg font-medium text-[#0f1012]">Start building your flow</h3>
                                 <p className="mt-1 text-sm text-[#868788]">Add your first step to automate this case workflow.</p>
                             </div>
+
+                            {/* Template Selector */}
+                            <div className="w-full relative">
+                                <button
+                                    onClick={() => setIsEmptyTemplateOpen(!isEmptyTemplateOpen)}
+                                    disabled={isApplyingTemplate}
+                                    className="flex w-full items-center justify-between gap-2 rounded-[10px] border border-[#0f1012]/[0.08] bg-[#0f1012]/[0.02] px-4 py-2.5 text-sm font-medium text-[#0f1012] transition hover:bg-[#0f1012]/[0.05] disabled:opacity-50"
+                                >
+                                    <span className="flex items-center gap-2">
+                                        <LuLayoutTemplate className="size-4 text-[#8f8f8f]" />
+                                        {isApplyingTemplate ? 'Applying template…' : 'Choose a template'}
+                                    </span>
+                                    <LuChevronDown
+                                        className={`size-3 text-[#868788] transition-transform ${isEmptyTemplateOpen ? 'rotate-180' : ''}`}
+                                    />
+                                </button>
+                                {isEmptyTemplateOpen && (
+                                    <div className="absolute left-0 top-full z-50 mt-2 w-full overflow-hidden rounded-[10px] border border-[#0f1012]/[0.08] bg-[#fdfdfd]/95 shadow-elevated backdrop-blur-md">
+                                        <div className="border-b border-[#0f1012]/[0.06] bg-[#0f1012]/[0.02] px-3 py-2">
+                                            <span className="text-[10px] font-medium uppercase tracking-wider text-[#868788]">Apply Template</span>
+                                        </div>
+                                        {templates.map((template) => (
+                                            <button
+                                                key={template.id}
+                                                onClick={() => {
+                                                    setShowTemplateConfirm(template);
+                                                    setIsEmptyTemplateOpen(false);
+                                                }}
+                                                className="flex w-full items-center gap-3 border-b border-[#0f1012]/[0.04] px-4 py-3 text-left transition-colors last:border-b-0 hover:bg-[#0f1012]/[0.04]"
+                                            >
+                                                <div className="flex size-8 items-center justify-center rounded-[6px] border border-[#0f1012]/[0.08] bg-[#fdfdfd] text-[#8f8f8f]">
+                                                    <LuServer className="size-4" />
+                                                </div>
+                                                <div className="min-w-0 flex-1">
+                                                    <div className="text-sm font-medium text-[#0f1012]">{template.name}</div>
+                                                    <div className="truncate text-xs text-[#868788]">{template.nodes.length} nodes</div>
+                                                </div>
+                                            </button>
+                                        ))}
+                                    </div>
+                                )}
+                            </div>
+
                             <div className="flex gap-2">
                                 <button
                                     onClick={() => handlePaletteSelect('trigger')}
@@ -759,7 +803,6 @@ const FlowBuilderContent: React.FC = () => {
                                     Approval
                                 </button>
                             </div>
-                            <p className="text-[11px] text-[#868788]">Or click the + button on the canvas</p>
                         </div>
                     </div>
                 )}

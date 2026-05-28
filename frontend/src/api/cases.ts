@@ -79,12 +79,17 @@ export type CaseDocument = {
 export type CaseEscalation = {
   id: number;
   case_id: number;
+  source_task_id?: number | null;
   flow_node_key: string | null;
   status: string;
   escalation_type: string;
   reason: string;
+  from_user_id?: number | null;
+  to_user_id?: number | null;
+  to_team_id?: number | null;
   triggered_at: string;
   resolved_at: string | null;
+  resolved_by_user_id?: number | null;
 };
 
 export type CaseDetail = CaseSummary & {
@@ -155,6 +160,18 @@ export async function addCaseNote(id: number, note: string): Promise<CaseEvent> 
 
 export async function resolveEscalation(caseId: number, escalationId: number, reason?: string): Promise<CaseEscalation> {
   const json = await apiPost<{ data?: CaseEscalation }>(`/cases/${caseId}/escalations/${escalationId}/resolve`, { reason });
+  if (!json.data) throw new Error("Unexpected escalation response shape");
+  return json.data;
+}
+
+export async function createManualEscalation(
+  caseId: number,
+  payload: { reason: string; toUserId?: number | null; toTeamId?: number | null }
+): Promise<CaseEscalation> {
+  const json = await apiPost<{ data?: CaseEscalation }>(`/cases/${caseId}/escalations`, {
+    ...payload,
+    escalationType: "manual",
+  });
   if (!json.data) throw new Error("Unexpected escalation response shape");
   return json.data;
 }

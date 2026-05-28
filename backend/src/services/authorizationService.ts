@@ -88,3 +88,14 @@ export async function canViewCase(user: CurrentUser, caseRecord: {
   const teamIds = await getUserTeamIds(user.userId);
   return teamIds.includes(caseRecord.assignee_team_id);
 }
+
+export async function canEscalateCase(user: CurrentUser, caseRecord: {
+  created_by_user_id: number | null;
+  assignee_user_id: number | null;
+  assignee_team_id: number | null;
+}) {
+  if (user.role === "Auditor") return false;
+  if (adminRoles.has(user.role) || supervisorRoles.has(user.role)) return true;
+
+  return canViewCase(user, caseRecord);
+}

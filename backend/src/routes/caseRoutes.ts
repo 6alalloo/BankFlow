@@ -6,13 +6,14 @@ import { startCaseRuntime } from "../services/caseRuntimeService";
 import { toInputJson } from "../lib/json";
 import { logAuditEvent } from "../services/auditService";
 import { pageMeta, parseDate, parseNumber, parsePageQuery } from "../lib/query";
-import { canViewAllOperationalQueues, canViewCase, getUserTeamIds } from "../services/authorizationService";
+import { canEscalateCase, canViewAllOperationalQueues, canViewCase, getUserTeamIds } from "../services/authorizationService";
 import { toCaseDetail, toCaseSummary } from "../serializers/caseSerializers";
 import {
   asBodyObject,
   optionalBodyObject,
   readIntegerParam,
   readOptionalEnum,
+  readOptionalInteger,
   readOptionalNullableString,
   readOptionalObject,
   readOptionalString,
@@ -262,6 +263,139 @@ router.post("/:id/close", async (req: Request, res: Response) => {
 
 router.post("/:id/cancel", async (req: Request, res: Response) => {
   await closeOrCancelCase(req, res, "cancelled");
+});
+
+router.post("/:id/escalations", async (req: Request, res: Response) => {
+  const caseId = readIntegerParam(req, "id", "case id");
+  const body = asBodyObject(req);
+  const reason = readRequiredString(body, "reason");
+  const escalationType =
+    readOptionalString(body, "escalationType") ?? readOptionalString(body, "escalation_type") ?? "manual";
+  const toUserId = readOptionalInteger(body.toUserId ?? body.to_user_id, "toUserId");
+  const toTeamId = readOptionalInteger(body.toTeamId ?? body.to_team_id, "toTeamId");
+  const sourceTaskIdInput = readOptionalInteger(body.sourceTaskId ?? body.source_task_id, "sourceTaskId");
+  const flowNodeKeyInput =
+    readOptionalNullableString(body, "flowNodeKey") ?? readOptionalNullableString(body, "flow_node_key");
+
+  if (!toUserId && !toTeamId) {
+    res.status(400).json({ error: "Escalation target user or team is required" });
+    return;
+  }
+
+  const caseRecord = await prisma.cases.findUnique({
+    where: { id: caseId },
+    select: {
+      id: true,
+      status: true,
+      current_node_key: true,
+      current_task_id: true,
+      created_by_user_id: true,
+      assignee_user_id: true,
+      assignee_team_id: true,
+    },
+  });
+  if (!caseRecord) {
+    res.status(404).json({ error: "Case not found" });
+    return;
+  }
+  if (["closed", "cancelled", "resolved"].includes(caseRecord.status)) {
+    res.status(409).json({ error: "Case cannot be escalated in its current state" });
+    return;
+  }
+  if (!req.user || !(await canEscalateCase({ userId: req.user.userId, role: req.user.role }, caseRecord))) {
+    res.status(403).json({ error: "You are not allowed to escalate this case" });
+    return;
+  }
+
+  const [targetUser, targetTeam] = await Promise.all([
+    toUserId ? prisma.users.findFirst({ where: { id: toUserId, is_active: true }, select: { id: true } }) : Promise.resolve(null),
+    toTeamId ? prisma.teams.findFirst({ where: { id: toTeamId, is_active: true }, select: { id: true } }) : Promise.resolve(null),
+  ]);
+  if (toUserId && !targetUser) {
+    res.status(404).json({ error: "Target user not found" });
+    return;
+  }
+  if (toTeamId && !targetTeam) {
+    res.status(404).json({ error: "Target team not found" });
+    return;
+  }
+
+  const sourceTaskId = sourceTaskIdInput === undefined ? caseRecord.current_task_id : sourceTaskIdInput;
+  const flowNodeKey = flowNodeKeyInput === undefined ? caseRecord.current_node_key : flowNodeKeyInput;
+
+  const escalation = await prisma.$transaction(async (tx) => {
+    const created = await tx.case_escalations.create({
+      data: {
+        case_id: caseId,
+        source_task_id: sourceTaskId ?? null,
+        flow_node_key: flowNodeKey ?? null,
+        escalation_type: escalationType || "manual",
+        reason,
+        from_user_id: req.user?.userId ?? null,
+        to_user_id: toUserId ?? null,
+        to_team_id: toTeamId ?? null,
+      },
+    });
+
+    if (sourceTaskId) {
+      await tx.case_tasks.updateMany({
+        where: {
+          id: sourceTaskId,
+          case_id: caseId,
+          status: { in: ["pending", "assigned", "claimed", "overdue"] },
+        },
+        data: {
+          assigned_user_id: toUserId ?? null,
+          assigned_team_id: toTeamId ?? null,
+          status: "assigned",
+        },
+      });
+    }
+
+    await tx.cases.update({
+      where: { id: caseId },
+      data: {
+        status: "escalated",
+        assignee_user_id: toUserId ?? null,
+        assignee_team_id: toTeamId ?? null,
+      },
+    });
+
+    await tx.case_events.create({
+      data: {
+        case_id: caseId,
+        task_id: sourceTaskId ?? null,
+        flow_node_key: flowNodeKey ?? null,
+        actor_user_id: req.user?.userId ?? null,
+        event_type: "escalation_triggered",
+        summary: reason,
+        data_json: toInputJson({
+          escalationId: created.id,
+          escalationType: escalationType || "manual",
+          manual: true,
+          toUserId: toUserId ?? null,
+          toTeamId: toTeamId ?? null,
+        }),
+      },
+    });
+
+    return created;
+  });
+
+  await logAuditEvent({
+    eventType: "case_manually_escalated",
+    userId: req.user.userId,
+    targetType: "case",
+    targetId: caseId,
+    details: {
+      escalationId: escalation.id,
+      escalationType: escalation.escalation_type,
+      toUserId: escalation.to_user_id,
+      toTeamId: escalation.to_team_id,
+    },
+  });
+
+  res.status(201).json({ data: escalation });
 });
 
 router.post("/:id/escalations/:escalationId/resolve", async (req: Request, res: Response) => {

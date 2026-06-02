@@ -50,19 +50,7 @@ const LoginPage = () => {
           </p>
         </div>
 
-        <div className="relative z-10 flex items-center gap-6">
-          <div className="flex gap-x-0">
-            {['A', 'B', 'C'].map((initial) => (
-              <div
-                key={initial}
-                className="-ml-2 first:ml-0 size-8 rounded-full border-2 border-[#fdfdfd] bg-[#f2f2f4] flex items-center justify-center text-[10px] font-medium text-[#0f1012]"
-              >
-                {initial}
-              </div>
-            ))}
-          </div>
-          <p className="text-xs text-[#868788]">Trusted by operations teams worldwide</p>
-        </div>
+
       </div>
 
       {/* Right Side - Login Form */}

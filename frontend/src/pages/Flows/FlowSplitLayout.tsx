@@ -6,6 +6,7 @@ import FlowListSidebar from './components/FlowListSidebar';
 import FlowDetailPanel from './components/FlowDetailPanel';
 import TemplateSelectionModal from '../../components/TemplateSelectionModal';
 import type { FlowTemplate } from '../../data/templates';
+import { resolveTemplateTeamKeys } from '../../utils/resolveTemplateTeams';
 
 type FlowSplitLayoutProps = {
     flows: FlowApi[];
@@ -54,11 +55,12 @@ const FlowSplitLayout: React.FC<FlowSplitLayoutProps> = ({
     const handleUseTemplate = async (template: FlowTemplate) => {
         try {
             setIsCreatingFromTemplate(true);
+            const resolvedNodes = await resolveTemplateTeamKeys(template.nodes);
             const newFlow = await createFlow({ name: template.name });
             const flowId = newFlow.id;
             const nodeIdMap: Record<string, number> = {};
 
-            await Promise.all(template.nodes.map(async (templateNode) => {
+            await Promise.all(resolvedNodes.map(async (templateNode) => {
                 const nodeResponse = await createFlowNode(flowId, {
                     kind: templateNode.kind,
                     name: templateNode.name,

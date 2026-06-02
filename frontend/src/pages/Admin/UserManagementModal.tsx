@@ -134,7 +134,7 @@ export function UserManagementModal({
             {formErrors.role_id && <p className="mt-1 text-xs text-[#b71c1c]">{formErrors.role_id}</p>}
           </div>
 
-          {mode === "edit" && selectedUser && selectedUser.roles.name === "Operator" && (
+          {mode === "edit" && selectedUser && (
             <div className="pt-2 border-t border-[#0f1012]/[0.08]">
               {!showPasswordChange ? (
                 <button

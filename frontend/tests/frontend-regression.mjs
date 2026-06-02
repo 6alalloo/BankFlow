@@ -85,7 +85,6 @@ expectIncludes("cases list page", casesListPage, [
   "pending_approval",
   "escalated",
   "buildObjectFromFields(caseFields, createFieldValues)",
-  "Additional Case Data JSON",
 ]);
 
 expectIncludes("tasks workbench page", tasksWorkbenchPage, [

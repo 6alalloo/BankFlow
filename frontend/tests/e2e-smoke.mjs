@@ -5,7 +5,7 @@ import vm from "node:vm";
 import ts from "typescript";
 
 const API_BASE_URL = process.env.BANKFLOW_API_URL ?? "http://localhost:3000/api";
-const FRONTEND_URL = process.env.BANKFLOW_FRONTEND_URL ?? "http://127.0.0.1:5173";
+const FRONTEND_URL = process.env.BANKFLOW_FRONTEND_URL ?? "http://localhost:5173";
 
 async function request(path, options = {}) {
   const response = await fetch(`${API_BASE_URL}${path}`, {
@@ -59,11 +59,35 @@ function loadFrontendTemplates() {
   return sandbox.module.exports.templates ?? sandbox.exports.templates;
 }
 
+async function resolveTemplateTeamKeys(authHeaders, nodes) {
+  const teams = await request("/teams?active=true", { headers: authHeaders });
+  const teamIdByKey = new Map((teams.data ?? []).map((team) => [team.key, team.id]));
+
+  return nodes.map((node) => {
+    const config = { ...node.config };
+
+    const resolveKey = (sourceKey, targetKey) => {
+      const teamKey = config[sourceKey];
+      if (typeof teamKey === "string" && teamIdByKey.has(teamKey)) {
+        config[targetKey] = teamIdByKey.get(teamKey);
+        delete config[sourceKey];
+      }
+    };
+
+    resolveKey("assignedTeamKey", "assignedTeamId");
+    resolveKey("requestedFromTeamKey", "requestedFromTeamId");
+    resolveKey("toTeamKey", "toTeamId");
+
+    return { ...node, config };
+  });
+}
+
 async function certifyTemplates(authHeaders) {
   const templates = loadFrontendTemplates();
   assert.ok(Array.isArray(templates) && templates.length > 0, "frontend templates should be loadable");
 
   for (const template of templates) {
+    const nodes = await resolveTemplateTeamKeys(authHeaders, template.nodes);
     const created = await request("/flows", {
       method: "POST",
       headers: authHeaders,
@@ -77,7 +101,7 @@ async function certifyTemplates(authHeaders) {
     const nodeIdByTemplateId = new Map();
 
     try {
-      for (const node of template.nodes) {
+      for (const node of nodes) {
         const createdNode = await request(`/flows/${flowId}/nodes`, {
           method: "POST",
           headers: authHeaders,

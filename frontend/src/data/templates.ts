@@ -205,6 +205,7 @@ export const templates: FlowTemplate[] = [
                 pos_y: 300,
                 config: {
                     title: 'Collect payment instruction, sanctions screen, and customer mandate',
+                    assignedTeamKey: 'payments-ops',
                     claimPolicy: 'claim_required',
                     requiredDocuments: ['payment_instruction', 'sanctions_screen', 'customer_mandate'],
                     dueInHours: 4,
@@ -218,6 +219,7 @@ export const templates: FlowTemplate[] = [
                 pos_y: 300,
                 config: {
                     title: 'Validate funding, beneficiary, and correspondent route',
+                    assignedTeamKey: 'treasury-control',
                     claimPolicy: 'claim_required',
                     dueInHours: 3,
                 },
@@ -244,6 +246,7 @@ export const templates: FlowTemplate[] = [
                 pos_y: 60,
                 config: {
                     label: 'Approve high-value payment release',
+                    requestedFromTeamKey: 'treasury-control',
                     requiredComment: true,
                     dueInHours: 2,
                 },
@@ -268,6 +271,7 @@ export const templates: FlowTemplate[] = [
                 config: {
                     escalationType: 'release_rework',
                     reason: 'Senior approver rejected payment release; treasury rework required before resubmission.',
+                    toTeamKey: 'treasury-control',
                 },
             },
         ],
@@ -282,8 +286,6 @@ export const templates: FlowTemplate[] = [
         ],
         requiredConfig: [
             'Payment amount field mapped to amountBhd for threshold routing',
-            'Treasury review team or claim queue configured',
-            'Senior approval role or team configured for release decisions',
         ],
     },
 ];

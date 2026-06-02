@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback } from "react";
+import { useState, useEffect, useCallback, useMemo } from "react";
 import { useAuth } from "../../contexts/useAuth";
 import {
   FiUsers,
@@ -71,8 +71,7 @@ export default function UserManagementPage() {
   const fetchRoles = useCallback(async () => {
     try {
       const data = await getRoles();
-      const allowedRoles = data.filter((r) => r.name === "Admin" || r.name === "Operator");
-      setRoles(allowedRoles);
+      setRoles(data);
     } catch (error) {
       console.error("Failed to fetch roles:", error);
     }
@@ -87,9 +86,17 @@ export default function UserManagementPage() {
     total: users.length,
     active: users.filter((u) => u.is_active).length,
     inactive: users.filter((u) => !u.is_active).length,
-    admins: users.filter((u) => u.roles.name === "Admin").length,
-    operators: users.filter((u) => u.roles.name === "Operator").length,
   };
+
+  const roleStats = useMemo(() => {
+    const map = new Map<string, number>();
+    roles.forEach((r) => map.set(r.name, 0));
+    users.forEach((u) => {
+      const count = map.get(u.roles.name) ?? 0;
+      map.set(u.roles.name, count + 1);
+    });
+    return Array.from(map.entries());
+  }, [users, roles]);
 
   const openCreateModal = () => {
     setModalMode("create");
@@ -310,14 +317,12 @@ export default function UserManagementPage() {
           <div className="text-xl font-medium text-[#8f8f8f] tabular-nums">{stats.inactive}</div>
           <div className="text-[9px] text-[#868788] uppercase tracking-wider">Inactive</div>
         </div>
-        <div className="p-3 bg-[#fdfdfd] border border-[#0f1012]/[0.06] rounded-[10px] shadow-card">
-          <div className="text-xl font-medium text-[#0f1012] tabular-nums">{stats.admins}</div>
-          <div className="text-[9px] text-[#868788] uppercase tracking-wider">Admins</div>
-        </div>
-        <div className="p-3 bg-[#fdfdfd] border border-[#0f1012]/[0.06] rounded-[10px] shadow-card">
-          <div className="text-xl font-medium text-[#0f1012] tabular-nums">{stats.operators}</div>
-          <div className="text-[9px] text-[#868788] uppercase tracking-wider">Operators</div>
-        </div>
+        {roleStats.map(([name, count]) => (
+          <div key={name} className="p-3 bg-[#fdfdfd] border border-[#0f1012]/[0.06] rounded-[10px] shadow-card">
+            <div className="text-xl font-medium text-[#0f1012] tabular-nums">{count}</div>
+            <div className="text-[9px] text-[#868788] uppercase tracking-wider">{name}s</div>
+          </div>
+        ))}
       </div>
 
       {/* Filters */}

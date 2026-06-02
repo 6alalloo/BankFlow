@@ -12,7 +12,6 @@ import {
     LuZap,
     LuClipboardCheck,
     LuShieldCheck,
-    LuCommand,
 } from 'react-icons/lu';
 
 import {
@@ -49,6 +48,7 @@ import ConfigPanel from '../../components/builder/ConfigPanel';
 import NodePicker from '../../components/builder/NodePicker';
 import { NODE_TYPE_MAP } from '../../components/builder/nodePickerOptions';
 import { templates, type FlowTemplate } from '../../data/templates';
+import { resolveTemplateTeamKeys } from '../../utils/resolveTemplateTeams';
 import { DEFAULT_NODE_CONFIGS, type NodeKind } from '../../types/nodeConfigs';
 import {
     SNAP_GRID,
@@ -101,6 +101,7 @@ const FlowBuilderContent: React.FC = () => {
     const [pendingSaves, setPendingSaves] = useState(0);
     const [publishMessage, setPublishMessage] = useState<string | null>(null);
     const [publishIssues, setPublishIssues] = useState<string[]>([]);
+    const [showPublishModal, setShowPublishModal] = useState(false);
     const [isPublishing, setIsPublishing] = useState(false);
     const beginSave = useCallback(() => setPendingSaves((n: number) => n + 1), []);
     const endSave = useCallback(() => setPendingSaves((n: number) => Math.max(0, n - 1)), []);
@@ -296,17 +297,7 @@ const FlowBuilderContent: React.FC = () => {
         }
     }, [loading, rfNodes, fitView]);
 
-    // Keyboard shortcut: Cmd+K to open palette
-    useEffect(() => {
-        const handleKey = (e: KeyboardEvent) => {
-            if ((e.metaKey || e.ctrlKey) && e.key === 'k') {
-                e.preventDefault();
-                openPalette();
-            }
-        };
-        document.addEventListener('keydown', handleKey);
-        return () => document.removeEventListener('keydown', handleKey);
-    }, []);
+
 
     const handleRename = async (newName: string) => {
         if (!state.flowId || !state.flowMeta) return;
@@ -331,10 +322,11 @@ const FlowBuilderContent: React.FC = () => {
 
             await Promise.all(state.nodes.map((node) => deleteFlowNode(flowId, node.id)));
 
+            const resolvedNodes = await resolveTemplateTeamKeys(template.nodes);
             const nodeIdMap: Record<string, number> = {};
 
             await Promise.all(
-                template.nodes.map(async (templateNode) => {
+                resolvedNodes.map(async (templateNode) => {
                     const nodeResponse = await createFlowNode(flowId, {
                         kind: templateNode.kind,
                         name: templateNode.name,
@@ -560,13 +552,17 @@ const FlowBuilderContent: React.FC = () => {
                     : prev.flowMeta,
             }));
             setPublishMessage('Published');
+            setPublishIssues([]);
+            setShowPublishModal(true);
         } catch (err) {
             if (err instanceof FlowPublishError) {
                 setPublishMessage(err.message);
                 setPublishIssues(err.issues.map((issue) => issue.message));
             } else {
                 setPublishMessage(err instanceof Error ? err.message : 'Failed to publish flow');
+                setPublishIssues([]);
             }
+            setShowPublishModal(true);
         } finally {
             setIsPublishing(false);
         }
@@ -691,9 +687,6 @@ const FlowBuilderContent: React.FC = () => {
                         >
                             <LuPlus className="size-4 text-[#8f8f8f]" />
                             Add Node
-                            <span className="flex items-center gap-0.5 rounded-[4px] border border-[#0f1012]/[0.08] bg-[#f2f2f4] px-1 py-0.5 text-[10px] text-[#868788]">
-                                <LuCommand className="size-3" />K
-                            </span>
                         </button>
 
                         <button
@@ -712,17 +705,64 @@ const FlowBuilderContent: React.FC = () => {
                     </div>
                 </div>
 
-                {/* Publish Feedback */}
-                {(publishMessage || publishIssues.length > 0) && (
-                    <div className="absolute left-4 top-20 z-40 max-w-md rounded-[10px] border border-[#0f1012]/[0.08] bg-[#fdfdfd]/95 p-3 text-sm shadow-elevated backdrop-blur-md">
-                        {publishMessage && <div className="font-medium text-[#0f1012]">{publishMessage}</div>}
-                        {publishIssues.length > 0 && (
-                            <ul className="mt-2 space-y-1 text-xs text-[#b71c1c]">
-                                {publishIssues.map((issue) => (
-                                    <li key={issue}>{issue}</li>
-                                ))}
-                            </ul>
-                        )}
+                {/* Publish Modal */}
+                {showPublishModal && (
+                    <div className="fixed inset-0 z-50 flex items-center justify-center bg-[#0f1012]/40 backdrop-blur-sm">
+                        <div className="w-full max-w-sm rounded-[16px] border border-[#0f1012]/[0.08] bg-[#fdfdfd] p-8 shadow-elevated">
+                            <div className="flex flex-col items-center text-center">
+                                {publishIssues.length === 0 ? (
+                                    <>
+                                        <div className="flex size-14 items-center justify-center rounded-full bg-[#e8f5e9] text-[#1b5e20]">
+                                            <FiCheck className="size-7" strokeWidth={2.5} />
+                                        </div>
+                                        <h3 className="mt-5 text-xl font-medium text-[#0f1012]">Flow Published</h3>
+                                        <p className="mt-1.5 text-sm text-[#868788]">
+                                            {state.flowMeta?.name || 'Untitled'} is now live and ready for cases.
+                                        </p>
+                                        <div className="mt-6 flex w-full flex-col gap-2.5">
+                                            <button
+                                                type="button"
+                                                onClick={() => navigate('/flows')}
+                                                className="flex h-10 w-full items-center justify-center gap-2 rounded-[10px] bg-[#0f1012] px-4 text-sm font-medium text-white transition hover:bg-[#0f1012]/90"
+                                            >
+                                                <LuArrowLeft className="size-4" />
+                                                Back to Flows
+                                            </button>
+                                            <button
+                                                type="button"
+                                                onClick={() => setShowPublishModal(false)}
+                                                className="flex h-10 w-full items-center justify-center rounded-[10px] border border-[#0f1012]/[0.08] bg-[#f2f2f4] px-4 text-sm font-medium text-[#0f1012] transition hover:bg-[#0f1012]/[0.05]"
+                                            >
+                                                Keep Editing
+                                            </button>
+                                        </div>
+                                    </>
+                                ) : (
+                                    <>
+                                        <div className="flex size-14 items-center justify-center rounded-full bg-[#ffebee] text-[#b71c1c]">
+                                            <LuTriangleAlert className="size-7" />
+                                        </div>
+                                        <h3 className="mt-5 text-xl font-medium text-[#0f1012]">Cannot Publish Flow</h3>
+                                        <p className="mt-1.5 text-sm text-[#868788]">{publishMessage}</p>
+                                        <ul className="mt-4 w-full space-y-2 text-left">
+                                            {publishIssues.map((issue, idx) => (
+                                                <li key={idx} className="flex items-start gap-2 text-xs text-[#b71c1c]">
+                                                    <span className="mt-0.5 size-1.5 flex-shrink-0 rounded-full bg-[#b71c1c]" />
+                                                    {issue}
+                                                </li>
+                                            ))}
+                                        </ul>
+                                        <button
+                                            type="button"
+                                            onClick={() => setShowPublishModal(false)}
+                                            className="mt-6 flex h-10 w-full items-center justify-center rounded-[10px] bg-[#0f1012] px-4 text-sm font-medium text-white transition hover:bg-[#0f1012]/90"
+                                        >
+                                            Close
+                                        </button>
+                                    </>
+                                )}
+                            </div>
+                        </div>
                     </div>
                 )}
 

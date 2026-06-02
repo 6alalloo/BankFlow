@@ -1280,7 +1280,7 @@ async function main() {
           mimeType: 'application/pdf',
           storagePath: 'seed/BF-20260514-AML-0875/edd-pack.pdf',
           documentType: 'edd_pack',
-          metadata: { pages: 14, reviewedBy: 'Yusuf Al-Khalifa' },
+          metadata: { pages: 14, reviewedBy: 'Auditor' },
           uploadedByUserId: auditorUser.id,
           uploadedAt: daysAgo(4, 13, 45),
         },

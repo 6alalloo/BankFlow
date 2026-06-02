@@ -11,14 +11,14 @@ const AppLayout: React.FC<AppLayoutProps> = ({ children }) => {
   const { user } = useAuth();
 
   return (
-    <div className="min-h-[100dvh] w-full flex bg-[#f2f2f4] text-[#0f1012]">
+    <div className="h-[100dvh] w-full flex bg-[#f2f2f4] text-[#0f1012] overflow-hidden">
         {/* Left sidebar - sticky to viewport */}
         <div className="shrink-0">
             <Sidebar />
         </div>
 
         {/* Right side: header + page content */}
-        <main className="flex-1 flex flex-col min-w-0 min-h-[100dvh]">
+        <main className="flex-1 flex flex-col min-w-0 h-[100dvh]">
             {/* Top bar */}
             <header className="sticky top-0 flex items-center justify-end px-6 py-3 z-20 shrink-0 h-14 bg-[#fdfdfd]/80 backdrop-blur-md border-b border-[#0f1012]/[0.06]">
                 {/* Right: User Indicator */}

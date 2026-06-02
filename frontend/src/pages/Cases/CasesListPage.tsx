@@ -1,5 +1,5 @@
 import React, { useEffect, useMemo, useState } from "react";
-import { FiAlertTriangle, FiBriefcase, FiCheckSquare, FiClock, FiRefreshCw, FiShield, FiUser } from "react-icons/fi";
+import { FiAlertTriangle, FiBriefcase, FiCheckSquare, FiClock, FiRefreshCw, FiSearch, FiShield, FiUser } from "react-icons/fi";
 import { useNavigate } from "react-router-dom";
 import { createCase, fetchCases, type CaseSummary } from "../../api/cases";
 import { fetchTasks, processOverdueWork, type TasksQuery } from "../../api/tasks";
@@ -66,6 +66,7 @@ const CasesListPage: React.FC = () => {
   const [approvals, setApprovals] = useState<CaseApproval[]>([]);
   const [flows, setFlows] = useState<FlowApi[]>([]);
   const [activeFilter, setActiveFilter] = useState("active");
+  const [searchQuery, setSearchQuery] = useState("");
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [refreshingSla, setRefreshingSla] = useState(false);
@@ -73,7 +74,6 @@ const CasesListPage: React.FC = () => {
   const [createFlowId, setCreateFlowId] = useState("");
   const [createTitle, setCreateTitle] = useState("");
   const [createPriority, setCreatePriority] = useState<"low" | "normal" | "high" | "critical">("normal");
-  const [createData, setCreateData] = useState("{\n  \n}");
   const [createFieldValues, setCreateFieldValues] = useState<Record<string, string>>({});
   const [createError, setCreateError] = useState<string | null>(null);
   const [creatingCase, setCreatingCase] = useState(false);
@@ -83,6 +83,17 @@ const CasesListPage: React.FC = () => {
     [flows, createFlowId]
   );
   const caseFields = useMemo(() => getCaseFields(selectedFlow?.case_type), [selectedFlow?.case_type]);
+
+  const filteredCases = useMemo(() => {
+    if (!searchQuery.trim()) return cases;
+    const q = searchQuery.toLowerCase();
+    return cases.filter(
+      (c) =>
+        c.case_reference.toLowerCase().includes(q) ||
+        (c.title?.toLowerCase().includes(q)) ||
+        c.case_type.toLowerCase().includes(q)
+    );
+  }, [cases, searchQuery]);
 
   useEffect(() => {
     const load = async () => {
@@ -137,31 +148,19 @@ const CasesListPage: React.FC = () => {
       const flowId = Number(createFlowId);
       if (!Number.isInteger(flowId) || flowId <= 0) throw new Error("Choose a published flow.");
 
-      const trimmed = createData.trim();
-      let caseData: Record<string, unknown> | undefined;
-      const guidedData = buildObjectFromFields(caseFields, createFieldValues);
-      if (trimmed && trimmed !== "{}") {
-        const parsed = JSON.parse(trimmed) as unknown;
-        if (!parsed || typeof parsed !== "object" || Array.isArray(parsed)) {
-          throw new Error("Case data must be a JSON object.");
-        }
-        caseData = { ...guidedData, ...(parsed as Record<string, unknown>) };
-      } else {
-        caseData = Object.keys(guidedData).length > 0 ? guidedData : undefined;
-      }
+      const caseData = buildObjectFromFields(caseFields, createFieldValues);
 
       const created = await createCase({
         flowId,
         title: createTitle.trim() || undefined,
         priority: createPriority,
         intakeSource: "manual",
-        caseData,
+        caseData: Object.keys(caseData).length > 0 ? caseData : undefined,
       });
       setIsCreateOpen(false);
       setCreateFlowId("");
       setCreateTitle("");
       setCreatePriority("normal");
-      setCreateData("{\n  \n}");
       setCreateFieldValues({});
       setCreateError(null);
       navigate(`/cases/${created.id}`);
@@ -298,13 +297,26 @@ const CasesListPage: React.FC = () => {
           ))}
         </div>
 
+        <div className="mb-6">
+          <div className="relative">
+            <FiSearch className="absolute left-3 top-1/2 -translate-y-1/2 text-[#868788] size-4" strokeWidth={1.5} />
+            <input
+              type="text"
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+              placeholder="Search by reference, title, or type…"
+              className="w-full bg-[#0f1012]/[0.04] border border-[#0f1012]/[0.08] rounded-[10px] pl-9 pr-3 py-2.5 text-sm text-[#020201] placeholder:text-[#868788] focus:outline-none focus:border-[#0f1012]/[0.18] focus:ring-1 focus:ring-[#0071e3]/20 transition-all"
+            />
+          </div>
+        </div>
+
         <div className="space-y-3">
-          {cases.length === 0 ? (
+          {filteredCases.length === 0 ? (
             <div className="border border-[#0f1012]/[0.06] rounded-[10px] p-6 text-[#8f8f8f] bg-[#fdfdfd] shadow-card">
-              No cases have been created yet.
+              {cases.length === 0 ? "No cases have been created yet." : "No cases match your search."}
             </div>
           ) : (
-            cases.map((caseItem) => (
+            filteredCases.map((caseItem) => (
               <button
                 key={caseItem.id}
                 type="button"
@@ -364,7 +376,10 @@ const CasesListPage: React.FC = () => {
               )}
               <div className="space-y-4">
                 <label>
-                  <span className="text-[#868788] text-[10px] uppercase tracking-wider">Published Flow</span>
+                  <span className="text-[#868788] text-[10px] uppercase tracking-wider">
+                    Published Flow
+                    <span className="ml-0.5 text-[#b71c1c]">*</span>
+                  </span>
                   <select
                     value={createFlowId}
                     onChange={(event) => {
@@ -403,11 +418,13 @@ const CasesListPage: React.FC = () => {
                 </label>
                 <div>
                   <span className="text-[#868788] text-[10px] uppercase tracking-wider">Case Fields</span>
-                  <p className="mt-1 text-xs text-[#8f8f8f]">Fill the demo-ready fields for the selected flow. Advanced JSON is optional.</p>
                   <div className="mt-1.5 grid grid-cols-1 gap-3 md:grid-cols-2">
                     {caseFields.map((field) => (
                       <label key={field.key}>
-                        <span className="mb-1 block text-xs text-[#8f8f8f]">{field.label}</span>
+                        <span className="mb-1 block text-xs text-[#8f8f8f]">
+                          {field.label}
+                          <span className="ml-0.5 text-[#b71c1c]">*</span>
+                        </span>
                         <input
                           value={createFieldValues[field.key] ?? ""}
                           onChange={(event) => setCreateFieldValues((current) => ({ ...current, [field.key]: event.target.value }))}
@@ -419,18 +436,6 @@ const CasesListPage: React.FC = () => {
                     ))}
                   </div>
                 </div>
-                <details className="rounded-[10px] border border-[#0f1012]/[0.08] bg-[#0f1012]/[0.02] p-3">
-                  <summary className="cursor-pointer text-xs font-medium text-[#0f1012]">Advanced JSON</summary>
-                  <label className="mt-3 block">
-                    <span className="text-[#868788] text-[10px] uppercase tracking-wider">Additional Case Data JSON</span>
-                    <textarea
-                      value={createData}
-                      onChange={(event) => setCreateData(event.target.value)}
-                      rows={5}
-                      className="mt-1.5 w-full bg-[#fdfdfd] border border-[#0f1012]/[0.08] rounded-[10px] px-3 py-2.5 text-sm text-[#020201] font-mono focus:outline-none focus:border-[#0f1012]/[0.18] focus:ring-1 focus:ring-[#0071e3]/20 transition-all resize-none"
-                    />
-                  </label>
-                </details>
               </div>
               <div className="flex justify-end gap-3 mt-6">
                 <Button variant="ghost" onClick={() => setIsCreateOpen(false)} disabled={creatingCase}>

@@ -202,7 +202,7 @@ const FlowDetailPanel: React.FC<FlowDetailPanelProps> = ({ flow, onDelete, onDup
 
     return (
         <div className="flex flex-col h-full bg-[#f2f2f4] relative overflow-hidden font-sans text-[#8f8f8f]">
-            <div className="flex-1 overflow-y-auto custom-scrollbar p-8 relative z-10">
+            <div className="flex-1 overflow-y-auto custom-scrollbar p-8 relative z-10 min-h-0">
                 <div className="max-w-4xl space-y-10"> 
                     
                     {/* Header */}
@@ -298,7 +298,7 @@ const FlowDetailPanel: React.FC<FlowDetailPanelProps> = ({ flow, onDelete, onDup
             </div>
 
             {/* Footer Actions */}
-            <div className="p-4 bg-[#fdfdfd]/80 border-t border-[#0f1012]/[0.06] z-20 flex items-center justify-end gap-3 backdrop-blur-md">
+            <div className="shrink-0 p-4 bg-[#fdfdfd]/80 border-t border-[#0f1012]/[0.06] z-20 flex items-center justify-end gap-3 backdrop-blur-md">
                 <Button
                     variant="secondary"
                     size="sm"

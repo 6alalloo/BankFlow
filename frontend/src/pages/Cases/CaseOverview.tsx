@@ -1,4 +1,4 @@
-import { FiClock, FiGitBranch, FiShield, FiUser } from "react-icons/fi";
+import { FiClock, FiUser } from "react-icons/fi";
 
 import type { CaseDetail } from "../../api/cases";
 import { Badge } from "../../components/ui/Badge";
@@ -34,8 +34,6 @@ export function CaseSummaryGrid({ caseDetail, currentOwner }: CaseOverviewProps)
   const items = [
     { label: "Owner", value: currentOwner, icon: FiUser },
     { label: "Opened", value: formatDate(caseDetail.opened_at), icon: FiClock },
-    { label: "Current Node", value: caseDetail.current_node_key || "None", icon: FiGitBranch },
-    { label: "Intake", value: caseDetail.intake_source || "manual", icon: FiShield },
   ];
 
   return (

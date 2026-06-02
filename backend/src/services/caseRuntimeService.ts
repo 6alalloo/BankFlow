@@ -134,6 +134,83 @@ const getValueByPath = (source: Record<string, unknown>, path: string): unknown 
     return undefined;
   }, source);
 
+const setValueByPath = (target: Record<string, unknown>, path: string, value: unknown) => {
+  const segments = path
+    .replace(/^\{\{\s*/, "")
+    .replace(/\s*\}\}$/, "")
+    .replace(/^trigger\./, "")
+    .split(".")
+    .map((segment) => segment.trim())
+    .filter(Boolean);
+  if (segments.length === 0) return;
+
+  let current = target;
+  for (const segment of segments.slice(0, -1)) {
+    const next = current[segment];
+    if (!next || typeof next !== "object" || Array.isArray(next)) {
+      current[segment] = {};
+    }
+    current = current[segment] as Record<string, unknown>;
+  }
+  current[segments[segments.length - 1]] = value;
+};
+
+const resolveRuntimeValue = (value: unknown, data: Record<string, unknown>): unknown => {
+  if (typeof value !== "string") return value;
+
+  const exactExpression = value.match(/^\{\{\s*([^}]+?)\s*\}\}$/);
+  if (exactExpression) {
+    const expression = exactExpression[1].trim();
+    if (expression === "now") return new Date().toISOString();
+    return getValueByPath(data, expression);
+  }
+
+  return value.replace(/\{\{\s*([^}]+?)\s*\}\}/g, (_match, expression: string) => {
+    if (expression.trim() === "now") return new Date().toISOString();
+    const resolved = getValueByPath(data, expression.trim());
+    return resolved === undefined || resolved === null ? "" : String(resolved);
+  });
+};
+
+const dateUnitMs: Record<string, number> = {
+  minutes: 60 * 1000,
+  hours: 60 * 60 * 1000,
+  days: 24 * 60 * 60 * 1000,
+};
+
+const allowedDatabaseTables = new Set(["cases", "case_tasks", "case_events", "case_documents"]);
+
+const formatRuntimeDate = (date: Date, format: string) => {
+  const yyyy = String(date.getFullYear());
+  const mm = String(date.getMonth() + 1).padStart(2, "0");
+  const dd = String(date.getDate()).padStart(2, "0");
+  const monthName = date.toLocaleString("en", { month: "long" });
+
+  switch (format) {
+    case "DD/MM/YYYY":
+      return `${dd}/${mm}/${yyyy}`;
+    case "MM/DD/YYYY":
+      return `${mm}/${dd}/${yyyy}`;
+    case "MMMM D, YYYY":
+      return `${monthName} ${date.getDate()}, ${yyyy}`;
+    case "YYYY-MM-DD":
+    default:
+      return `${yyyy}-${mm}-${dd}`;
+  }
+};
+
+async function patchCaseData(tx: Prisma.TransactionClient, context: RuntimeContext, patch: Record<string, unknown>) {
+  const currentData = { ...(context.data ?? {}) };
+  for (const [key, value] of Object.entries(patch)) {
+    setValueByPath(currentData, key, value);
+  }
+  context.data = currentData;
+  await tx.cases.update({
+    where: { id: context.caseId },
+    data: { case_data_json: toInputJson(currentData) },
+  });
+}
+
 export const evaluateCondition = (config: Record<string, unknown>, data: Record<string, unknown>): string | null => {
   const field = String(config.field ?? config.path ?? "");
   const operator = String(config.operator ?? "equals");
@@ -314,6 +391,253 @@ async function recordNonBlockingNode(tx: Prisma.TransactionClient, context: Runt
   });
 }
 
+async function applyVariable(tx: Prisma.TransactionClient, context: RuntimeContext, node: RuntimeNode) {
+  const config = getNodeConfig(node);
+  const variableName = String(config.variableName ?? config.variable_name ?? config.name ?? "").trim();
+  if (!variableName) {
+    await recordNonBlockingNode(tx, context, node);
+    return;
+  }
+
+  const action = String(config.variableAction ?? config.variable_action ?? "store");
+  const rawValue =
+    action === "copy"
+      ? getValueByPath(context.data ?? {}, String(config.copyField ?? config.copy_field ?? ""))
+      : resolveRuntimeValue(config.variableValue ?? config.variable_value ?? config.value ?? "", context.data ?? {});
+
+  await patchCaseData(tx, context, { [variableName]: rawValue });
+  await tx.case_events.create({
+    data: {
+      case_id: context.caseId,
+      flow_node_key: getNodeKey(node),
+      actor_user_id: context.actorUserId ?? null,
+      event_type: "status_updated",
+      summary: `Variable stored: ${variableName}`,
+      data_json: toInputJson({ nodeKind: node.kind, variableName, value: rawValue }),
+    },
+  });
+}
+
+async function applyDateTime(tx: Prisma.TransactionClient, context: RuntimeContext, node: RuntimeNode) {
+  const config = getNodeConfig(node);
+  const operation = String(config.operation ?? "now");
+  const outputField = String(config.outputField ?? config.output_field ?? "calculatedDate").trim();
+  const inputField = String(config.inputField ?? config.input_field ?? "now");
+  const format = String(config.format ?? "YYYY-MM-DD");
+  const amount = Number(config.value ?? 0);
+  const unit = String(config.unit ?? "days");
+
+  const rawInput = inputField === "now" ? new Date().toISOString() : resolveRuntimeValue(inputField, context.data ?? {});
+  const baseDate = rawInput ? new Date(String(rawInput)) : new Date();
+  const safeBaseDate = Number.isNaN(baseDate.getTime()) ? new Date() : baseDate;
+
+  let resultDate = safeBaseDate;
+  if ((operation === "add" || operation === "subtract") && Number.isFinite(amount) && amount > 0) {
+    const delta = amount * (dateUnitMs[unit] ?? dateUnitMs.days);
+    resultDate = new Date(safeBaseDate.getTime() + (operation === "add" ? delta : -delta));
+  }
+
+  const result = operation === "now" ? new Date().toISOString() : formatRuntimeDate(resultDate, format);
+  if (outputField) {
+    await patchCaseData(tx, context, { [outputField]: result });
+  }
+
+  await tx.case_events.create({
+    data: {
+      case_id: context.caseId,
+      flow_node_key: getNodeKey(node),
+      actor_user_id: context.actorUserId ?? null,
+      event_type: "status_updated",
+      summary: outputField ? `Date/time stored: ${outputField}` : "Date/time operation completed",
+      data_json: toInputJson({ nodeKind: node.kind, operation, outputField, result }),
+    },
+  });
+}
+
+async function applyLogger(tx: Prisma.TransactionClient, context: RuntimeContext, node: RuntimeNode) {
+  const config = getNodeConfig(node);
+  const level = String(config.level ?? "info");
+  const rawMessage = config.message ?? node.name ?? "Runtime log entry";
+  const message = String(resolveRuntimeValue(rawMessage, context.data ?? {}) ?? "Runtime log entry");
+
+  await tx.case_events.create({
+    data: {
+      case_id: context.caseId,
+      flow_node_key: getNodeKey(node),
+      actor_user_id: context.actorUserId ?? null,
+      event_type: "note_added",
+      summary: message,
+      data_json: toInputJson({ nodeKind: node.kind, level }),
+    },
+  });
+}
+
+const resolveRuntimePayload = (value: unknown, data: Record<string, unknown>): unknown => {
+  if (Array.isArray(value)) {
+    return value.map((item) => resolveRuntimePayload(item, data));
+  }
+
+  if (value && typeof value === "object") {
+    return Object.fromEntries(
+      Object.entries(value as Record<string, unknown>).map(([key, childValue]) => [key, resolveRuntimePayload(childValue, data)])
+    );
+  }
+
+  return resolveRuntimeValue(value, data);
+};
+
+async function queryDatabaseNode(tx: Prisma.TransactionClient, context: RuntimeContext, table: string, limit: number) {
+  if (table === "cases") {
+    const record = await tx.cases.findUnique({
+      where: { id: context.caseId },
+      select: {
+        id: true,
+        case_reference: true,
+        case_type: true,
+        title: true,
+        status: true,
+        priority: true,
+        current_node_key: true,
+        current_task_id: true,
+        opened_at: true,
+        resolved_at: true,
+        closed_at: true,
+      },
+    });
+    return record ? [record] : [];
+  }
+
+  if (table === "case_tasks") {
+    return tx.case_tasks.findMany({
+      where: { case_id: context.caseId },
+      orderBy: { id: "desc" },
+      take: limit,
+      select: {
+        id: true,
+        flow_node_key: true,
+        task_type: true,
+        title: true,
+        status: true,
+        assigned_user_id: true,
+        assigned_team_id: true,
+        due_at: true,
+        completed_at: true,
+        decision: true,
+      },
+    });
+  }
+
+  if (table === "case_events") {
+    return tx.case_events.findMany({
+      where: { case_id: context.caseId },
+      orderBy: { created_at: "desc" },
+      take: limit,
+      select: {
+        id: true,
+        flow_node_key: true,
+        event_type: true,
+        summary: true,
+        created_at: true,
+      },
+    });
+  }
+
+  return tx.case_documents.findMany({
+    where: { case_id: context.caseId },
+    orderBy: { uploaded_at: "desc" },
+    take: limit,
+    select: {
+      id: true,
+      flow_node_key: true,
+      filename: true,
+      mime_type: true,
+      document_type: true,
+      uploaded_at: true,
+    },
+  });
+}
+
+async function applyDatabase(tx: Prisma.TransactionClient, context: RuntimeContext, node: RuntimeNode) {
+  const config = getNodeConfig(node);
+  const table = String(config.table ?? "").trim();
+  const operation = String(config.operation ?? "query");
+  const outputField = String(config.outputField ?? config.output_field ?? `database.${table || "result"}.lastQuery`).trim();
+  const limit = Math.min(Math.max(Number(config.limit ?? 10) || 10, 1), 20);
+
+  if (!allowedDatabaseTables.has(table)) {
+    await tx.case_events.create({
+      data: {
+        case_id: context.caseId,
+        flow_node_key: getNodeKey(node),
+        actor_user_id: context.actorUserId ?? null,
+        event_type: "automation_failed",
+        summary: `Database operation skipped: unsupported table${table ? ` ${table}` : ""}`,
+        data_json: toInputJson({ nodeKind: node.kind, operation, table }),
+      },
+    });
+    return;
+  }
+
+  if (operation === "query") {
+    const result = await queryDatabaseNode(tx, context, table, limit);
+    await patchCaseData(tx, context, { [outputField]: result });
+    await tx.case_events.create({
+      data: {
+        case_id: context.caseId,
+        flow_node_key: getNodeKey(node),
+        actor_user_id: context.actorUserId ?? null,
+        event_type: "automation_completed",
+        summary: `Database query completed: ${table}`,
+        data_json: toInputJson({ nodeKind: node.kind, operation, table, outputField, rowCount: result.length }),
+      },
+    });
+    return;
+  }
+
+  if (operation === "create" && table === "case_events") {
+    const message = String(resolveRuntimeValue(config.message ?? config.summary ?? "Database-created case event", context.data ?? {}));
+    const payload = resolveRuntimePayload(config.fields ?? config.record ?? config.values ?? {}, context.data ?? {});
+    await tx.case_events.create({
+      data: {
+        case_id: context.caseId,
+        flow_node_key: getNodeKey(node),
+        actor_user_id: context.actorUserId ?? null,
+        event_type: "note_added",
+        summary: message,
+        data_json: toInputJson({ nodeKind: node.kind, operation, table, payload }),
+      },
+    });
+    return;
+  }
+
+  if (operation === "update" && table === "cases") {
+    const payload = asObject(resolveRuntimePayload(config.fields ?? config.record ?? config.values ?? {}, context.data ?? {}));
+    await patchCaseData(tx, context, payload);
+    await tx.case_events.create({
+      data: {
+        case_id: context.caseId,
+        flow_node_key: getNodeKey(node),
+        actor_user_id: context.actorUserId ?? null,
+        event_type: "automation_completed",
+        summary: "Database update completed: cases.case_data_json",
+        data_json: toInputJson({ nodeKind: node.kind, operation, table, updatedFields: Object.keys(payload) }),
+      },
+    });
+    return;
+  }
+
+  await tx.case_events.create({
+    data: {
+      case_id: context.caseId,
+      flow_node_key: getNodeKey(node),
+      actor_user_id: context.actorUserId ?? null,
+      event_type: "automation_failed",
+      summary: `Database operation skipped: ${operation} is not allowed for ${table}`,
+      data_json: toInputJson({ nodeKind: node.kind, operation, table }),
+    },
+  });
+}
+
 async function applyRouting(tx: Prisma.TransactionClient, context: RuntimeContext, node: RuntimeNode) {
   const config = getNodeConfig(node);
   const assigneeUserId = Number(config.assignedUserId ?? config.assigned_user_id) || null;
@@ -459,9 +783,33 @@ async function runFromNode(tx: Prisma.TransactionClient, context: RuntimeContext
       continue;
     }
 
-    if (node.kind === "timer" || node.kind === "sla") {
+    if (node.kind === "timer" || node.kind === "sla" || node.kind === "wait") {
       context.pendingDueAt = parseDueAt(getNodeConfig(node)) ?? context.pendingDueAt ?? null;
       await recordNonBlockingNode(tx, context, node);
+      node = chooseNextNode(graph, nodeKey, context.decision);
+      continue;
+    }
+
+    if (node.kind === "variable") {
+      await applyVariable(tx, context, node);
+      node = chooseNextNode(graph, nodeKey, context.decision);
+      continue;
+    }
+
+    if (node.kind === "datetime") {
+      await applyDateTime(tx, context, node);
+      node = chooseNextNode(graph, nodeKey, context.decision);
+      continue;
+    }
+
+    if (node.kind === "logger") {
+      await applyLogger(tx, context, node);
+      node = chooseNextNode(graph, nodeKey, context.decision);
+      continue;
+    }
+
+    if (node.kind === "database") {
+      await applyDatabase(tx, context, node);
       node = chooseNextNode(graph, nodeKey, context.decision);
       continue;
     }
